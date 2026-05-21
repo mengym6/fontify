@@ -37,6 +37,20 @@ class RandomApplyWithBinary():
 
         return binary_tensor
 
+class PadToSquare:
+    def __init__(self, fill=255):
+        self.fill = fill
+
+    def __call__(self, img, tgt, interpolation1=None, interpolation2=None):
+        def _pad(image):
+            w, h = image.size
+            size = max(w, h)
+            new_img = Image.new(image.mode, (size, size), self.fill)
+            new_img.paste(image, ((size - w) // 2, (size - h) // 2))
+            return new_img
+        return _pad(img), _pad(tgt)
+
+
 class Compose(transforms.Compose):
     """Composes several transforms together. This transform does not support torchscript.
     Please, see the note below.
