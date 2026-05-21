@@ -1,0 +1,51 @@
+# macOS
+.DS_Store
+
+# VSCode local settings
+.vscode/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Logs
+*.log
+runs/
+logs/
+wandb/
+
+# Model checkpoints / weights
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+checkpoints/
+outputs/
+results/
+
+# Generated data / training data
+fontdata_example/font/
+fontdata_example/train_json/
+fontdata_example/val_json/
+
+# Large generated files
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.npy
+*.npz
+
+# Jupyter
+.ipynb_checkpoints/
+
+fontdata_example/font/
+fontdata_example/train_json/
+fontdata_example/val_json/

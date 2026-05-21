@@ -1,0 +1,819 @@
+# split=train  total_fonts=818  total_pairs=753637
+851CHIKARA-DZUYOKU-kanaB-2	613
+A Li Da Slender Bold Elegant Chinese Font -Simplified Chinese Fonts	993
+A-OTF-CinemaLetterStd-Light-2	702
+A-OTF-HigemojiStd-Ultra-2	702
+A-OTF-ShinMGoMin-Emboss-2	639
+A-OTF-ShinMGoMin-Futoline-2	639
+A-OTF-ShinMGoMin-Line-2	639
+A-OTF-ShinMGoMin-Shadow-2	639
+Aa Devil May Cry Art Chinese Font – Simplified Chinese Fonts	993
+Aa Energetic Cute Chinese Font – Simplified Chinese Fonts	993
+AaChaoMianJin-2	993
+Adorkable Children(KFhimaji) Chinese Font-Simplified Chinese Fonts+	888
+Adorkable Chinese Font-Simplified Chinese Fonts	993
+Adorkable Handwriting Pen Chinese Font-Simplified Chinese Fonts	993
+Apple Li hei W3 ti Font-Simplified Chinese-Traditional Chinese	989
+Arashi Transform Chinese Fontt-Simplified Chinese Fonts	992
+Arphic ‘Who’ E5GBK_M Handwriting Pen Chinese Font-Simplified Chinese Fonts	992
+Aunnt Cute handwritten graffiti Chinese Font-Simplified Chinese Fonts	992
+Aunt Bamboo orchid Handwriting Chinese Font -Simplified Chinese Fonts	989
+Aunt Charm Handwriting Chinese Font-Simplified Chinese Fonts	993
+Aunt- Kaleidoscopic Change Chinese Font-Simplified Chinese Fonts	992
+Aura Glorious Day Chinese Font – Simplified Chinese Fonts – Traditional Chinese Fonts	993
+Aura Long Bold Figure Chinese Font-Simplified Chinese Fonts	993
+AuraDianZhenSong-2	993
+BMW China Hei ti Font-Simplified Chinese	992
+BMW China Xi ti Font-Simplified Chinese	993
+Bai zhou Ancient Chinese Font–Traditional Chinese	687
+Bai zhou Bai yu Shu ti Font(HaKuu)-Traditional Chinese	641
+Bai zhou Hun xin Shu ti Font-Traditional Chinese	641
+Bai zhou Jing men shu Font-Traditional Chinese	638
+Bai zhou Sun Feng Shu ti Font-Traditional Chinese	641
+Bai zhou Tian zhen shu ti Font-Traditional Chinese	641
+Bai zhou jing hai zui hou shu ti Font-Traditional Chinese	638
+Bauhinia Art Chinese Font – Simplified Chinese Fonts+	889
+Beautiful (Xiao Mei) Handwritten Chinese Font-Simplified Chinese Fonts	993
+Beautiful Curl Modelling Chinese Font-Simplified Chinese Fonts	993
+Beautiful Handwriting Chinese Font (Droid Sans Fallback) -Simplified Chinese	993
+Beautiful Ink brush Calligraphy Font Style -Simplified Chinese Fonts	993
+Beautiful Rounded Corners Font-Simplified Chinese	992
+Beautiful regular script in small characters Font-Traditional Chinese	702
+Beauty Elegant Handwriting Pen Regular Script Chinese Font – Simplified Chinese Fonts	993
+Bei An Pen Calligraphy Chinese Font – Simplified Chinese Fonts	993
+Ben Mo Today Song (Ming) Typeface Chinese Font -Simplified Chinese Fonts	993
+Ben Mo YongHei Elegant Chinese Font -Simplified Chinese Fonts	993
+Ben Mo ZiYu Elegant Chinese Font -Simplified Chinese Fonts	993
+BenMoJingYuan-LiTi-2	993
+Benmo Jin Bold Elegant Chinese Font -Simplified Chinese Fonts	993
+Bluebird(Hua Guang) Amber Bold Rounded Chinese Font – Traditional Chinese Fonts	993
+Bluebird(Hua Guang) Official Script Chinese Font – Simplified Chinese Fonts	993
+Bluebird(Hua Guang) Variety Art Bold Figure Chinese Font – Simplified Chinese Fonts	993
+Bo Le  Oil Painter(BoLeYouHuati) Chinese Font-Simplified Chinese Fonts	993
+Bo Le Caterpillar Handwriting Chinese Font – Simplified Chinese Fonts	993
+Bo Le Florale Chinese Font-Simplified Chinese Fonts	993
+Bo Le Handwriting Pen(BoLePianXianti) Chinese Font-Simplified Chinese Fonts	993
+Bo Le Locust Tree Handwriting Pen Chinese Font-Simplified Chinese Fonts	993
+Bo Le Small and pure and fresh Handwriting Pen Chinese Font-Simplified Chinese Fonts	993
+Bo Le Summer Wind Handwriting Pen Chinese Font-Simplified Chinese Fonts	993
+Bo Yang Xing Shu two Font-Simplified Chinese	993
+Bo Yang Xing kai Font-Simplified Chinese	993
+Bodhi Song (Ming) Typeface Chinese Font – Simplified Chinese Fonts – Traditional Chinese Fonts	992
+Brother(xiongdifont_yy) Handwriting Chinese Font-Simplified Chinese Fonts	993
+CRC & C Bold Regular Script Chinese Font-Traditional Chinese Fonts	702
+Cai Yunhan Ying bi Xing shu calligraphy Font-Simplified Chinese	993
+Calligrapher Fashion zhong hei Font	993
+Carefully Handwritten (JieSi BanXing) Pen Chinese Font-Simplified Chinese Fonts	993
+ChaoShiJiBoKaKongYinTiFan-1	679
+ChaoShiJiCuHeiShiYinTiFan-1	665
+ChaoShiJiCuYuanShuangKongTiFan-1	667
+ChaoShiJiXinChaoTiLangTiFan-1	679
+ChaoShiJiZongYiShuangKongYinTiFan-1	679
+Charm Handwriting Pen Chinese Font-Simplified Chinese Fonts	992
+Chasing The Waves  Elegant Song (Ming) Typeface Chinese Font-Simplified Chinese Fonts	993
+Chasing The Waves Creative Bamboo Chinese Font-Simplified Chinese Fonts	993
+Chasing The Waves Creative Cool Chinese Font-Simplified Chinese Fonts	80
+Chasing The Waves Handwritten Style Pen Chinese Font-Simplified Chinese Fonts	993
+Chen Jishi Guai guai ti Font-Simplified Chinese	993
+Chen ji shi Ying bi Xing shu Font-Simplified Chinese	993
+China Ministry of Communications logo special font Bold Chinese Font -Simplified Chinese Fonts	993
+China construction bank Standard font-Simplified Chinese	993
+Chinese green tea Font-Simplified Chinese	991
+Chinese tea Full of beautiful things Chinese Font-Simplified Chinese Fonts+	888
+Christmas Font-Simplified Chinese	993
+Cicada Feather Beauty Handwriting Pen Chinese Font – Simplified Chinese Fonts	993
+Cicada Feather Dagger-Axe［ancient Chinese weapon］Handwriting Pen Chinese Font – Simplified Chinese Fonts	993
+Circumference(Fang Yuan) Soul Chinese Font-Traditional Chinese Fonts	641
+Classic Cu hei Font+	889
+Classic Die yuan ti Simplified Font	993
+Classic Li shu Font	993
+Classic Shu tong Font	993
+Classic Song ti Font	993
+Classic Song typeface Font	993
+Classic Zong yi ti Font	993
+Cool  Mark pen Handwritten Chinese Font-Simplified Chinese	979
+Cool Graffiti Handwriting Chinese Font-Simplified Chinese Fonts	979
+Cool JinFang Guo Pen Semi-Cursive Script Chinese Font-Simplified Chinese	993
+Cool pen Handwritten Chinese Font-Simplified Chinese	979
+Corn Ink Brush (Writing Brush) Font-Simplified Chinese	993
+Corn poetry Font-Simplified Chinese	992
+Corn(HanziPen SC) Song (Ming) Typeface Chinese Font -Simplified Chinese	992
+Corn(Heiti SC) Cute Chinese Font – Simplified Chinese Fonts+	889
+Crazy for love Font-Simplified Chinese	993
+Creative ruins Chinese Font-Simplified Chinese Fonts+	888
+Cu qian ti Font-Simplified Chinese	993
+Curving(QisiAaWanWan) Chinese Font-Simplified Chinese Fonts	993
+DFT-CCMY-1	705
+DFT-DQSY-1	705
+DFT-GGSP-1	705
+DFT-GLKS01-1	705
+DFT-HLSZ-1	705
+Da Liang Font library(The full version) -Simplified Chinese-Traditional Chinese	993
+Da Liang Perfect font¿CSimplified Chinese-Traditional Chinese	993
+Da Liang Ti Computer generated-Simplified Chinese	993
+Da Liang reinvent¿CSimplified Chinese	993
+Da Liang slender¿CSimplified Chinese	993
+Dai Jin hao Chinese  Font - Simplified Chinese	993
+Daiyu Lin Font-Simplified Chinese	993
+Deformation calligraphy Chinese Font-Simplified Chinese	993
+Delicate Cursive Script (East Asia) Chinese Font-Simplified Chinese	991
+Deng yu er Pen ti Font - Simplified Chinese	993
+Dream Pianist Chinese Font-Simplified Chinese Fonts	992
+Duo Mi Ink Brush (Writing Brush) Chinese Font-Simplified Chinese Fonts	993
+EPSON Tai jiao ti Font-Simplified Chinese	697
+Elegant Bold Figure Chinese Font-Simplified Chinese	993
+Elegant and beautiful Bold Figure Chinese Font – Simplified Chinese Fonts	993
+Elegant and beautiful Running water Chinese Font – Simplified Chinese	993
+ErZiYuanFengBoPaoPaoJian-2	993
+ErZiYuanXinYouShouHuiA-2	993
+FC Brush Regular script Font-Traditional Chinese	698
+FOT-ComicMysteryStd-DB-2	702
+FOT-ManyoKoinLargeStd-B-2	702
+FZBitmap-GBK-11X12-2	993
+Fang Zhen Miao ming Font-Simplified Chinese-Traditional Chinese	993
+Fang Zheng Miao wu ti Font-Simplified Chinese	993
+Fang Zheng zheng xian Hei zi ti Font-Simplified Chinese	993
+Fang yuan Liu li Xing shu ti Font-Traditional Chinese	702
+Fang zheng Arts Font-Simplified Chinese	993
+Fang zheng Chao hei Font-Simplified Chinese	993
+Fang zheng Children's handwriting Font-Simplified Chinese	993
+Fang zheng Cu huo yi Font-Simplified Chinese	993
+Fang zheng Cu song Font-Simplified Chinese	993
+Fang zheng Cu yuan Font-Simplified Chinese	993
+Fang zheng Fang Song Font	993
+Fang zheng Hei ti Font-Simplified Chinese	993
+Fang zheng Hua li Font-Simplified Chinese	993
+Fang zheng Huang cao Font-Simplified Chinese	993
+Fang zheng Jing Lei bold Font- Simplified Chinese	993
+Fang zheng Jing lei xu Font-Simplified Chinese	993
+Fang zheng Li bian Font-Simplified Chinese	993
+Fang zheng Mei hei Font-Simplified Chinese	993
+Fang zheng New Bao song Font-Simplified Chinese	993
+Fang zheng Pang tou yu Font-Simplified Chinese	993
+Fang zheng Pang wa Font-Simplified Chinese	993
+Fang zheng Ping he Font-Simplified Chinese	993
+Fang zheng Qi ti Font-Simplified Chinese	993
+Fang zheng Shao er Font-Simplified Chinese	993
+Fang zheng Shu Song Font	993
+Fang zheng Shui hei Font-Simplified Chinese	993
+Fang zheng Song san Font-Simplified Chinese	993
+Fang zheng Su Xin Shi Liu Kai Font- Simplified Chinese	993
+Fang zheng Tao tao ti Font-Simplified Chinese	993
+Fang zheng Tie jing Li shu Font-Simplified Chinese	993
+Fang zheng Xi Shan hu Font-Simplified Chinese	993
+Fang zheng Xi deng xian Font-Simplified Chinese	993
+Fang zheng Xi qian Font-Simplified Chinese	993
+Fang zheng Xi yuan Font-Simplified Chinese	993
+Fang zheng Xiang li Font-Simplified Chinese	993
+Fang zheng Xiao biao song Font-Simplified Chinese	993
+Fang zheng Yao ti Font-Simplified Chinese	993
+Fang zheng Yi hei Font-Simplified Chinese	993
+Fang zheng You xian Font-Simplified Chinese	993
+Fang zheng Zhan bi hei Font-Simplified Chinese	993
+Fang zheng Zheng zhun Hei Font-Simplified Chinese	993
+Fang zheng Zhi yi Font-Simplified Chinese	993
+Fang zheng Zhong deng xian Font	993
+Fang zheng Zhong qian Font	993
+Fang zheng Zhun yuan Font-Simplified Chinese	993
+Fang zheng amber Font-Simplified Chinese	993
+Fang zheng cartoon Font-Simplified Chinese	993
+Fang zheng handwriting ZhangHao Ying bi Kai shu Font-Simplified Chinese	993
+Fang zheng iridescent cloud Font-Simplified Chinese	993
+Fang zheng popular Font-Simplified Chinese	993
+Fang zheng zheng da hei ti Font-Simplified Chinese	993
+Fashion Profile Stylish Chinese Font-Simplified Chinese Fonts	993
+Fashion Thin gold Shu Font - Simplified Chinese	993
+Fashion ink Chinese Font-Simplified Chinese	993
+Fashionable dress Dan xian Font - Simplified Chinese	993
+Fashionable dress Distorted Font¿CSimplified Chinese	993
+Fashionable dress Ge huang ti Font - Simplified Chinese	993
+Fashionable dress Stereoscopic Font¿CSimplified Chinese	949
+Fashionable dress Wen ding Yan ti Font - Simplified Chinese	993
+Fashionable dress ants Font - Simplified Chinese	993
+Fashionable dress ball Font¿CSimplified Chinese	992
+Fashionable dress block Font - Simplified Chinese	993
+Fashionable dress broken Font ¿C Simplified Chinese	993
+Fashionable dress changing Font¿CSimplified Chinese	993
+Fashionable dress dalmatians Font - Simplified Chinese	993
+Fashionable dress ear of wheat Font - Simplified Chinese	993
+Fashionable dress heart Font¿CSimplified Chinese	993
+Fashionable dress insects Font - Simplified Chinese	993
+Fashionable dress skew Font - Simplified Chinese	992
+Fashionable dress twist Font¿CSimplified Chinese	993
+Feng yi Sha bi ti Font-Traditional Chinese	699
+Fine Jade Handwriting Pen(BoLeZhuSunTi) Chinese Font-Simplified Chinese Fonts	993
+Fingertip Official Script Chinese Font-Simplified Chinese Fonts	993
+Font Housekeeper Adorkable Font-Simplified Chinese Fonts	993
+Font Housekeeper Cotton candy Font-Simplified Chinese Fonts	993
+Font Housekeeper Cute Chinese Font-Traditional Chinese	993
+Font Housekeeper Detective Font-Simplified Chinese	992
+Font Housekeeper Flattening Bold Figure Chinese Font-Simplified Chinese Fonts	991
+Font Housekeeper Imitation Song (Ming) Typeface Chinese Font-Simplified Chinese Fonts	990
+Font Housekeeper Phat Girlz Chinese Font-Simplified Chinese Fonts+	888
+Font Housekeeper Qiao Qiao Handwritten Chinese Font-Simplified Chinese Fonts	993
+Font Housekeeper Scallion Chinese Font-Traditional Chinese	993
+Font Housekeeper Song (Ming) Typeface Chinese Font-Simplified Chinese Fonts	993
+Font Housekeeper XiHe Chinese Font-Simplified Chinese Fonts	993
+Font Housekeeper-QisiAaBanSong- Song (Ming) Typeface Chinese Font – Simplified Chinese Fonts	993
+Font housekeeper lovely Font-Simplified Chinese	993
+Free commercial use! ZhanKu Happy Chinese Font - Simplified Chinese	993
+Good Night Retro Chinese Font-Simplified Chinese	990
+Green Grass Cute Chinese Font – Simplified Chinese Fonts	993
+Gu yue xuan Cu ming ti Font-Traditional Chinese	679
+Guofu Li Handwriting Chinese Font -Simplified Chinese Fonts	993
+H-NEW Ya lan ti Font-Simplified Chinese-Traditional Chinese	992
+HOT-BukotsuStd-U-2	701
+HOT-Gekai07Std-R-2	702
+HOT-Gekai11Std-R-2	702
+HOT-Gekai15Std-R-2	702
+HOT-KasumiStd-U-2	701
+HOT-MamerakuStd-R-2	701
+HYL1GJ(Hanyi fonts) Retro Art Chinese Font – Simplified Chinese Fonts	993
+Ha Tian Casual - Sui Xing Handwriting Chinese Font – Simplified Chinese Fonts	993
+Ha Tian Delicate Ink Brush (Writing Brush) Chinese Font – Simplified Chinese Fonts	993
+Hai liang xing shu Kong xin ti Font-Simplified Chinese	993
+HaiPaiQiangDiaoMoCaJian-2	993
+HaiPaiQiangDiaoPengKeJian-2	993
+Han Yi (Prohibit commercial use) Ink Brush (Writing Brush) Chinese Font-Simplified Chinese Fonts	993
+Han Yi (Yuan Long) Bold Figure Chinese Font - Personal non-commercial version-Simplified Chinese Fonts	993
+Han Yi Children's handwriting(Individual non-commercial edition) Chinese Font-Simplified Chinese Fonts	993
+Han yi Bamboo Font-Simplified Chinese	993
+Han yi Butterfly Font	993
+Han yi Chen pin po Font	993
+Han yi Dictionary Font-Simplified Chinese	993
+Han yi Die yu Font	993
+Han yi Du du Font	993
+Han yi Fang die Font	993
+Han yi Haha Font	993
+Han yi Hai yun Font	993
+Han yi Hei mi ti Font	993
+Han yi Hei qi ti Font	993
+Han yi Jia shu Font	993
+Han yi Jing shi ti Font-Simplified Chinese	993
+Han yi Ling bo Font	993
+Han yi Man bu ti Font	993
+Han yi Nan gong ti Font-Simplified Chinese	993
+Han yi Olive Font	993
+Han yi Qing yun ti Font-Simplified Chinese	993
+Han yi Radish Font	993
+Han yi Shen gong ti Font-Simplified Chinese	993
+Han yi Shou jin shu Font-Simplified Chinese	993
+Han yi Shu hun Font-Simplified Chinese	993
+Han yi Shuang xian Font-Simplified Chinese	993
+Han yi Wa wa zhuan Font-Simplified Chinese	993
+Han yi Water droplets Font-Simplified Chinese	993
+Han yi Wei bei Font-Simplified Chinese	993
+Han yi Xi Xing kai Font-Simplified Chinese	993
+Han yi Xi deng xian Font-Simplified Chinese	993
+Han yi Xi yuan Font-Simplified Chinese	993
+Han yi Xi zhong yuan Font-Simplified Chinese	993
+Han yi Xiao li shu Font-Simplified Chinese	993
+Han yi Xing kuai ti Font-Simplified Chinese	993
+Han yi Xiu ying ti Font-Simplified Chinese	993
+Han yi Xue feng ti Font-Simplified Chinese	993
+Han yi Xun jun ti Font-Simplified Chinese	993
+Han yi Ya ya Font-Simplified Chinese	993
+Han yi Yan ling ti Font-Simplified Chinese	993
+Han yi Yuan die ti Font-Simplified Chinese	993
+HanYi Medium width Bold Figure Chinese Font – Simplified Chinese Fonts	993
+HanYi Slender Bold Figure Chinese Font – Simplified Chinese Fonts	993
+HanZiZhiMeiBangBangTangXiJian-2	993
+HanZiZhiMeiYuLongJian-2	993
+Handwritten ink graffiti(Myfont_GB2312) Chinese Font-Simplified Chinese Fonts	993
+Handwritten pen Font-Simplified Chinese	992
+Handwritten word Regular script Font-Simplified Chinese	992
+Hanyi Chinese Buddhist style Open Source Font – Simplified Chinese Fonts	993
+Happiness Four Leaf Clover Font-Simplified Chinese-Traditional Chinese+	886
+Hazy Bold Figure Font-Simplified Chinese	992
+HongLiang Yu Handwritten Pen Chinese Font-Simplified Chinese	993
+HuXiaoBoSaoBaoTi-2	993
+Hua Kang Budingti W12 Font	993
+Hua Kang Dian Jing Ti(DFDianJing-B5) Font-Traditional Chinese	705
+Hua Kang Hong yi Kai shu ti Font-Traditional Chinese	698
+Hua Kang Li Zhong song Font-Traditional Chinese	705
+Hua Kang Li cu song Font-Traditional Chinese	705
+Hua Kang Li te yuan Font-Traditional Chinese	705
+Hua Kang Longmen Stone tablets(DFLungMen-B5) Font-Traditional Chinese	679
+Hua Kang Shi yi ti Font-Simplified Chinese	993
+Hua Kang Songti W12 Font	993
+Hua Kang Wawa ti W5 Font	993
+Hua Kang Yasong ti Font	993
+Hua Shi Ti Handwriting Chinese Font – Simplified Chinese Fonts	993
+Hua kang Bang shu Font-Traditional Chinese	705
+Hua kang Bao feng ti Font-Traditional Chinese	704
+Hua kang Cai feng ti Font-Traditional Chinese	704
+Hua kang Chao te yuan ti Font-Traditional Chinese	705
+Hua kang Clerical script W5 Font-Traditional Chinese	704
+Hua kang Clerical script W7 Font-Traditional Chinese	704
+Hua kang Dou dou ti Font-Traditional Chinese	704
+Hua kang Fang song ti Font-Traditional Chinese	704
+Hua kang Fang yuan ti Font-Traditional Chinese	704
+Hua kang Guo tai bei Font-Traditional Chinese	704
+Hua kang Hai bao ti w12 Font-Traditional Chinese	993
+Hua kang Hei zi Font-Traditional Chinese	704
+Hua kang Hua zong ti Font-Traditional Chinese	704
+Hua kang Lian lian ti Font-Traditional Chinese	704
+Hua kang Liu feng ti Font-Traditional Chinese	704
+Hua kang Liu li ti Font-Traditional Chinese	704
+Hua kang Liu liu Font-Traditional Chinese	705
+Hua kang Liu xian ti Font-Traditional Chinese	704
+Hua kang Mo feng ti Font-Traditional Chinese	704
+Hua kang Mo zi Font-Traditional Chinese	705
+Hua kang Ou yang xun Font-Traditional Chinese	705
+Hua kang POP2 ti W9 Font-Traditional Chinese	705
+Hua kang Shao nv Font-Traditional Chinese	993
+Hua kang Tadpole Chinese font	704
+Hua kang Tang feng Li Font-Traditional Chinese	704
+Hua kang Tie xian long men Font-Traditional Chinese	704
+Hua kang Tong tong Font-Traditional Chinese	704
+Hua kang Ya feng Font-Traditional Chinese	704
+Hua kang Ying hei ti W7 Font-Traditional Chinese	704
+Hua kang Zhu feng ti Font-Traditional Chinese	704
+Hua kang ribbons ti Font-Traditional Chinese	704
+Hua wen Cloud Font	993
+Hua wen Hu po Font	993
+Hua wen Xin wei Font	993
+HuaKangDouDouTiW5-B5-1	704
+HuaKangGanLongXingKai-1	704
+HuaKangGanLongXingKai3DTi01-2	705
+HuaKangGanLongXingKaiKuangXianTi02-1	705
+HuaKangHaiBaoDanKuangTiFan-1	679
+HuaKangWaWaKongXinTiFan-1	679
+Huai Fang Ti Black Font-Traditional Chinese	702
+Huai Ying(id-cinema)Font-Traditional Chinese	702
+Huai feng ti Font-Traditional Chinese	460
+Huai liu ti Font-Simplified Chinese	460
+Huang Yanwen Xing shu Font-Simplified Chinese	993
+Inferior Student Ideas Font-Simplified Chinese-Traditional Chinese	993
+Ink Cylinder Chinese Font-Simplified Chinese Fonts	993
+Iphone love(STHeiti TC)Font-Simplified Chinese-Traditional Chinese+	888
+Japan San ci yuan Font-Simplified Chinese	638
+Japan Shui mian ti Font-Simplified Chinese	638
+Japan Te song ti Font-Traditional Chinese	702
+Japan Zhao he ti Font-Simplified Chinese	645
+Japan hengshan writing brush Font-Traditional Chinese	738
+Japanese Art(FOT -Gospel Std EB) Ensemble Chinese Font – Traditional Chinese Fonts	702
+Japanese Handwritten Style Chinese Font-Simplified Chinese	993
+Japanese calligraphy Font-Traditional Chinese	638
+Ji Shi Chen Natural and unrestrained Handwriting Chinese Font-Simplified Chinese Fonts	993
+JiaShang Liu Xing kai 5500 Font- Simplified Chinese	992
+JiaYan Ink brush Calligraphy Font Style -Simplified Chinese Fonts+	888
+JianGang Crooked Handwritten Pen Writing Font-Simplified Chinese	993
+JianGang Exquisite Regular Script Font-Simplified Chinese	993
+JianGang Font library MingXu font-Simplified Chinese	993
+JianGang Young Incomplete version Font-Simplified Chinese	993
+JianGang boldface(Hand writing) Font-Simplified Chinese	993
+JianGang manuscript Font-Simplified Chinese	993
+JianYu Zhang Excellent Pen Chinese Font-Simplified Chinese Fonts	993
+Jing Chen Handwritten Pen Chinese Font-Simplified Chinese	993
+JingMing Guo Handwritten Pen Chinese Font-Simplified Chinese	993
+Jishi Chen Full of mysterious Font-Simplified ChineseFont-Simplified Chinese	993
+Jishi Chen Xing Kai Font-Simplified Chinese	993
+Justice Title Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Juvenile Chinese Font – Simplified Chinese Fonts	993
+Knives And Awords Handwriting Pen Chinese Font – Simplified Chinese Fonts	993
+Kouzn Brush(hengshan writing brush)Font-Traditional Chinese	738
+LEXUS Cu hei ti Font-Simplified Chinese	993
+LEXUS ti Font-Simplified Chinese	993
+LOVE爱情字体下载	702
+Lama Pacos Handwritten Chinese Font-Simplified Chinese	993
+Lan Sun Pen Handwriting Chinese Font – Simplified Chinese Fonts+	887
+Li ti Gu yue xin nan Xing kuai Font-Simplified Chinese	993
+LiQun Ye Geometric Limit Chinese Font-Simplified Chinese Fonts	992
+LiQun Ye Geometric Trimming Chinese Fontt-Simplified Chinese Fonts	992
+LiQun Ye Geometry Beta Version Chinese Font-Simplified Chinese Fonts	992
+Limit Sha bi ti Font-Traditional Chinese	742
+Ling Handwriting Chinese Font-Simplified Chinese Fonts	993
+Literature and art Bold Figure Chinese Font-Simplified Chinese	993
+Literature and art Hollow Bold figure Font-Simplified Chinese	993
+Liu li Tai hang Shu ti Font-Traditional Chinese	702
+Lolita chinese font	992
+LongShuFengJian-2	993
+Loong Chinese Font-Simplified Chinese Fonts	993
+Lovely Baby Fat Chinese Font-Simplified Chinese Fonts	993
+Lovely biscuits Font-Simplified Chinese	993
+Lovely handwritten kids Font-Simplified Chinese	993
+LuoXi Handwritten Pen Running Script Font-Simplified Chinese+	889
+MFSongHe_Noncommercial-Regular	993
+MT Graffiti Handwriting Font-Simplified Chinese	993
+Ma wei Shi zhuang Font-Simplified Chinese	993
+Marker pen to write Font-Simplified Chinese+	887
+Meng na Colorful butterfly Tong yuan(COYuenHK-XboldOutline)Font - Traditional Chinese	680
+Meng na Computer ti Font - Traditional Chinese	772
+Meng na Cu Qiao pi(MYoungHK-Xbold) Font - Traditional Chinese	680
+Meng na Cu hei(MHeiHK-Xbold)Font - Traditional Chinese	755
+Meng na Cu song(MSungHK-Xbold) Font - Traditional Chinese	755
+Meng na Gu yuan T(MHGReithicTHK-Light)Font - Traditional Chinese	686
+Meng na Hei song(MWindyHK-Bold)Font - Traditional Chinese	755
+Meng na Lan shan li shu(MWindyHK-Bold) Font - Traditional Chinese	755
+Meng na Ling Hui ti P(MLingWaiPHK-Light)Font - Traditional Chinese	755
+Meng na Qiao pi(MYoungHK-Medium) Font - Traditional Chinese	680
+Meng na Shu tong(CSuHK-Medium)Font - Traditional Chinese	752
+Meng na Song jin hei  Font- Traditional Chinese	772
+Meng na Song ti(MWindyHK-Bold)Font - Traditional Chinese	780
+Meng na Square lattice(MBitmapSquareHK-Light)Font - Traditional Chinese	780
+Meng na Wedding banquet Font- Traditional Chinese	756
+Meng na Xiu ming ti Font - Traditional Chinese	772
+Meng na Ya qian ti Font - Traditional Chinese	772
+Meng na Yao yang ( Myoyo PRC Mediun ) Font-Simplified Chinese	993
+Meng na Yi ti(MNgaiHK-Bold)Font - Traditional Chinese	680
+Meng na Ying fu ti Font - Traditional Chinese	772
+Meng na You pi(MYuppyHK-Medium) Font - Traditional Chinese	680
+Meng na You ya li Font - Traditional Chinese	781
+Meng na You yuan Hei (CYuenHK-SemiMedium)Font - Traditional Chinese	677
+Meng na You yuan(MYuenHK-Light) Font - Traditional Chinese	766
+Meng na Yu yi (MHGKyokashotaiTHK-Light)Font - Traditional Chinese	686
+Meng na Yu yi T(MHGHagoromoTHK-Medium)Font - Traditional Chinese	686
+Meng na Yuan hei(MYuenHK-SemiBold) Font - Traditional Chinese	771
+Meng na Zhog zong yi Font-Simplified Chinese	772
+Meng na Zhong Xiu ming ti Font - Traditional Chinese	772
+Meng na Zhong yuan(MYuenHK-Medium) Font - Traditional Chinese	682
+Meng na caricature Font-Traditional Chinese	772
+Meng na textbook(MHGHagoromoTHK-Light)Font - Traditional Chinese	686
+MengNaFanYuanDianZhen-1	680
+MengNaFenJianTiJian-1	755
+MengNaGangHeiTiJian-1	755
+MengNaJianCaiDieTongYuan-1	755
+MiNiJianLiHei-1	993
+Miaokong Cute cartoon Font-Simplified Chinese	993
+Miaokong lovesickness Font-Simplified Chinese	993
+Mimi Handwriting Pen Chinese Font-Simplified Chinese Fonts	993
+Ming hei Font-Simplified Chinese-Traditional Chinese	992
+Mini Bai qi Font-Simplified Chinese	993
+Mini Chang yi ti Font-Simplified Chinese	993
+Mini Chao cu yuan Font-Simplified Chinese	993
+Mini Cu qian Font-Simplified Chinese	993
+Mini Dai yu Font-Simplified Chinese	993
+Mini Fang li Font-Simplified Chinese	993
+Mini Hua li Font-Simplified Chinese	993
+Mini Huang Cursive script Font-Simplified Chinese	993
+Mini Mei hei Font-Simplified Chinese	993
+Mini New bao song Font-Simplified Chinese	993
+Mini Pang wa Font-Simplified Chinese	993
+Mini Radish Font-Simplified Chinese	993
+Mini Standard Song (Ming) Typeface Chinese Font -Simplified Chinese Fonts	993
+Mini Stroll Font-Simplified Chinese	993
+Mini Xi shan hu Font-Simplified Chinese	993
+Mini Yao ti Font-Simplified Chinese	993
+Mini Zhi yi Font-Simplified Chinese	993
+Mini Zong yi Font-Simplified Chinese	993
+Mini amber Font-Simplified Chinese	993
+Mini children Font-Simplified Chinese	993
+Mini iridescent cloud Font-Simplified Chinese	993
+Mint Bold Chinese Font -Simplified Chinese Fonts	993
+MoMoYueYaTi-2	993
+Muyao-Softbrush Open Source Font – Simplified Chinese Fonts	993
+My Cool Fonts(Wo Zi Ku) Freehand brushwork in traditional Chinese Font-Simplified Chinese Fonts	993
+My Leaves Font-Simplified Chinese	993
+Natural Writing Brush(HOT-Ninja Std R) Font-Traditional Chinese	702
+New Song (Ming) Typeface (Heiti TC Light) Font-Simplified Chinese	993
+NingDuan Write writing brush Running script Font-Simplified Chinese	993
+Old newspaper Sung Font-Simplified Chinese	992
+Original paper cutting Bold Elegant Chinese Font -Simplified Chinese Fonts	993
+POP(STHeiti J Light)Font-Simplified Chinese-Traditional Chinese	991
+Paint Brush Art Chinese Font – Simplified Chinese Fonts+	889
+Pea Nuts (Rounded corners) Font – Simplified Chinese	992
+PeiSheng Liang Soft brush Font-Simplified Chinese	993
+Play lovely affectionate Font-Simplified Chinese+	885
+Pray for blessing (QFKT) Regular Script Chinese Font – Simplified Chinese Fonts	993
+Proud Chinese Dragon Ink Brush (Writing Brush) Chinese Font-Traditional Chinese Fonts	698
+Qi Shan Zhong Handwriting Chinese Font-Simplified Chinese	993
+QiLing Zhang Corn HanziPen SC - Ink Brush (Writing Brush) Chinese Font – Simplified Chinese Fonts	991
+Qing niao Hua guang Yao ti Font-Simplified Chinese	993
+Qing niao Song dynasty Font-Simplified Chinese	993
+Qing niao Super bold face letter Font-Simplified Chinese	993
+Qing niao equal proportion Font-Simplified Chinese	993
+Qing niao obesity Font-Simplified Chinese	993
+QingKe Zheng Elegant Wisdom Font-Simplified Chinese	993
+Rage comic(BoLeBaoZaoti) Handwritten Chinese Font-Simplified Chinese Fonts	993
+RenDong Yang Bamboo stone -Semibold Open Source Font – Simplified Chinese Fonts	993
+Ri wen Mao bi xing shu Font-Traditional Chinese	698
+Ri xi Xian ti Font-Traditional Chinese	702
+RuiZiWenShuaiXiaoKeAiFan-TTF-2	993
+SNOWREN Jian gang ti Font-Simplified Chinese	993
+Sadhus Note Handwriting Pen Chinese Font-Simplified Chinese Fonts	993
+School days Pen Chinese Font-Simplified Chinese Fonts	993
+Semi-Cursive Script Pen(specification) Font-Simplified Chinese	993
+Senty Cream Puff Child handwriting Font-Simplified Chinese	993
+Senty Golden Bell Handwriting Art Font-Simplified Chinese	993
+Senty Pea Handwritten Pen Font-Simplified Chinese	993
+Senty Snow Mountain Xin Di Ink Brush (Writing Brush) Font-Simplified Chinese	993
+Senty Zhao Font-Simplified Chinese	991
+Shang hei Te xi ti Font-Simplified Chinese	993
+Shang hei xian xi ti Font-Simplified Chinese	993
+Sharp (Glory to return) Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Sharp Bloom Bold Figure Chinese Fontt-Simplified Chinese Fonts	993
+Sharp Dawn Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Sharp Glory Bold Figure(GBK) Chinese Font-Simplified Chinese Fonts	993
+Sharp Outstanding Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Sharp Workshop Cappuccino Cosmetic Contact Lenses Chinese Font-Simplified Chinese Fonts	993
+Sharp Workshop Cappuccino Super Slim Chinese Font-Simplified Chinese Fonts	993
+Sharp Workshop Light Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Sharp Workshop Magnificent Bold Figure Chinese Font-Simplified Chinese Fonts	993
+ShiXin Xing Semi-Cursive Script Handwriting Chinese Font-Simplified Chinese Fonts	993
+Shu ti Fang Xiaoyuguo pen Kai ti Font-Simplified Chinese	993
+SiMa Yan ti modified version Font-Traditional Chinese	993
+Soft Ink Brush (Writing Brush) & Regular Script Chinese Font – Simplified Chinese Fonts	993
+Soft Writing Brush Regular Script Chinese Font-Simplified Chinese	993
+SoukouMincho - Song (Ming) Typeface Chinese Font – Traditional Chinese Font Fonts	702
+SourceHanSans-Bold Font(Google apple free open-source font)-Simplified Chinese	992
+SourceHanSans-ExtraLight (Google apple free open-source font)-Simplified Chinese-Traditional Chinese	992
+SourceHanSans-Heavy Bold Font(Google apple free open-source font)-Simplified Chinese-Traditional Chinese	992
+SourceHanSans-Light Font(Google apple free open-source font)-Simplified Chinese-Traditional Chinese	991
+SourceHanSans-Medium Font(Google apple free open-source font)-Simplified Chinese-Traditional Chinese	991
+SourceHanSans-Normal Font(Google apple free open-source font)-Simplified Chinese-Traditional Chinese	990
+SourceHanSans-Regular Font(Google apple free open-source font)-Simplified Chinese-Traditional Chinese	992
+Speak Chinese Font-Simplified Chinese+	887
+Special Semi-Cursive Script (Writing Brush) HiraginoGyoDS Font-Traditional Chinese	702
+Spider Chinese Font-Simplified Chinese Fonts+	887
+Standard Rounded -15 Angle Chinese Font-Simplified Chinese Fonts	993
+Standard Rounded Chinese Font – Simplified Chinese	993
+Standardization Sharp Chinese Font-Simplified Chinese Fonts	992
+Standardization of ink (Benmo Chenhei) Chinese Font-Simplified Chinese Fonts	993
+Stylish Fashion ink(BENMO Fengyue Bold)  Font-Simplified Chinese	993
+Stylish Wood Font – Simplified Chinese	993
+Su Poetry and painting Art Chinese Font -Simplified Chinese Fonts	993
+Su xin Shi Cuan Bao Zi (inscription) -Traditional Chinese	993
+Su xin Shi Liu Regular script Font-Simplified Chinese	993
+Su xin Shi rough Font–Simplified Chinese	993
+Su xin shi luan shi ti Font-Simplified Chinese	993
+Su xin shi mouse Xing shu Font-Simplified Chinese	993
+SuXinShiBaoZiBeiJian-1	993
+SuXinShiGuYinSongJian-1	993
+SuXinShiShuangGouTi-1	993
+Subtitle Hei ti Font-Simplified Chinese	991
+Summer Dream Handwriting Chinese Font-Simplified Chinese Fonts	993
+Summer begins handwritten Font-Simplified Chinese+	889
+Sun Yun He Regular script character Font-Simplified Chinese	993
+Super century Cu Zong yi Font - Traditional Chinese	679
+Super century Cu yuan yi Font - Traditional Chinese	679
+Super century New Cu hei Font - Traditional Chinese	679
+Super century Xi hei ti Font - Traditional Chinese	679
+Super century Xi ming Font - Traditional Chinese	679
+Super century Xi yuan Font - Traditional Chinese	679
+Super cute naive Chinese Font-Simplified Chinese Fonts	993
+Sweet Girl Chinese Font – Simplified Chinese Fonts+	888
+Swim the Wolf Cursive Script Font-Traditional Chinese	993
+TTF-ChaoZiSheHuTouXiaoJian-2	993
+Take off&Good luck Beautiful Bold Rounded Chinese Font (W3) – Simplified Chinese Fonts	993
+Take off&Good luck Beautiful Bold Rounded Chinese Font (W4) – Simplified Chinese Fonts	993
+Take off&Good luck Beautiful Bold Rounded Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Big Bold Rounded Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Charm Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Creative Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Dream Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Elegant Bold Figure w2 Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Fashion Round Chinese Font-Traditional Chinese Fonts	993
+Take off&Good luck Fashionable Bold Figure Chinese Font-Traditional Chinese Fonts	993
+Take off&Good luck Galli Bold Figure Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Galli Bold Rounded Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Gentle and graceful Cute Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Ghost Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Gold brick Boldface Font-Simplified Chinese	993
+Take off&Good luck Hurry Cute Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Jia Li Slender Rounded Corners Font-Traditional Chinese	993
+Take off&Good luck Jia Li Super Slender Cylinder Font-Simplified Chinese	993
+Take off&Good luck Line Bold Figure Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Love (slender) Cute Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Love Cute Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Naive Song (Ming) Typeface Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck New Kids Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Official Script Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Qian nv Font-Simplified Chinese	993
+Take off&Good luck Rounded Font-Simplified Chinese	993
+Take off&Good luck Slim Rounded Chinese Font – Simplified Chinese Fonts	993
+Take off&Good luck Smart W3 Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Stone Font-Simplified Chinese	993
+Take off&Good luck Super Coarse cylinder Font-Simplified Chinese	993
+Take off&Good luck Tie shan Regular script character font-Simplified Chinese	993
+Take off&Good luck Trend Bold Figure Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Trend Rounded Chinese Font-Simplified Chinese Fonts	993
+Take off&Good luck Wheat Bold Figure Chinese Font-Traditional Chinese Fonts	993
+Take off&Good luck Wise And Farsighted Bold Figure W1 Font-Simplified Chinese	993
+Take off&Good luck Xiaoge Fan Regular script font-Simplified Chinese	993
+Take off&Good luck Xiaoge Fan font-Simplified Chinese	993
+Take off&Good luck Xing Regular script Font-Simplified Chinese	993
+Take off&Good luck Young children Font-Simplified Chinese	993
+Take off&Good luck blackbody Font-Simplified Chinese	993
+Take off&Good luck child interest (professional)Chinese Font-Traditional Chinese Fonts-Simplified Chinese Fonts	993
+Take off&Good luck hard pen Official script Font-Simplified Chinese	993
+Take off&Good luck medium bold figure Font-Simplified Chinese	993
+Take off&Good luck pen font-Simplified Chinese	993
+Talent scout (BoLeYaYaTi) Handwritten Chinese Font-Simplified Chinese Fonts	993
+Tan ti Kai shu ti Font-Simplified Chinese	993
+TengXiangXinJian-1	993
+Tensentype BoDang running hand (in Chinese calligraphy) Chinese Font – Simplified Chinese Fonts	993
+Tensentype Bread Chinese Font – Simplified Chinese Fonts	993
+Tensentype Children Running Script Chinese Font – Simplified Chinese Fonts	993
+Tensentype Fairy Tale Art Chinese Font – Simplified Chinese Fonts	993
+Tensentype Soap Bubbles Chinese Font – Simplified Chinese Fonts	993
+The Chinese Dragon Handwritten Chinese Font-Simplified Chinese Fonts	993
+The International Style Art Bold Figure Chinese Font-Simplified Chinese Fonts	993
+The International Style Bold Figure Chinese Font-Simplified Chinese Fonts	993
+The International Style Passion For Craftsmanship Bold Figure Chinese Font-Simplified Chinese Fonts	993
+The Rising Sun Chinese Font-Simplified Chinese Fonts	992
+The Stars Cookies Chinese Font-Simplified Chinese	944
+The Universe Chinese Font-Simplified Chinese Fonts+	887
+The elephant Handwritten Pen Chinese Font-Simplified Chinese	993
+The hamburger & Mobile phone Font-Simplified Chinese-Traditional Chinese+	889
+The immature Handwritten Style Chinese Font – Simplified Chinese	978
+The lovely panda(Medium) Font-Simplified Chinese+	885
+The phantom earl Chinese Font-Simplified Chinese	993
+The style of the ancient Chinese Font-Simplified Chinese	993
+The world is so big Handwriting Chinese Font – Simplified Chinese Fonts	993
+Tian shi Brushes ti Font-Traditional Chinese	702
+Tian shi Fang Bi shua ti Font-Traditional Chinese	700
+Tian shi xi brushes ti Font-Traditional Chinese	702
+TianShiMuZhiTiFan-1	660
+Tie lan ti Font-Simplified Chinese+	675
+Time (jojisin TrueType) Chinese Font -Simplified Chinese Fonts+	888
+Time Flies Anna Chinese Font-Simplified Chinese Fonts+	887
+Tweets Fluctuation Font-Traditional Chinese	715
+Unique Ink Brush (Writing Brush) Chinese Font – Simplified Chinese Fonts	993
+Unique creative Font-Simplified Chinese+	889
+Voice Of The Wind Font-Simplified Chinese	993
+WanQiong Pan Beautiful Handwritten Pen Chinese Font-Simplified Chinese	993
+Wander Handwriting Chinese Font -Simplified Chinese Fonts	993
+Wandering the Wolf Engrave Chinese Font-Simplified Chinese	993
+Wang Zheng liang Ying bi Kai shu ti Font-Simplified Chinese	993
+Wang han Pen Font	658
+Wang han zong Bo ka Font	680
+Wang han zong Hai bao ti Font	680
+Wang han zong Ku li Hai bao Font-Traditional Chinese	679
+Wang han zong Shi yin Font	665
+Wang han zong Slim boldface Font-Traditional Chinese	679
+Wang han zong Te yuan ti Font	678
+Wang han zong Trendy Waves Font-Traditional Chinese	680
+Wang han zong Zhen yan kai ti Font-Traditional Chinese	465
+Wang han zong Zhong Clerical script Font-Traditional Chinese	679
+Wang han zong boldface Font-Traditional Chinese	679
+Wang han zong super blackbody big bang Font-Traditional Chinese	366
+Wang jin yan Xing shu ti Font-Simplified Chinese	993
+Water God Chinese Fontt-Simplified Chinese Fonts	992
+WeiBo Warm Colour Tone Small Size Handwriting Chinese Font -Simplified Chinese Fonts+	888
+Wen Yue New Youth (Prohibit commercial use) Font-Simplified Chinese Fonts	993
+Wen ding Bamboo Font-Traditional Chinese	658
+Wen ding Beard Font	658
+Wen ding Petal Font	658
+Wen ding Sausage chinese font	658
+Wen ding Shi tou ti chinese font	658
+Wen ding Yan shui chinese font	658
+Wen er guang gao Song ti Font-Traditional Chinese	698
+Wen quan Yi zheng hei ti Font-Simplified Chinese	991
+Wen quan yi Wei mi hei ti Font-Traditional Chinese	991
+WenDingDanHuangTi-1	658
+WenDingYingHuaTi-1	702
+Wind And Rain Handwriting Pen Chinese Font-Simplified Chinese Fonts	993
+Wings of liberty Font-Traditional Chinese	992
+Wood graffiti Chinese Font-Simplified Chinese+	888
+Wu jia rui handwritten ti Font-Simplified Chinese	993
+Xi tan hei ti Font-Simplified Chinese	993
+XiangYue Tian Regular Script Chinese Font – Simplified Chinese Fonts	993
+Xiao dian zhen ti Font-Traditional Chinese	679
+XiaoDouDaoJianGangMoDuJian-2	993
+XiaoJiang Chen Haw-Haw Handwriting Chinese Font-Simplified Chinese Fonts	983
+XiaoMi Lan Ting Light Chinese Font – Simplified Chinese Fonts	993
+Xiaobo hu Man Font - Simplified Chinese	993
+Xiaobo hu Mei xin ti Font-Simplified Chinese	993
+Xiaobo hu Qv yuan ti Font-Traditional Chinese	702
+Xiaohei Wang Xing kai Font-Simplified Chinese	993
+Xin Di Chi-bi Maruko(Primary school students handwriting) Font-Simplified Chinese	993
+Xin di Xiao wan zi ti Font-Simplified Chinese	993
+Xin di paper-cut Font -  Simplified Chinese	993
+XinDiHeiBanBaoTi-1	993
+Xing ShiXin Ying bi Xing shu - Simplified Chinese	993
+Xiu ying xi ming chao ti Font-Traditional Chinese	747
+Xu Jin Ru pen Running Script Font-Simplified Chinese	993
+XuDong Chen Handwritten Pen (CXD6763_Newest) Chinese Font-Simplified Chinese	993
+XuKe Li Pen Cursive Script Chinese Font-Simplified Chinese Fonts	993
+XueRu Chen Calligraphy writing – Ink Brush (Writing Brush) Chinese Font – Simplified Chinese Fonts	993
+Xuke Li Handwriting Calligraphy (v1	993
+Xuke Li Old Newspapers Font -Simplified Chinese Fonts	993
+Xuke Li Writing brush Running script Font - Simplified Chinese	993
+Ye Gen You Sacred monument Font-Simplified Chinese	993
+Ye Gen You Sharp Carving Font-Simplified Chinese	993
+Ye Gen You Sharp Hand Drawing Font-Simplified Chinese	993
+Ye Gen You Small  Song (Ming) Typeface Font-Simplified Chinese	993
+Ye GenYou Fei zhu liu Shou xie Font-Simplified Chinese	993
+Ye GenYou Ji feng Cao shu Font-Simplified Chinese	993
+Ye GenYou Kong xin Font- Simplified Chinese	993
+Ye GenYou Te se Jian ti Font- Simplified Chinese	993
+Ye GenYou calligraphy Font-Simplified Chinese	993
+Ye gen you Carving Font-Simplified Chinese	993
+Ye gen you New zhuan ti Font-Simplified Chinese	993
+Ye gen you Tang dynasty Regular script Font-Simplified Chinese	993
+YeGenYou Tong ti Font-Traditional Chinese	993
+Yu Wei Seal Script Font-Traditional Chinese	781
+Yu wei Ying bi conventional Font-Simplified Chinese	993
+Yu wei calligraphy Running Script Font-Simplified Chinese	992
+Yuan yun Ya feng wei mao bi ti Font-Simplified Chinese	698
+Yue hei xian xi chang ti Font-Simplified Chinese	991
+YueYuan Belle Chinese Font-Simplified Chinese Fonts	992
+YunHe Sun Ink Brush (Writing Brush) Font-Simplified Chinese	993
+Zao Zi Gong Fang  Elegant Art Chinese Font(Normal Font) -Simplified Chinese	993
+Zao Zi Gong Fang (Make Font) Natural Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang (Make Font) Playful Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang (Make Font) Wind Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang (Makefont) Brahma Song (Ming) Typeface Chinese Font-Simplified Chinese Fonts	993
+Zao Zi Gong Fang (Makefont) Buddhism Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang (Makefont) Ding Bold Figure Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang (Makefont) Exquisite China Font-Simplified Chinese Fonts	993
+Zao Zi Gong Fang (Makefont) Extraordinary Art Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang (Makefont) Mo Yu China Font-Simplified Chinese Fonts	992
+Zao Zi Gong Fang (Makefont) Naive China Font-Simplified Chinese Fonts	992
+Zao Zi Gong Fang (Makefont) Retro Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang Angel Wings(Prohibition of commercial use) Elegant Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang Bold Figure Chinese Font(Normal Font) -Simplified Chinese	993
+Zao Zi Gong Fang Childlike innocence Bold Figure Chinese Font(Normal Font) -Simplified Chinese	991
+Zao Zi Gong Fang Creative Bold Figure(Normal Font) Chinese Font-Simplified Chinese	992
+Zao Zi Gong Fang Elegant Bold Figure Overstriking Font-Simplified Chinese	992
+Zao Zi Gong Fang Elegant Bold Figure Particular small Font-Simplified Chinese	993
+Zao Zi Gong Fang Elegant Bold Figure Slender Font-Simplified Chinese	993
+Zao Zi Gong Fang Elegant Bold Figure Standard Font-Simplified Chinese	992
+Zao Zi Gong Fang Elegant Bold Figure Super Bold Font-Simplified Chinese	993
+Zao Zi Gong Fang Elegant Bold Figure Super Slim Font-Simplified Chinese	993
+Zao Zi Gong Fang Elegant Chinese Font(Normal Font) -Simplified Chinese	993
+Zao Zi Gong Fang Elegant Semicircle (Normal Font) Chinese Font-Simplified Chinese	993
+Zao Zi Gong Fang Hard Bold Figure Chinese Font(Normal Font) -Simplified Chinese	992
+Zao Zi Gong Fang High Quality Bold Figure(Normal Font) Chinese Font-Simplified Chinese	993
+Zao Zi Gong Fang Pu Yue Make Font(MFPuYue_Noncommercial-Regular) Art Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang Pygmyism Rounded Chinese Font(Normal Font) -Simplified Chinese	990
+Zao Zi Gong Fang Qi Hei (non-commercial)  Bold Figure Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang Sharp Bold Figure Chinese Font (Normal Font) -Simplified Chinese	992
+Zao Zi Gong Fang Solid Bold Figure Chinese Font-Simplified Chinese	992
+Zao Zi Gong Fang(Font manual mill)  Elegant art Song (Ming) Typeface Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang(Font manual mill) Comics Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Font manual mill) Cube Bold Figure Chinese Font -Simplified Chinese	992
+Zao Zi Gong Fang(Font manual mill) Modern Chinese Font -Simplified Chinese	992
+Zao Zi Gong Fang(Font manual mill) Noble Art Song (Ming) Typeface Chinese Font -Simplified Chinese Fonts	991
+Zao Zi Gong Fang(Font manual mill) Quiet and elegant Song (Ming) Typeface Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Font manual mill) Song (Ming) Typeface Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Make Font )MFShangZhen_Noncommercial-Regular-Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Make Font )MFShaoHua_Noncommercial-Regular-Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Make Font )MFShuJian-Noncommercial-Regular-Simplified Chinese Fonts	992
+Zao Zi Gong Fang(Prohibition of commercial use) Bold Elegant Chinese Font -Simplified Chinese Fonts	991
+Zao Zi Gong Fang(Prohibition of commercial use) Elegant Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang(Prohibition of commercial use) Excellence Bold Elegant Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Prohibition of commercial use) Fate Art Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Prohibition of commercial use) Happy Event Retro Typeface Chinese Fontt -Simplified Chinese Fonts	990
+Zao Zi Gong Fang(Prohibition of commercial use) Literature Song (Ming) Typeface Chinese Fontt -Simplified Chinese Fonts	991
+Zao Zi Gong Fang(Prohibition of commercial use) Meditation Elegant Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Prohibition of commercial use) Rock Bold Elegant Chinese Font -Simplified Chinese Fonts	992
+Zao Zi Gong Fang(Prohibition of commercial use) Sharp Elegant Chinese Font -Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Prohibition of commercial use) Unique Retro Chinese Font-Simplified Chinese Fonts	991
+Zao Zi Gong Fang(Prohibition of commercial use) swift and fierce Art Chinese Font-Simplified Chinese Fonts	993
+Zao Zi Gong Fang(Prohibition of commercial use)Beautiful Art Chinese Font -Simplified Chinese Fonts	990
+Zao zi Gong fang Beautiful Boldface(non-commercial) Slender Font-Traditional Chinese	993
+Zao zi Gong fang Beautiful Boldface(non-commercial) Thick Font-Simplified Chinese	993
+Zao zi Gong fang Carving Simsun Bold Font-Simplified Chinese	993
+Zao zi Gong fang Carving Simsun Font-Simplified Chinese	993
+Zao zi Gong fang Elegant Bold Figure Font-Simplified Chinese	993
+Zao zi Gong fang Elegant Simsun Font-Simplified Chinese	992
+Zao zi Gong fang Golden Section Simsun Font-Simplified Chinese	993
+Zao zi Gong fang Golden Section Simsun bold face Font-Simplified Chinese	991
+Zao zi Gong fang Lang Qian (non-commercial) conventional Font-Simplified Chinese	993
+Zao zi Gong fang Modesty Simsun Font-Simplified Chinese	993
+Zao zi Gong fang Movie screen(non-commercial) conventional Font-Traditional Chinese	993
+Zao zi Gong fang Shang ya ti Font-Simplified Chinese	983
+Zao zi Gong fang Simsun(non-commercial) conventional Font-Traditional Chinese	992
+Zao zi Gong fang Wen Yan (non-commercial) conventional Font-Traditional Chinese	993
+Zao zi Gong fang bold figure G0v1 Font-Simplified Chinese	992
+Zao zi Gong fang boldface Lang Qian(non-commercial) conventional Font-Traditional Chinese	990
+Zao zi Gong fang elegant round body(non-commercial) conventional Font-Traditional Chinese	992
+Zao zi Gong fang love letter(non-commercial) conventional Font-Traditional Chinese	993
+Zao zi Gong fang printing bold figure(non-commercial) conventional Font-Traditional Chinese	993
+Zao zi Gong fang strong boldface(non-commercial) conventional Font-Traditional Chinese	993
+Zao zi gong fang Yue hei ti Font	992
+Zao zi gong fang jun ya Chinese font	993
+Zao zi gong fang shang hei xi ti Font-Simplified Chinese	992
+Zcool Literary Open Source Font – Simplified Chinese Fonts	993
+Zcool QingKe Chasing Dream Bold Figure Chinese Font-Simplified Chinese Fonts	991
+Zcool XiaoWei Logo Art Chinese Font – Simplified Chinese Fonts	993
+Zhang Haishan Yue xian Font-Simplified Chinese+	887
+Zhang hai shan Cao ni ma ti Font-Simplified Chinese+	887
+ZhiXiu Lin Regular Script Chinese Font -Simplified Chinese	993
+Zhong qi Chen wei xun Ying bi xing shu Font-Simplified Chinese	993
+Zhong qi Li qiang xing shu Font-Simplified Chinese	993
+Zhong qi WeiXun Zhen Hard brushes regular script Font-Simplified Chinese	993
+Zhong qi meng Xian min Gang bi ti Font-Simplified Chinese	993
+Zhong qi wang qing hua mao bi ti Font-Simplified Chinese	993
+Zhong qi yu hao jian hang art Font-Simplified Chinese	993
+Zhoubai shi shu ti Font-Traditional Chinese	638
+Zhoujingbai Yue shu ti Font-Traditional Chinese	641
+ZhuLang  Creative Bold Figure Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Chinese traditional buddhist culture Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Excellent Art Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Hanfu Art Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Marxism-Leninism Regular Script Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Modernization Regular Script Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Music symbols Cute Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Projection Perspective Bold Figure Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Semi-Cursive Script Chinese Font-Simplified Chinese Fonts	993
+ZhuLang Windsor Elegant Regular Script Chinese Font-Simplified Chinese Fonts	993
+black-2	690
+genkai-mincho-2	702
+heavy-2	690
+xiao zhong ming Chao jiu Font - Simplified Chinese	754
+║║╥╟▒¿╦╬╝≥	993
+║║╥╟▓╩╡√╠σ╝≥	993
+微软雅黑	991
