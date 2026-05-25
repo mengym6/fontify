@@ -53,13 +53,36 @@ PARAMS = {
     #   公式: output = 255 * (pixel/255)^gamma
     #   >1 中间灰度往黑压，值越大压得越狠；1.0=不变；<1 反而变亮
     #   建议 1.5~3.0。1.5=轻微加深, 2.0=适中, 3.0=很重。0=关闭加深
-    "darken_gamma": 1.5,
+    "darken_gamma": 2.0,
 
     # --- 边缘平滑（闭运算填平笔画边缘锯齿） ---
     # smooth_kernel_size: 闭运算核大小(奇数)
     #   填平笔画边缘 1~2px 的锯齿凹陷。越大填平越多但笔画会变粗
     #   建议 3~5。3=轻微, 5=明显。0=关闭
     "smooth_kernel_size": 7,
+
+    # --- 轮廓平滑补齐（取锯齿外边缘，高斯平滑轮廓坐标后补齐凹陷） ---
+    # contour_smooth_sigma: 轮廓点坐标的一维高斯平滑σ(单位:轮廓点数)
+    #   越大→边缘越平滑，拐角越圆。建议 3~8
+    #   0=关闭此步骤
+    "contour_smooth_sigma": 15,
+    # contour_min_area: 忽略面积小于此值的轮廓（过滤噪点碎片）
+    #   建议 50~200
+    "contour_min_area": 50,
+    # contour_fill_mode: 补齐区域灰度值来源
+    #   "erode"=从相邻笔画像素扩散(最自然), "fixed"=固定灰度值
+    "contour_fill_mode": "erode",
+    # contour_fill_kernel: erode模式下灰度腐蚀核大小
+    #   建议 3~7
+    "contour_fill_kernel": 5,
+    # contour_fill_value: fixed模式下的灰度值(0=纯黑)
+    "contour_fill_value": 20,
+
+    # --- 边缘平滑（高斯模糊保留灰度过渡） ---
+    # edge_blur_sigma: 对最终结果做轻度高斯模糊，柔化边缘锯齿
+    #   保留灰度抗锯齿，不做硬阈值切割
+    #   建议 0.5~1.0。0=关闭
+    "edge_blur_sigma": 1.0,
 }
 
 
@@ -134,6 +157,82 @@ def apply_mask(noisy_gray, mask_soft):
     return np.clip(result, 0, 255).astype(np.uint8)
 
 
+def _gaussian_kernel_1d(sigma):
+    """生成归一化的一维高斯核"""
+    radius = int(np.ceil(sigma * 3))
+    x = np.arange(-radius, radius + 1, dtype=np.float64)
+    kernel = np.exp(-0.5 * (x / sigma) ** 2)
+    return kernel / kernel.sum()
+
+
+def _smooth_contour_coords(contour, sigma):
+    """对闭合轮廓点坐标做环形一维高斯平滑"""
+    pts = contour.reshape(-1, 2).astype(np.float64)
+    n = len(pts)
+    if n < 5:
+        return contour
+
+    kernel = _gaussian_kernel_1d(sigma)
+    radius = len(kernel) // 2
+
+    # 环形填充（wrap）：首尾相接
+    x = np.pad(pts[:, 0], radius, mode='wrap')
+    y = np.pad(pts[:, 1], radius, mode='wrap')
+
+    # 一维卷积
+    x_smooth = np.convolve(x, kernel, mode='valid')
+    y_smooth = np.convolve(y, kernel, mode='valid')
+
+    smoothed = np.stack([x_smooth, y_smooth], axis=1)
+    return smoothed.astype(np.int32).reshape(-1, 1, 2)
+
+
+def smooth_edge_contour(result, binary_mask, params):
+    """轮廓坐标高斯平滑：取锯齿外边缘补齐凹陷，只补不削"""
+    sigma = params["contour_smooth_sigma"]
+    if sigma <= 0:
+        return result
+
+    min_area = params["contour_min_area"]
+
+    # 提取轮廓
+    contours, _ = cv2.findContours(
+        binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    # 用平滑轮廓填充生成 smooth_mask
+    smooth_mask = np.zeros_like(binary_mask)
+    for cnt in contours:
+        if cv2.contourArea(cnt) < min_area:
+            # 小轮廓直接保留原样
+            cv2.drawContours(smooth_mask, [cnt], -1, 255, cv2.FILLED)
+            continue
+        smoothed = _smooth_contour_coords(cnt, sigma)
+        cv2.drawContours(smooth_mask, [smoothed], -1, 255, cv2.FILLED)
+
+    # 取并集：只补凹陷，不削凸出
+    final_mask = cv2.bitwise_or(smooth_mask, binary_mask)
+
+    # 差集 = 需要补齐的区域
+    fill_region = cv2.bitwise_and(
+        final_mask, cv2.bitwise_not(binary_mask))
+
+    if cv2.countNonZero(fill_region) == 0:
+        return result
+
+    # 补齐区域灰度值：灰度腐蚀扩散相邻笔画像素
+    if params["contour_fill_mode"] == "erode":
+        fk = params["contour_fill_kernel"]
+        fk = fk if fk % 2 == 1 else fk + 1
+        fill_kernel = cv2.getStructuringElement(
+            cv2.MORPH_ELLIPSE, (fk, fk))
+        eroded = cv2.erode(result, fill_kernel, iterations=1)
+        result[fill_region == 255] = eroded[fill_region == 255]
+    else:
+        result[fill_region == 255] = params["contour_fill_value"]
+
+    return result
+
+
 def process_single(clean_path, noisy_path, params):
     """处理单对图片，返回去噪结果"""
     # 步骤1：读入两张图（灰度）
@@ -168,6 +267,18 @@ def process_single(clean_path, noisy_path, params):
         sk = sk if sk % 2 == 1 else sk + 1
         k_smooth = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (sk, sk))
         result = cv2.morphologyEx(result, cv2.MORPH_CLOSE, k_smooth)
+
+    # 步骤8.5：轮廓平滑补齐（取锯齿外边缘，补齐凹陷）
+    if params["contour_smooth_sigma"] > 0:
+        _, ink_mask = cv2.threshold(
+            result, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        result = smooth_edge_contour(result, ink_mask, params)
+
+    # 步骤9：轻度高斯模糊柔化边缘，保留灰度抗锯齿
+    sigma = params["edge_blur_sigma"]
+    if sigma > 0:
+        ksize = int(np.ceil(sigma * 3)) * 2 + 1
+        result = cv2.GaussianBlur(result, (ksize, ksize), sigma)
 
     return result
 
