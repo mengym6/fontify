@@ -39,12 +39,12 @@ PARAMS = {
     # alpha: 斜率, >1 增强对比度。建议 1.5~3.0
     "contrast_alpha": 2.5,
     # beta: 截距, 负值使整体变暗(文字更黑)。建议 -50~0
-    "contrast_beta": -40,
+    "contrast_beta": -30,
 
     # --- sigmoid 对比度映射（核心参数）---
     # sigmoid_gain: 控制黑白过渡的陡峭程度。越大越接近二值，越小边缘越柔和
     #   建议范围: 8~20。8=很柔和, 12=适中, 20=接近硬二值
-    "sigmoid_gain": 10,
+    "sigmoid_gain": 8,
     # sigmoid_cutoff: 分割点偏移。0=用 Otsu 自动找, >0 手动指定 (0~255)
     #   往小调→保留更多笔画(但可能多噪点), 往大调→去掉更多(但可能丢细笔画)
     "sigmoid_cutoff": 0,
@@ -52,13 +52,18 @@ PARAMS = {
     # --- 背景清理 ---
     # bg_threshold: sigmoid 输出中灰度值 > 此值的像素直接变纯白。越小去噪越狠
     #   建议 180~230。180=激进去噪, 200=适中, 230=只去最淡的噪点
-    "bg_threshold": 180,
+    "bg_threshold": 210,
     # text_threshold: sigmoid 输出中灰度值 < 此值的像素直接变纯黑。越大字越黑越实
     #   建议 30~100。30=只加深最暗部分, 60=适中, 100=激进加深
-    "text_threshold": 100,
+    "text_threshold": 50,
     # median_ksize: 中值滤波核大小(奇数)。专杀孤立小噪点，不影响大面积笔画
     #   建议 3~7。3=轻微, 5=适中, 7=激进(可能磨掉极细笔画)。0=关闭
     "median_ksize": 7,
+
+    # --- 边缘抗锯齿 ---
+    # edge_smooth_sigma: 缩回原尺寸前的高斯模糊σ，重建边缘灰度过渡带
+    #   建议 0.6~1.2。0=关闭。在2x尺寸下操作，缩回后影响约1px
+    "edge_smooth_sigma": 0.8,
 }
 
 # ============================================================
@@ -181,6 +186,12 @@ def process_single(img_path, params):
     ink_closed = cv2.morphologyEx(ink, cv2.MORPH_CLOSE, k_close, iterations=2)
     holes_filled = ink_closed & (~ink)
     result[holes_filled == 255] = 0
+
+    # 边缘抗锯齿：轻度高斯模糊重建灰度过渡带
+    sigma = params["edge_smooth_sigma"]
+    if sigma > 0:
+        ksize = int(np.ceil(sigma * 3)) * 2 + 1
+        result = cv2.GaussianBlur(result, (ksize, ksize), sigma)
 
     # 缩回原尺寸
     if scale > 1:
