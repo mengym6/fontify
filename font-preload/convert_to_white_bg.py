@@ -182,7 +182,7 @@ def process_single(img_path, params):
 
     # 闭运算只填笔画内部白洞，不覆盖边缘
     ink = (result < 128).astype(np.uint8) * 255
-    k_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    k_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
     ink_closed = cv2.morphologyEx(ink, cv2.MORPH_CLOSE, k_close, iterations=2)
     holes_filled = ink_closed & (~ink)
     result[holes_filled == 255] = 0
