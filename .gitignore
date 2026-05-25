@@ -33,7 +33,9 @@ results/
 # Generated data / training data
 fontdata_example/font/
 fontdata_example/train_json/
+fontdata_example/train_json_new/
 fontdata_example/val_json/
+fontdata_example/val_json_new/
 
 # Large generated files
 *.png
@@ -45,7 +47,4 @@ fontdata_example/val_json/
 
 # Jupyter
 .ipynb_checkpoints/
-
-fontdata_example/font/
-fontdata_example/train_json/
-fontdata_example/val_json/
+、
