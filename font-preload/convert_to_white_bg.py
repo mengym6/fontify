@@ -37,9 +37,9 @@ PARAMS = {
 
     # --- 线性对比度增强 DB = alpha * DA + beta ---
     # alpha: 斜率, >1 增强对比度。建议 1.5~3.0
-    "contrast_alpha": 3.0,
+    "contrast_alpha": 2.5,
     # beta: 截距, 负值使整体变暗(文字更黑)。建议 -50~0
-    "contrast_beta": -50,
+    "contrast_beta": -40,
 
     # --- sigmoid 对比度映射（核心参数）---
     # sigmoid_gain: 控制黑白过渡的陡峭程度。越大越接近二值，越小边缘越柔和
@@ -52,7 +52,7 @@ PARAMS = {
     # --- 背景清理 ---
     # bg_threshold: sigmoid 输出中灰度值 > 此值的像素直接变纯白。越小去噪越狠
     #   建议 180~230。180=激进去噪, 200=适中, 230=只去最淡的噪点
-    "bg_threshold": 200,
+    "bg_threshold": 180,
     # text_threshold: sigmoid 输出中灰度值 < 此值的像素直接变纯黑。越大字越黑越实
     #   建议 30~100。30=只加深最暗部分, 60=适中, 100=激进加深
     "text_threshold": 100,
