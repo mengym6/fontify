@@ -240,7 +240,6 @@ def main(args, ds_init):
         pair_transforms.ToTensor(),
         pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     transform_train_seccrop = pair_transforms.Compose([
-        pair_transforms.PadToSquare(fill=255),
         pair_transforms.RandomResizedCrop(args.input_size, scale=(args.min_random_scale, 1.0), ratio=(0.3, 0.7),
                                           interpolation=3),  # 3 is bicubic
     ])
