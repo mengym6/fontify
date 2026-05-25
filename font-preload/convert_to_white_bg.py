@@ -205,6 +205,18 @@ def process_single(img_path, params):
 # 主程序
 # ============================================================
 
+def _worker(args):
+    """多进程 worker：处理单张图并写文件，返回 (文件名, 是否成功)"""
+    fname, input_dir, output_dir, contrast_dir, params = args
+    path = os.path.join(input_dir, fname)
+    contrast_img, result = process_single(path, params)
+    if result is not None:
+        cv2.imwrite(os.path.join(output_dir, fname), result)
+        cv2.imwrite(os.path.join(contrast_dir, fname), contrast_img)
+        return fname, True
+    return fname, False
+
+
 def main():
     output_dir = setup_output_dir(INPUT_DIR, OUTPUT_SUFFIX)
     contrast_dir = setup_output_dir(INPUT_DIR, "_contrast")
@@ -224,27 +236,29 @@ def main():
     else:
         mode_str = "批量处理 (全部)"
 
+    num_workers = min(cpu_count(), len(files))
     print(f"输入目录: {INPUT_DIR}")
     print(f"输出目录: {output_dir}")
     print(f"对比度中间图: {contrast_dir}")
     print(f"运行模式: {mode_str}")
-    print(f"待处理: {len(files)} 张")
+    print(f"待处理: {len(files)} 张, 进程数: {num_workers}")
     if TEST_MODE:
         print(f"抽样文件: {files}")
     print("-" * 40)
 
+    tasks = [(f, INPUT_DIR, output_dir, contrast_dir, PARAMS)
+             for f in files]
+
     success = 0
-    for i, fname in enumerate(files, 1):
-        path = os.path.join(INPUT_DIR, fname)
-        contrast_img, result = process_single(path, PARAMS)
-        if result is not None:
-            cv2.imwrite(os.path.join(output_dir, fname), result)
-            cv2.imwrite(os.path.join(contrast_dir, fname), contrast_img)
-            success += 1
-        else:
-            print(f"  [跳过] {fname} (读取失败)")
-        if i % 10 == 0 or i == len(files):
-            print(f"  进度: {i}/{len(files)}")
+    with Pool(num_workers) as pool:
+        for i, (fname, ok) in enumerate(
+                pool.imap_unordered(_worker, tasks), 1):
+            if ok:
+                success += 1
+            else:
+                print(f"  [跳过] {fname} (读取失败)")
+            if i % 10 == 0 or i == len(files):
+                print(f"  进度: {i}/{len(files)}")
 
     print("-" * 40)
     print(f"完成，成功处理 {success}/{len(files)} 张")
