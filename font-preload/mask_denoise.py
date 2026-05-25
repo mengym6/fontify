@@ -19,7 +19,7 @@ OUTPUT_SUFFIX = "_mask_denoised"
 # 运行模式
 # ============================================================
 TEST_MODE = True          # True=测试模式(随机抽样), False=批量处理全部
-TEST_SAMPLE_NUM = 2       # 测试模式下随机抽取的图片数量
+TEST_SAMPLE_NUM = 5       # 测试模式下随机抽取的图片数量
 
 # ============================================================
 # 可调参数
@@ -59,31 +59,60 @@ PARAMS = {
     # smooth_kernel_size: 闭运算核大小(奇数)
     #   填平笔画边缘 1~2px 的锯齿凹陷。越大填平越多但笔画会变粗
     #   建议 3~5。3=轻微, 5=明显。0=关闭
-    "smooth_kernel_size": 7,
+    "smooth_kernel_size": 9,
 
     # --- 轮廓平滑补齐（取锯齿外边缘，高斯平滑轮廓坐标后补齐凹陷） ---
     # contour_smooth_sigma: 轮廓点坐标的一维高斯平滑σ(单位:轮廓点数)
     #   越大→边缘越平滑，拐角越圆。建议 3~8
     #   0=关闭此步骤
-    "contour_smooth_sigma": 15,
+    "contour_smooth_sigma": 12,
     # contour_min_area: 忽略面积小于此值的轮廓（过滤噪点碎片）
     #   建议 50~200
-    "contour_min_area": 50,
+    "contour_min_area": 100,
     # contour_fill_mode: 补齐区域灰度值来源
     #   "erode"=从相邻笔画像素扩散(最自然), "fixed"=固定灰度值
     "contour_fill_mode": "erode",
     # contour_fill_kernel: erode模式下灰度腐蚀核大小
     #   建议 3~7
-    "contour_fill_kernel": 5,
+    "contour_fill_kernel": 7,
     # contour_fill_value: fixed模式下的灰度值(0=纯黑)
     "contour_fill_value": 20,
+
+    # --- 填补笔画内部白色小洞（连通域定位，只填小洞不动边缘） ---
+    # hole_max_area: 面积小于此值的白色连通域视为小洞并填充
+    #   建议 50~500。越大→填的洞越多，太大会把笔画间隙也填上
+    #   0=关闭此步骤
+    "hole_max_area": 200,
+    # hole_fill_mode: 填充灰度来源
+    #   "erode"=从周围笔画像素扩散, "fixed"=固定灰度值
+    "hole_fill_mode": "erode",
+    # hole_fill_kernel: erode模式下腐蚀核大小
+    "hole_fill_kernel": 5,
+    # hole_fill_value: fixed模式下的灰度值
+    "hole_fill_value": 0,
+
+    # --- 灰色像素加深（将笔画内残留灰色压暗） ---
+    # gray_darken_gamma: 对笔画区域内灰色像素再做一次gamma加深
+    #   只作用于非白(< 250)非黑(> 5)的灰色像素
+    #   建议 1.5~3.0。1.0=不变，0=关闭
+    "gray_darken_gamma": 2.2,
+
+    # --- 灰色轮廓清除（笔画外围残留灰色推白） ---
+    # outline_clean_threshold: 二值化阈值，低于此值的像素视为笔画核心
+    #   建议 80~150。越大→保护区越大（保留更多灰度过渡）
+    #   0=关闭此步骤
+    "outline_clean_threshold": 100,
+    # outline_protect_size: 保护区膨胀核大小(奇数)
+    #   笔画核心向外扩展的保护范围，保护区内的灰色不清除
+    #   建议 3~7。越大→保留越多边缘灰度
+    "outline_protect_size": 3,
 
     # --- 边缘平滑（高斯模糊保留灰度过渡） ---
     # edge_blur_sigma: 对最终结果做轻度高斯模糊，柔化边缘锯齿
     #   保留灰度抗锯齿，不做硬阈值切割
     #   建议 0.5~1.0。0=关闭
     "edge_blur_sigma": 1.0,
-}
+}   
 
 
 # ============================================================
@@ -188,48 +217,128 @@ def _smooth_contour_coords(contour, sigma):
 
 
 def smooth_edge_contour(result, binary_mask, params):
-    """轮廓坐标高斯平滑：取锯齿外边缘补齐凹陷，只补不削"""
+    """轮廓坐标高斯平滑：平滑轮廓替换原边缘，凸出削白，凹陷填色"""
     sigma = params["contour_smooth_sigma"]
     if sigma <= 0:
         return result
 
     min_area = params["contour_min_area"]
 
-    # 提取轮廓
-    contours, _ = cv2.findContours(
-        binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    # 提取轮廓（RETR_CCOMP：外轮廓+内轮廓/holes）
+    contours, hierarchy = cv2.findContours(
+        binary_mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
 
-    # 用平滑轮廓填充生成 smooth_mask
-    smooth_mask = np.zeros_like(binary_mask)
-    for cnt in contours:
-        if cv2.contourArea(cnt) < min_area:
-            # 小轮廓直接保留原样
-            cv2.drawContours(smooth_mask, [cnt], -1, 255, cv2.FILLED)
-            continue
-        smoothed = _smooth_contour_coords(cnt, sigma)
-        cv2.drawContours(smooth_mask, [smoothed], -1, 255, cv2.FILLED)
-
-    # 取并集：只补凹陷，不削凸出
-    final_mask = cv2.bitwise_or(smooth_mask, binary_mask)
-
-    # 差集 = 需要补齐的区域
-    fill_region = cv2.bitwise_and(
-        final_mask, cv2.bitwise_not(binary_mask))
-
-    if cv2.countNonZero(fill_region) == 0:
+    if not contours or hierarchy is None:
         return result
 
-    # 补齐区域灰度值：灰度腐蚀扩散相邻笔画像素
-    if params["contour_fill_mode"] == "erode":
-        fk = params["contour_fill_kernel"]
+    # 用平滑轮廓重建 smooth_mask
+    smooth_mask = np.zeros_like(binary_mask)
+    for i, cnt in enumerate(contours):
+        parent = hierarchy[0][i][3]
+        is_hole = parent >= 0
+
+        if cv2.contourArea(cnt) < min_area:
+            if is_hole:
+                cv2.drawContours(smooth_mask, [cnt], -1, 0, cv2.FILLED)
+            else:
+                cv2.drawContours(smooth_mask, [cnt], -1, 255, cv2.FILLED)
+            continue
+
+        smoothed = _smooth_contour_coords(cnt, sigma)
+        if is_hole:
+            # 内轮廓：挖洞（填0）
+            cv2.drawContours(smooth_mask, [smoothed], -1, 0, cv2.FILLED)
+        else:
+            # 外轮廓：填充前景
+            cv2.drawContours(smooth_mask, [smoothed], -1, 255, cv2.FILLED)
+
+    # 补齐区域（凹陷）：smooth_mask有但original没有
+    fill_region = cv2.bitwise_and(
+        smooth_mask, cv2.bitwise_not(binary_mask))
+    # 削除区域（凸出）：original有但smooth_mask没有
+    trim_region = cv2.bitwise_and(
+        binary_mask, cv2.bitwise_not(smooth_mask))
+
+    # 凹陷处填色
+    if cv2.countNonZero(fill_region) > 0:
+        if params["contour_fill_mode"] == "erode":
+            fk = params["contour_fill_kernel"]
+            fk = fk if fk % 2 == 1 else fk + 1
+            fill_kernel = cv2.getStructuringElement(
+                cv2.MORPH_ELLIPSE, (fk, fk))
+            eroded = cv2.erode(result, fill_kernel, iterations=1)
+            result[fill_region == 255] = eroded[fill_region == 255]
+        else:
+            result[fill_region == 255] = params["contour_fill_value"]
+
+    # 凸出处推白 + 清除smooth_mask外围残留灰色过渡带
+    if cv2.countNonZero(trim_region) > 0:
+        result[trim_region == 255] = 255
+
+    # smooth_mask外围一圈内的灰色残留像素也推白
+    border_k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+    smooth_expanded = cv2.dilate(smooth_mask, border_k, iterations=1)
+    border_band = cv2.bitwise_and(
+        smooth_expanded, cv2.bitwise_not(smooth_mask))
+    # 在这个外围带内，非白像素推白
+    gray_residue = (border_band == 255) & (result < 250)
+    result[gray_residue] = 255
+
+    return result
+
+
+def fill_small_holes(result, params):
+    """连通域分析定位笔画内部白色小洞并填充，不影响外边缘"""
+    max_area = params["hole_max_area"]
+    if max_area <= 0:
+        return result
+
+    # 阈值化得到前景mask（笔画=255）
+    _, ink_mask = cv2.threshold(
+        result, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    # 对背景（ink_mask取反）做连通域分析
+    bg_mask = cv2.bitwise_not(ink_mask)
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+        bg_mask, connectivity=8)
+
+    # 找出面积小于阈值的背景连通域（排除label=0即最大背景）
+    hole_mask = np.zeros_like(bg_mask)
+    for i in range(1, num_labels):
+        area = stats[i, cv2.CC_STAT_AREA]
+        if area < max_area:
+            hole_mask[labels == i] = 255
+
+    if cv2.countNonZero(hole_mask) == 0:
+        return result
+
+    # 膨胀小洞区域，覆盖周围灰色过渡带
+    dilate_k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8, 8))
+    hole_mask = cv2.dilate(hole_mask, dilate_k, iterations=1)
+    # 只扩展到非纯黑区域（不侵入已有笔画）
+    hole_mask[result == 0] = 0
+
+    # 填充小洞+过渡带
+    if params["hole_fill_mode"] == "erode":
+        fk = params["hole_fill_kernel"]
         fk = fk if fk % 2 == 1 else fk + 1
         fill_kernel = cv2.getStructuringElement(
             cv2.MORPH_ELLIPSE, (fk, fk))
         eroded = cv2.erode(result, fill_kernel, iterations=1)
-        result[fill_region == 255] = eroded[fill_region == 255]
+        result[hole_mask == 255] = eroded[hole_mask == 255]
     else:
-        result[fill_region == 255] = params["contour_fill_value"]
+        result[hole_mask == 255] = params["hole_fill_value"]
 
+    return result
+
+
+def clean_outline_residue(result, params):
+    """清除笔画外围残留灰色：灰度 > threshold 的像素全部推白"""
+    thresh = params["outline_clean_threshold"]
+    if thresh <= 0:
+        return result
+
+    result[result > thresh] = 255
     return result
 
 
@@ -274,11 +383,27 @@ def process_single(clean_path, noisy_path, params):
             result, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         result = smooth_edge_contour(result, ink_mask, params)
 
+    # 步骤8.6：填补笔画内部白色小洞
+    if params["hole_max_area"] > 0:
+        result = fill_small_holes(result, params)
+
+    # 步骤8.7：灰色像素加深
+    gamma2 = params["gray_darken_gamma"]
+    if gamma2 > 0 and gamma2 != 1.0:
+        gray_mask = (result > 5) & (result < 250)
+        pixels = result[gray_mask].astype(np.float32) / 255.0
+        pixels = np.power(pixels, gamma2) * 255.0
+        result[gray_mask] = pixels.astype(np.uint8)
+
     # 步骤9：轻度高斯模糊柔化边缘，保留灰度抗锯齿
     sigma = params["edge_blur_sigma"]
     if sigma > 0:
         ksize = int(np.ceil(sigma * 3)) * 2 + 1
         result = cv2.GaussianBlur(result, (ksize, ksize), sigma)
+
+    # 步骤10：清除笔画外围残留灰色轮廓线（必须在模糊之后）
+    if params["outline_clean_threshold"] > 0:
+        result = clean_outline_residue(result, params)
 
     return result
 

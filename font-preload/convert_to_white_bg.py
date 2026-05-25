@@ -3,6 +3,7 @@ import numpy as np
 import os
 import shutil
 import random
+from multiprocessing import Pool, cpu_count
 
 # ============================================================
 # 路径配置
@@ -16,7 +17,7 @@ OUTPUT_SUFFIX = "_white_bg"
 # 运行模式：改这里切换测试/批量
 # ============================================================
 TEST_MODE = True          # True=测试模式(随机抽样), False=批量处理全部
-TEST_SAMPLE_NUM = 2       # 测试模式下随机抽取的图片数量
+TEST_SAMPLE_NUM = 5       # 测试模式下随机抽取的图片数量
 
 # ============================================================
 # 可调参数
