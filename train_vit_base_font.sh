@@ -24,10 +24,8 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --input_size 896 448 \
     --save_freq 1 \
     --data_path $DATA_PATH/ \
-    --json_path  \
-    $DATA_PATH/train_json/font_train_QingniaoHuaguangYaotiFontSimplifiedChinese.json \
-    --val_json_path \
-    $DATA_PATH/val_json/font_val_QingniaoHuaguangYaotiFontSimplifiedChinese.json \
+    --json_path $DATA_PATH/train_json_new/*.json \
+    --val_json_path $DATA_PATH/val_json_new/*.json \
     --output_dir models/$name \
     --log_dir models/$name/logs \
     --finetune path/to/mae_pretrain_vit_base.pth \
