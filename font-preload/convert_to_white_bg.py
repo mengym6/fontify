@@ -8,7 +8,7 @@ from multiprocessing import Pool, cpu_count
 # ============================================================
 # 路径配置
 # ============================================================
-INPUT_DIR = r"/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new/颜真卿结体/images"
+INPUT_DIR = r"/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new/柳公权结体/images"
 
 # 输出文件夹自动在 INPUT_DIR 同级创建，名为 <原文件夹名>_white_bg
 OUTPUT_SUFFIX = "_white_bg"
@@ -17,7 +17,7 @@ OUTPUT_SUFFIX = "_white_bg"
 # 运行模式：改这里切换测试/批量
 # ============================================================
 TEST_MODE = True          # True=测试模式(随机抽样), False=批量处理全部
-TEST_SAMPLE_NUM = 5       # 测试模式下随机抽取的图片数量
+TEST_SAMPLE_NUM = 2       # 测试模式下随机抽取的图片数量
 
 # ============================================================
 # 可调参数
