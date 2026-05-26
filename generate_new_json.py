@@ -19,7 +19,7 @@ os.makedirs(os.path.join(abs_root, DATA_ROOT, val_output_dir), exist_ok=True)
 
 new_abs = os.path.join(abs_root, DATA_ROOT, new_base)
 for folder in sorted(os.listdir(new_abs)):
-    wb_dir = os.path.join(new_abs, folder, "images_white_bg_mask_denoised_448")
+    wb_dir = os.path.join(new_abs, folder, "images_white_bg_mask_denoised")
     if not os.path.isdir(wb_dir):
         continue
 
@@ -31,7 +31,7 @@ for folder in sorted(os.listdir(new_abs)):
             continue
         pairs.append({
             "image_path": f"{source_dir}/{source_name}",
-            "target_path": f"{new_base}/{folder}/images_white_bg_mask_denoised_448/{f}",
+            "target_path": f"{new_base}/{folder}/images_white_bg_mask_denoised/{f}",
             "type": f"font_{folder}"
         })
 
