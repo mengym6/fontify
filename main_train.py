@@ -131,6 +131,9 @@ def get_args_parser():
     parser.add_argument('--use_two_pairs', action='store_true',
                         help='concatenate two pairs of images')
     parser.set_defaults(use_two_pairs=True)
+    parser.add_argument('--no_gan', action='store_true',
+                        help='disable discriminator training (for finetuning)')
+    parser.set_defaults(no_gan=False)
 
     # distributed training parameters
     parser.add_argument('--world_size', default=1, type=int,

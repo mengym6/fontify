@@ -31,3 +31,4 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --log_dir models/$name/logs \
     --finetune $PRETRAIN_CKPT \
     --auto_resume \
+    --no_gan \

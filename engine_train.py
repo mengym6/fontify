@@ -61,31 +61,31 @@ def train_one_epoch(model: torch.nn.Module,
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
             loss, loss_l1l2, loss_vgg, y, mask, pred = model(samples, targets, bool_masked_pos=bool_masked_pos, valid=valid, epoch=epoch)
 
-            requires_grad_original = {}
-            for name, param in model.module.named_parameters():
-                requires_grad_original[name] = param.requires_grad
-                if 'discriminator' not in name:
-                    param.requires_grad = False
+            if not args.no_gan:
+                requires_grad_original = {}
+                for name, param in model.module.named_parameters():
+                    requires_grad_original[name] = param.requires_grad
+                    if 'discriminator' not in name:
+                        param.requires_grad = False
 
-            model.module.discriminator.requires_grad_(True)
-            optimizer_d.zero_grad()
+                model.module.discriminator.requires_grad_(True)
+                optimizer_d.zero_grad()
 
-            real_imgs = model.module.resize(targets)
-            real_output = model.module.discriminator(real_imgs)
-            real_loss = F.binary_cross_entropy_with_logits(real_output, torch.ones_like(real_output))
+                real_imgs = model.module.resize(targets)
+                real_output = model.module.discriminator(real_imgs)
+                real_loss = F.binary_cross_entropy_with_logits(real_output, torch.ones_like(real_output))
 
-            fake_imgs = model.module.resize(pred.detach())
-            fake_output = model.module.discriminator(fake_imgs)
-            fake_loss = F.binary_cross_entropy_with_logits(fake_output, torch.zeros_like(fake_output))
+                fake_imgs = model.module.resize(pred.detach())
+                fake_output = model.module.discriminator(fake_imgs)
+                fake_loss = F.binary_cross_entropy_with_logits(fake_output, torch.zeros_like(fake_output))
 
-            d_loss = (real_loss + fake_loss) / 2
-            d_loss.backward()
-            optimizer_d.step()
-            #loss_scaler(d_loss, optimizer_d, parameters=model.module.discriminator.parameters())
+                d_loss = (real_loss + fake_loss) / 2
+                d_loss.backward()
+                optimizer_d.step()
 
-            model.module.discriminator.requires_grad_(False)
-            for name, param in model.module.named_parameters():
-                param.requires_grad = requires_grad_original[name]
+                model.module.discriminator.requires_grad_(False)
+                for name, param in model.module.named_parameters():
+                    param.requires_grad = requires_grad_original[name]
 
         loss_value = loss.item()
 
