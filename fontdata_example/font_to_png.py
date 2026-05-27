@@ -162,7 +162,7 @@ def calculate_hashes(font_pil, charset, canvas_size, x_offset, y_offset, bg_colo
             all_images[char] = image
 
     # 从 hash_count 字典中提取出那些出现次数大于1的哈希值
-    recurring_hashes = [hash for hash, count in hash_count.items() if count > 1]
+    recurring_hashes = [hash for hash, count in hash_count.items() if count > 5]
     filtered_unicode = [char for char in all_images if hashlib.md5(all_images[char].tobytes()).hexdigest() in recurring_hashes]
     return recurring_hashes, filtered_unicode, all_images
 
@@ -254,18 +254,15 @@ def font2image(font_file,
 
 if __name__ == '__main__':
     font_directory = 'fontdata_example/ttf'
-    new_data_directory = 'fontdata_example/font/train/new'
+    source_directory = 'fontdata_example/font/train/source'
     valid_unicode_set = set()
-    for folder in os.listdir(new_data_directory):
-        wb_dir = os.path.join(new_data_directory, folder, "images_white_bg_mask_denoised")
-        if os.path.isdir(wb_dir):
-            for f in os.listdir(wb_dir):
-                name = os.path.splitext(f)[0]
-                if name:
-                    valid_unicode_set.add(ord(name[0]))
+    for f in os.listdir(source_directory):
+        name = os.path.splitext(f)[0]
+        if name:
+            valid_unicode_set.add(ord(name[0]))
     print(f"需要生成的字符数: {len(valid_unicode_set)}")
     image_width = 448
     image_height = 448
     for font_file in traverse_font_files(font_directory):
         print(font_file)
-        font2image(font_file, 420, image_width, image_height, valid_unicode_set=valid_unicode_set)
+        font2image(font_file, 420, image_width, image_height, valid_unicode_set=valid_unicode_set, is_skip=False)

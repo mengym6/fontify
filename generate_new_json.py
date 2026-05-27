@@ -7,7 +7,7 @@ random.seed(42)
 
 DATA_ROOT = "fontdata_example"
 new_base = "font/train/new"
-source_dir = "ttf/SourceHanSansSC-VF"
+source_dir = "ttf/SourceHanSansSC-Bold"
 train_output_dir = "train_json_new"
 val_output_dir = "val_json_new"
 val_ratio = 0.15
