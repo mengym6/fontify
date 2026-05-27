@@ -71,8 +71,6 @@ def get_args_parser():
                         help='Minimal random scale for randomresizecrop (default: 0.3)')
     parser.add_argument('--last_norm_instance', action='store_true', default=False,
                         help='use instance norm to normalize each channel map before the decoder layer')
-    parser.add_argument('--no_color_jitter', action='store_true', default=False,
-                        help='disable ColorJitter augmentation (for grayscale/BW data)')
     parser.add_argument('--half_mask_ratio', default=0.1, type=float,
                         help='ratio of using half mask during training (default: 0.1)')
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
@@ -221,19 +219,15 @@ def main(args, ds_init):
     args.patch_size = patch_size
 
 
-    transform_train_list = [
+    transform_train = pair_transforms.Compose([
         pair_transforms.PadToSquare(fill=255),
         pair_transforms.RandomResizedCrop(args.input_size[1], scale=(args.min_random_scale, 1.0), interpolation=3),
-    ]
-    if not args.no_color_jitter:
-        transform_train_list.append(pair_transforms.RandomApply([
+        pair_transforms.RandomApply([
             pair_transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)
-        ], p=0.8))
-    transform_train_list.extend([
+        ], p=0.8),
         pair_transforms.RandomHorizontalFlip(),
         pair_transforms.ToTensor(),
         pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    transform_train = pair_transforms.Compose(transform_train_list)
     transform_train2 = pair_transforms.Compose([
         pair_transforms.PadToSquare(fill=255),
         pair_transforms.RandomResizedCrop(args.input_size[1], scale=(0.9999, 1.0), interpolation=3),  # 3 is bicubic

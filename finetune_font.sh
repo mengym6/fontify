@@ -29,5 +29,5 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --val_json_path $DATA_PATH/val_json_new/*.json \
     --output_dir models/$name \
     --log_dir models/$name/logs \
-    --no_color_jitter \
     --finetune $PRETRAIN_CKPT \
+    --auto_resume \
