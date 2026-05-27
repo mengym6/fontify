@@ -8,7 +8,7 @@ from PIL import Image
 # ===== 在这里设置路径 =====
 NEW_DIR = Path("/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new")
 SUBFOLDER = "images_white_bg_mask_denoised"
-TARGET_SIZE = 64
+TARGET_SIZE = 448
 
 
 def pad_and_resize(img: Image.Image, target_size: int = 64) -> Image.Image:

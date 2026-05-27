@@ -1,12 +1,13 @@
 import os
 import json
 import random
+import shutil
 
 random.seed(42)
 
 DATA_ROOT = "fontdata_example"
 new_base = "font/train/new"
-source_dir = "font/train/source"
+source_dir = "ttf/SourceHanSansSC-VF"
 train_output_dir = "train_json_new"
 val_output_dir = "val_json_new"
 val_ratio = 0.15
@@ -14,8 +15,14 @@ val_ratio = 0.15
 abs_root = os.path.dirname(os.path.abspath(__file__))
 source_files = set(os.listdir(os.path.join(abs_root, DATA_ROOT, source_dir)))
 
-os.makedirs(os.path.join(abs_root, DATA_ROOT, train_output_dir), exist_ok=True)
-os.makedirs(os.path.join(abs_root, DATA_ROOT, val_output_dir), exist_ok=True)
+train_abs = os.path.join(abs_root, DATA_ROOT, train_output_dir)
+val_abs = os.path.join(abs_root, DATA_ROOT, val_output_dir)
+if os.path.exists(train_abs):
+    shutil.rmtree(train_abs)
+if os.path.exists(val_abs):
+    shutil.rmtree(val_abs)
+os.makedirs(train_abs)
+os.makedirs(val_abs)
 
 new_abs = os.path.join(abs_root, DATA_ROOT, new_base)
 for folder in sorted(os.listdir(new_abs)):
@@ -24,10 +31,12 @@ for folder in sorted(os.listdir(new_abs)):
         continue
 
     pairs = []
+    missing = []
     for f in sorted(os.listdir(wb_dir)):
         name, ext = os.path.splitext(f)
         source_name = name[0] + ext
         if source_name not in source_files:
+            missing.append(f)
             continue
         pairs.append({
             "image_path": f"{source_dir}/{source_name}",
@@ -46,4 +55,6 @@ for folder in sorted(os.listdir(new_abs)):
         json.dump(train_pairs, fp, ensure_ascii=False, indent=2)
     with open(val_path, "w", encoding="utf-8") as fp:
         json.dump(val_pairs, fp, ensure_ascii=False, indent=2)
-    print(f"{folder}: train {len(train_pairs)}, val {len(val_pairs)}")
+    print(f"{folder}: train {len(train_pairs)}, val {len(val_pairs)}, 未配对 {len(missing)}")
+    if missing:
+        print(f"  未配对文件: {missing}")

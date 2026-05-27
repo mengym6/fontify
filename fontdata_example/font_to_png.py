@@ -254,11 +254,18 @@ def font2image(font_file,
 
 if __name__ == '__main__':
     font_directory = 'fontdata_example/ttf'
-    text_image_directory = 'fontdata_example/font/train/chinese/Qing niao Hua guang Yao ti Font-Simplified Chinese'
-    valid_unicode_set = get_characters_from_images(text_image_directory)
-    valid_unicode_set = {ord(char) for char in valid_unicode_set}
-    image_width = 64
-    image_height = 64
+    new_data_directory = 'fontdata_example/font/train/new'
+    valid_unicode_set = set()
+    for folder in os.listdir(new_data_directory):
+        wb_dir = os.path.join(new_data_directory, folder, "images_white_bg_mask_denoised")
+        if os.path.isdir(wb_dir):
+            for f in os.listdir(wb_dir):
+                name = os.path.splitext(f)[0]
+                if name:
+                    valid_unicode_set.add(ord(name[0]))
+    print(f"需要生成的字符数: {len(valid_unicode_set)}")
+    image_width = 448
+    image_height = 448
     for font_file in traverse_font_files(font_directory):
         print(font_file)
-        font2image(font_file, 60, image_width, image_height, valid_unicode_set=valid_unicode_set)
+        font2image(font_file, 420, image_width, image_height, valid_unicode_set=valid_unicode_set)
