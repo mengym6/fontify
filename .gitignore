@@ -32,6 +32,7 @@ results/
 
 # Generated data / training data
 fontdata_example/font/
+fontdata_example/ttf/
 fontdata_example/train_json/
 fontdata_example/train_json_new/
 fontdata_example/val_json/
