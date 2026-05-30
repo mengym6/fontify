@@ -16,14 +16,14 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --model vit_base_patch16_input896x448_win_dec64_8glb_sl1 \
     --num_mask_patches 784 \
     --max_mask_patches_per_block 392 \
-    --epochs 5 \
+    --epochs 70 \
     --warmup_epochs 1 \
     --lr 5e-5 \
     --clip_grad 1.0 \
     --layer_decay 0.8 \
     --drop_path 0.1 \
     --input_size 896 448 \
-    --save_freq 1 \
+    --save_freq 3 \
     --data_path $DATA_PATH/ \
     --json_path $DATA_PATH/train_json_new/*.json \
     --val_json_path $DATA_PATH/val_json_new/*.json \
@@ -35,5 +35,5 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --semantic_mask_dir $DATA_PATH/font/train/new \
     --num_mask_annotations_bf 3 \
     --num_mask_annotations_jt 1 \
-    --mask_coverage_threshold 0.1 \
-    --semantic_only_epochs 5
+    --mask_coverage_threshold 0.3 \
+    --semantic_only_epochs 20 \

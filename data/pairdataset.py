@@ -83,6 +83,8 @@ class PairDataset(VisionDataset):
         self.current_epoch = 0  # 由训练循环每个 epoch 更新
         # phase1 课程学习用：所有 BF（笔法）样本的下标，JT 样本会被重定向到这里
         self._bf_indices = [i for i, p in enumerate(self.pairs) if 'BF' in p.get('type', '')]
+        # 对应的采样权重，保证重定向也走文件夹均衡（与 self.weights 一致），而非按文件夹样本数均匀
+        self._bf_weights = [self.weights[i] for i in self._bf_indices]
 
     def set_epoch(self, epoch: int) -> None:
         """训练循环每个 epoch 调用，供课程学习判断当前阶段"""
@@ -158,7 +160,7 @@ class PairDataset(VisionDataset):
         if (self.current_epoch < self.semantic_only_epochs
                 and self._bf_indices
                 and 'JT' in self.pairs[index].get('type', '')):
-            index = random.choice(self._bf_indices)
+            index = random.choices(self._bf_indices, weights=self._bf_weights, k=1)[0]
         pair = self.pairs[index]
         image = self._load_image(pair['image_path'])
         target = self._load_image(pair['target_path'])
