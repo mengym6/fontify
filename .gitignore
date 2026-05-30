@@ -39,6 +39,7 @@ fontdata_example/val_json/
 fontdata_example/val_json_new/
 
 # Large generated files
+*.zip
 *.png
 *.jpg
 *.jpeg
