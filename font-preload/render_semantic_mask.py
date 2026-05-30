@@ -103,7 +103,7 @@ def pad_and_resize_mask(mask, target_size):
 
 
 def render_single_image_mask(image_info, annotations, text_cat_id):
-    """为单张图渲染完整语义 mask（所有部件与 text 轮廓取交集后合并）"""
+    """为单张图渲染逐标注独立 mask，返回 (N, H, W) 数组，每层一个标注"""
     h = image_info['height']
     w = image_info['width']
     img_id = image_info['id']
@@ -126,12 +126,10 @@ def render_single_image_mask(image_info, annotations, text_cat_id):
             text_found = True
 
     if not text_found:
-        # 无 text 标注，无法做交集约束，跳过
         return None
 
-    # 渲染所有非 text 部件，与 text mask 取交集后合并
-    final_mask = np.zeros((h, w), dtype=np.uint8)
-    stroke_count = 0
+    # 逐标注渲染，每个部件与 text 取交集后单独存为一层
+    layers = []
     for ann in img_anns:
         if ann['category_id'] == text_cat_id:
             continue
@@ -140,19 +138,18 @@ def render_single_image_mask(image_info, annotations, text_cat_id):
             part_mask = decode_rle(seg, h, w)
         else:
             part_mask = render_polygon(seg, h, w)
-        # 与 text 轮廓取交集
         clean_part = part_mask & text_mask
-        final_mask |= clean_part
-        stroke_count += 1
+        if clean_part.any():
+            layers.append(clean_part)
 
-    if stroke_count == 0:
+    if not layers:
         return None
 
-    return final_mask
+    return np.stack(layers, axis=0)  # (N, H, W)
 
 
 def process_font_dir(font_dir: Path, verbose=False):
-    """处理单个字体文件夹，渲染所有图的语义 mask"""
+    """处理单个字体文件夹，渲染所有图的逐标注 mask 并保存为 .npy"""
     ann_path = font_dir / ANNOTATIONS_SUBDIR / ANNOTATIONS_FILENAME
     if not ann_path.exists():
         if verbose:
@@ -187,24 +184,29 @@ def process_font_dir(font_dir: Path, verbose=False):
 
     for img_info in images:
         file_name = img_info['file_name']
-        mask = render_single_image_mask(img_info, annotations, text_cat_id)
+        char_name = Path(file_name).stem
+        layers = render_single_image_mask(img_info, annotations, text_cat_id)
 
-        if mask is None:
+        if layers is None:
             skip_count += 1
             if verbose:
                 print(f"    [跳过] {file_name}：无有效标注")
             continue
 
-        # pad + resize 到目标尺寸
-        mask_resized = pad_and_resize_mask(mask, TARGET_SIZE)
+        # 每层独立 pad + resize
+        resized_layers = []
+        for layer in layers:
+            resized = pad_and_resize_mask(layer, TARGET_SIZE)
+            resized_layers.append(resized)
+        result = np.stack(resized_layers, axis=0)  # (N, 448, 448)
 
-        # 转为输出值
-        output = np.where(mask_resized > 0, MASK_FG_VALUE, MASK_BG_VALUE).astype(np.uint8)
-
-        # 保存
-        out_path = output_dir / file_name
-        cv2.imwrite(str(out_path), output)
+        # 保存为 .npy
+        out_path = output_dir / f"{char_name}.npy"
+        np.save(str(out_path), result.astype(np.uint8))
         success_count += 1
+
+        if verbose:
+            print(f"    {file_name} → {result.shape[0]} 层")
 
     return success_count, skip_count
 
@@ -215,22 +217,27 @@ def process_font_dir(font_dir: Path, verbose=False):
 
 
 def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: int):
-    """测试单张图的 mask 渲染，输出 mask 和叠加对比图"""
+    """测试单张图的逐标注 mask 渲染，输出合并 mask 和叠加对比图"""
     char_name = Path(img_info['file_name']).stem
     print(f"\n  [{font_dir.name}/{char_name}] 尺寸 {img_info['width']}×{img_info['height']}")
 
-    mask = render_single_image_mask(img_info, annotations, text_cat_id)
-    if mask is None:
+    layers = render_single_image_mask(img_info, annotations, text_cat_id)
+    if layers is None:
         print("    无有效标注，跳过")
         return
 
-    total_pixels = mask.shape[0] * mask.shape[1]
-    mask_pixels = np.sum(mask > 0)
-    print(f"    原始遮盖占比：{mask_pixels/total_pixels*100:.1f}%")
+    print(f"    标注数量：{layers.shape[0]}")
 
-    mask_resized = pad_and_resize_mask(mask, TARGET_SIZE)
-    resized_pixels = np.sum(mask_resized > 0)
-    print(f"    resize 后遮盖占比：{resized_pixels/TARGET_SIZE**2*100:.1f}%")
+    # 逐层 pad+resize，合并后统计覆盖率
+    resized_layers = []
+    for layer in layers:
+        resized = pad_and_resize_mask(layer, TARGET_SIZE)
+        resized_layers.append(resized)
+    result = np.stack(resized_layers, axis=0)  # (N, 448, 448)
+    combined = np.any(result, axis=0).astype(np.uint8)
+
+    coverage = np.sum(combined > 0) / (TARGET_SIZE ** 2) * 100
+    print(f"    全部合并覆盖率：{coverage:.1f}%")
 
     # 加载原图做叠加对比
     orig_img_path = font_dir / IMAGES_SUBDIR / img_info['file_name']
@@ -245,11 +252,10 @@ def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: 
         square[oy:oy+h, ox:ox+w] = orig
         orig_resized = cv2.resize(square, (TARGET_SIZE, TARGET_SIZE),
                                   interpolation=cv2.INTER_AREA)
-        # mask 区域染红
         overlay = cv2.cvtColor(orig_resized, cv2.COLOR_GRAY2BGR)
         red_layer = np.zeros_like(overlay)
         red_layer[:, :, 2] = 255
-        mask_bool = mask_resized > 0
+        mask_bool = combined > 0
         overlay[mask_bool] = cv2.addWeighted(
             overlay, 0.6, red_layer, 0.4, 0)[mask_bool]
 
@@ -257,15 +263,16 @@ def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: 
     test_output_dir = font_dir / "semantic_masks_test"
     test_output_dir.mkdir(exist_ok=True)
 
-    mask_out = np.where(mask_resized > 0, MASK_FG_VALUE, MASK_BG_VALUE).astype(np.uint8)
+    mask_out = np.where(combined > 0, MASK_FG_VALUE, MASK_BG_VALUE).astype(np.uint8)
     cv2.imwrite(str(test_output_dir / f"{char_name}_mask.png"), mask_out)
+    np.save(str(test_output_dir / f"{char_name}.npy"), result.astype(np.uint8))
 
     if overlay is not None:
         cv2.imwrite(str(test_output_dir / f"{char_name}_overlay.png"), overlay)
     if orig_resized is not None:
         cv2.imwrite(str(test_output_dir / f"{char_name}_orig.png"), orig_resized)
 
-    print(f"    已保存到 {test_output_dir.name}/")
+    print(f"    已保存到 {test_output_dir.name}/（含 .npy {result.shape}）")
 
 
 def test_mode():

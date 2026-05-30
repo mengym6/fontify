@@ -192,14 +192,11 @@ def __getitem__(self, index):
 
         image = self._combine_images(image, image2)
         target = self._combine_images(target, target2)
-        # mask 也上下拼接
+        # mask 拼接：两个 target 都必须被遮盖（source 是参考字，始终完整可见）
         if sem_mask is not None and sem_mask2 is not None:
             sem_mask = torch.cat([sem_mask, sem_mask2], dim=1)  # (1, 2H, W)
-        elif sem_mask is not None:
-            sem_mask = torch.cat([sem_mask, torch.zeros_like(sem_mask)], dim=1)
-        elif sem_mask2 is not None:
-            sem_mask = torch.cat([torch.zeros_like(sem_mask2), sem_mask2], dim=1)
         else:
+            # 任一方无标注 → 整体回退随机 mask（对两个 target 的完整 56×28 网格）
             sem_mask = None
 
     # seccrop 也带上 mask
@@ -327,4 +324,4 @@ class PairStandardTransform(StandardTransform):
 
 1. **遮盖比例控制**：语义 mask 的面积不固定（有的笔画多有的少），是否需要补充随机 patch 凑到固定比例（如 50%）？还是允许自然波动？
 2. **BF/JT 分开渲染**：每个字体的 BF 和 JT 分别渲染独立的 mask 图，训练时根据 pair JSON 的 type 字段自动选对应目录。
-3. **第二对 pair 无标注时的处理**：当前方案是该位置填 0（不遮盖），是否改为随机 mask 填充？
+3. ~~**第二对 pair 无标注时的处理**~~ **已决定**：回退随机 mask。mask 只作用于 target（右侧大图），source（左侧参考字）始终完整可见不遮盖。两个 target 都必须被遮盖，无标注时用随机 mask 兜底。

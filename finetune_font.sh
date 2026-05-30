@@ -32,3 +32,5 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --finetune $PRETRAIN_CKPT \
     --auto_resume \
     --no_gan \
+    --semantic_mask_dir $DATA_PATH/font/train/new \
+    --num_mask_annotations 3 \

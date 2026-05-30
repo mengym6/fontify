@@ -41,14 +41,17 @@ class PadToSquare:
     def __init__(self, fill=255):
         self.fill = fill
 
-    def __call__(self, img, tgt, interpolation1=None, interpolation2=None):
-        def _pad(image):
+    def __call__(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
+        def _pad(image, fill):
             w, h = image.size
             size = max(w, h)
-            new_img = Image.new(image.mode, (size, size), self.fill)
+            new_img = Image.new(image.mode, (size, size), fill)
             new_img.paste(image, ((size - w) // 2, (size - h) // 2))
             return new_img
-        return _pad(img), _pad(tgt)
+        img_out = _pad(img, self.fill)
+        tgt_out = _pad(tgt, self.fill)
+        mask_out = _pad(mask, 0) if mask is not None else None
+        return img_out, tgt_out, mask_out
 
 
 class Compose(transforms.Compose):
@@ -61,10 +64,10 @@ class Compose(transforms.Compose):
     def __init__(self, transforms):
         super().__init__(transforms)
 
-    def __call__(self, img, tgt, interpolation1=None, interpolation2=None):
+    def __call__(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
         for t in self.transforms:
-            img, tgt = t(img, tgt, interpolation1=interpolation1, interpolation2=interpolation2)
-        return img, tgt
+            img, tgt, mask = t(img, tgt, interpolation1=interpolation1, interpolation2=interpolation2, mask=mask)
+        return img, tgt, mask
 
 
 class ToTensor(transforms.ToTensor):
@@ -83,14 +86,15 @@ class ToTensor(transforms.ToTensor):
     def __init__(self) -> None:
         super().__init__()
 
-    def __call__(self, pic1, pic2, interpolation1=None, interpolation2=None):
+    def __call__(self, pic1, pic2, interpolation1=None, interpolation2=None, mask=None):
         """
         Args:
             pic (PIL Image or numpy.ndarray): Image to be converted to tensor.
         Returns:
             Tensor: Converted image.
         """
-        return F.to_tensor(pic1), F.to_tensor(pic2)
+        mask_tensor = F.to_tensor(mask) if mask is not None else None
+        return F.to_tensor(pic1), F.to_tensor(pic2), mask_tensor
 
 
 class Normalize(transforms.Normalize):
@@ -111,14 +115,14 @@ class Normalize(transforms.Normalize):
     def __init__(self, mean, std, inplace=False):
         super().__init__(mean, std, inplace)
 
-    def forward(self, tensor1: Tensor, tensor2: Tensor, interpolation1=None, interpolation2=None):
+    def forward(self, tensor1: Tensor, tensor2: Tensor, interpolation1=None, interpolation2=None, mask=None):
         """
         Args:
             tensor (Tensor): Tensor image to be normalized.
         Returns:
             Tensor: Normalized Tensor image.
         """
-        return F.normalize(tensor1, self.mean, self.std, self.inplace), F.normalize(tensor2, self.mean, self.std, self.inplace)
+        return F.normalize(tensor1, self.mean, self.std, self.inplace), F.normalize(tensor2, self.mean, self.std, self.inplace), mask
 
 
 class RandomResizedCrop(transforms.RandomResizedCrop):
@@ -155,7 +159,7 @@ class RandomResizedCrop(transforms.RandomResizedCrop):
     ):
         super().__init__(size, scale=scale, ratio=ratio, interpolation=interpolation)
 
-    def forward(self, img, tgt, interpolation1=None, interpolation2=None):
+    def forward(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
         """
         Args:
             img (PIL Image or Tensor): Image to be cropped and resized.
@@ -171,9 +175,11 @@ class RandomResizedCrop(transforms.RandomResizedCrop):
             interpolation2 = InterpolationMode.NEAREST
         else:
             interpolation2 = InterpolationMode.BICUBIC
-            
-        return F.resized_crop(img, i, j, h, w, self.size, interpolation1), \
-                F.resized_crop(tgt, i, j, h, w, self.size, interpolation2)
+
+        img_out = F.resized_crop(img, i, j, h, w, self.size, interpolation1)
+        tgt_out = F.resized_crop(tgt, i, j, h, w, self.size, interpolation2)
+        mask_out = F.resized_crop(mask, i, j, h, w, self.size, InterpolationMode.NEAREST) if mask is not None else None
+        return img_out, tgt_out, mask_out
 
 
 class RandomHorizontalFlip(transforms.RandomHorizontalFlip):
@@ -188,7 +194,7 @@ class RandomHorizontalFlip(transforms.RandomHorizontalFlip):
     def __init__(self, p=0.5):
         super().__init__(p=p)
 
-    def forward(self, img, tgt, interpolation1=None, interpolation2=None):
+    def forward(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
         """
         Args:
             img (PIL Image or Tensor): Image to be flipped.
@@ -196,8 +202,10 @@ class RandomHorizontalFlip(transforms.RandomHorizontalFlip):
             PIL Image or Tensor: Randomly flipped image.
         """
         if torch.rand(1) < self.p:
-            return F.hflip(img), F.hflip(tgt)
-        return img, tgt
+            img = F.hflip(img)
+            tgt = F.hflip(tgt)
+            mask = F.hflip(mask) if mask is not None else None
+        return img, tgt, mask
 
 
 class RandomApply(transforms.RandomApply):
@@ -219,12 +227,12 @@ class RandomApply(transforms.RandomApply):
     def __init__(self, transforms, p=0.5):
         super().__init__(transforms, p=p)
 
-    def forward(self, img, tgt, interpolation1=None, interpolation2=None):
+    def forward(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
         if self.p < torch.rand(1):
-            return img, tgt
+            return img, tgt, mask
         for t in self.transforms:
             img, tgt = t(img, tgt)
-        return img, tgt
+        return img, tgt, mask
 
 class ColorJitter(transforms.ColorJitter):
     """Randomly change the brightness, contrast, saturation and hue of an image.
@@ -252,7 +260,7 @@ class ColorJitter(transforms.ColorJitter):
     def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):
         super().__init__(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
 
-    def forward(self, img, tgt, interpolation1=None, interpolation2=None):
+    def forward(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
         """
         Args:
             img (PIL Image or Tensor): Input image.
@@ -272,7 +280,7 @@ class ColorJitter(transforms.ColorJitter):
                 img = F.adjust_saturation(img, saturation_factor)
             elif fn_id == 3 and hue_factor is not None:
                 img = F.adjust_hue(img, hue_factor)
-        return img, tgt
+        return img, tgt, mask
 
 
 class RandomErasing(transforms.RandomErasing):
@@ -303,7 +311,7 @@ class RandomErasing(transforms.RandomErasing):
     def __init__(self, p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False):
         super().__init__(p=p, scale=scale, ratio=ratio, value=value, inplace=inplace)
 
-    def forward(self, img, tgt, interpolation1=None, interpolation2=None):
+    def forward(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
         """
         Args:
             img (Tensor): Tensor image to be erased.
@@ -329,8 +337,8 @@ class RandomErasing(transforms.RandomErasing):
                 )
 
             x, y, h, w, v = self.get_params(img, scale=self.scale, ratio=self.ratio, value=value)
-            return F.erase(img, x, y, h, w, v, self.inplace), tgt
-        return img, tgt
+            return F.erase(img, x, y, h, w, v, self.inplace), tgt, mask
+        return img, tgt, mask
 
 
 
@@ -340,10 +348,10 @@ class GaussianBlur(object):
     def __init__(self, sigma=[.1, 2.]):
         self.sigma = sigma
 
-    def __call__(self, img, tgt, interpolation1=None, interpolation2=None):
+    def __call__(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
         sigma = random.uniform(self.sigma[0], self.sigma[1])
         img = img.filter(ImageFilter.GaussianBlur(radius=sigma))
-        return img, tgt
+        return img, tgt, mask
 
     def __repr__(self) -> str:
         s = f"{self.__class__.__name__}( sigma={self.sigma})"
