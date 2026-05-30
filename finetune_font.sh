@@ -36,3 +36,4 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --num_mask_annotations_bf 3 \
     --num_mask_annotations_jt 1 \
     --mask_coverage_threshold 0.1 \
+    --semantic_only_epochs 5

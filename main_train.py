@@ -81,6 +81,9 @@ def get_args_parser():
                         help='JT（结体）字体每个 target 随机选几个标注遮盖')
     parser.add_argument('--mask_coverage_threshold', default=0.5, type=float,
                         help='patch 内 mask 像素覆盖率超过此阈值则标记为遮盖')
+    parser.add_argument('--semantic_only_epochs', default=0, type=int,
+                        help='前 N 个 epoch 只用笔法(BF)语义遮盖，JT 结体样本重定向到 BF；'
+                             'epoch>=N 后 JT 恢复随机遮盖。0 表示关闭课程学习')
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
                         help='use checkpoint to save GPU memory')
 
@@ -272,7 +275,8 @@ def main(args, ds_init):
                                 semantic_mask_dir=args.semantic_mask_dir,
                                 num_mask_annotations_bf=args.num_mask_annotations_bf,
                                 num_mask_annotations_jt=args.num_mask_annotations_jt,
-                                mask_coverage_threshold=args.mask_coverage_threshold)
+                                mask_coverage_threshold=args.mask_coverage_threshold,
+                                semantic_only_epochs=args.semantic_only_epochs)
     dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
                               transform3=None, masked_position_generator=masked_position_generator,
                               use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0)
@@ -375,6 +379,7 @@ def main(args, ds_init):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
+        dataset_train.set_epoch(epoch)  # 课程学习：让 dataset 知道当前 epoch
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
         train_stats = train_one_epoch(
