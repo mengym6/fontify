@@ -41,7 +41,8 @@ class PairDataset(VisionDataset):
         use_two_pairs: bool = True,
         half_mask_ratio:float = 0.,
         semantic_mask_dir: Optional[str] = None,
-        num_mask_annotations: int = 3,
+        num_mask_annotations_bf: int = 3,
+        num_mask_annotations_jt: int = 1,
         mask_coverage_threshold: float = 0.5,
     ) -> None:
         super().__init__(root, transforms, transform, target_transform)
@@ -74,7 +75,8 @@ class PairDataset(VisionDataset):
         self.masked_position_generator = masked_position_generator
         self.half_mask_ratio = half_mask_ratio
         self.semantic_mask_dir = semantic_mask_dir
-        self.num_mask_annotations = num_mask_annotations
+        self.num_mask_annotations_bf = num_mask_annotations_bf
+        self.num_mask_annotations_jt = num_mask_annotations_jt
         self.mask_coverage_threshold = mask_coverage_threshold
 
     def _load_image(self, path: str) -> Image.Image:
@@ -97,7 +99,7 @@ class PairDataset(VisionDataset):
         dst = torch.cat([image, image2], dim=1)
         return dst
 
-    def _load_semantic_mask(self, target_path: str) -> Optional[Image.Image]:
+    def _load_semantic_mask(self, target_path: str, pair_type: str) -> Optional[Image.Image]:
         """加载 .npy 并随机选 K 个标注 OR 合并，返回 PIL Image (mode='L')"""
         if self.semantic_mask_dir is None:
             return None
@@ -117,7 +119,12 @@ class PairDataset(VisionDataset):
             return None
         layers = np.load(npy_path)  # (N, 448, 448)
         N = layers.shape[0]
-        k = min(self.num_mask_annotations, N)
+        # 根据 pair_type 选择对应的标注数量
+        if 'JT' in pair_type:
+            num_ann = self.num_mask_annotations_jt
+        else:
+            num_ann = self.num_mask_annotations_bf
+        k = min(num_ann, N)
         indices = random.sample(range(N), k)
         combined = np.any(layers[indices], axis=0).astype(np.uint8) * 255
         return Image.fromarray(combined, mode='L')
@@ -137,7 +144,6 @@ class PairDataset(VisionDataset):
         pair = self.pairs[index]
         image = self._load_image(pair['image_path'])
         target = self._load_image(pair['target_path'])
-        sem_mask = self._load_semantic_mask(pair['target_path'])
 
         # decide mode for interpolation
         pair_type = pair['type']
@@ -147,6 +153,8 @@ class PairDataset(VisionDataset):
         else:
             interpolation1 = 'bicubic'
             interpolation2 = 'bicubic'
+
+        sem_mask = self._load_semantic_mask(pair['target_path'], pair_type)
 
         # no aug for instance segmentation
         if "font" in pair['type'] and self.transforms3 is not None:
@@ -163,7 +171,7 @@ class PairDataset(VisionDataset):
             pair2 = self.pairs[pair2_index]
             image2 = self._load_image(pair2['image_path'])
             target2 = self._load_image(pair2['target_path'])
-            sem_mask2 = self._load_semantic_mask(pair2['target_path'])
+            sem_mask2 = self._load_semantic_mask(pair2['target_path'], pair_type)
             assert pair2['type'] == pair_type
             image2, target2, sem_mask2 = cur_transforms(image2, target2, interpolation1, interpolation2, mask=sem_mask2)
 

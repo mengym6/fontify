@@ -75,8 +75,10 @@ def get_args_parser():
                         help='ratio of using half mask during training (default: 0.1)')
     parser.add_argument('--semantic_mask_dir', default=None, type=str,
                         help='预渲染语义 mask .npy 根目录，None 则使用随机 mask')
-    parser.add_argument('--num_mask_annotations', default=3, type=int,
-                        help='每个 target 随机选几个标注进行遮盖')
+    parser.add_argument('--num_mask_annotations_bf', default=3, type=int,
+                        help='BF（笔法）字体每个 target 随机选几个标注遮盖')
+    parser.add_argument('--num_mask_annotations_jt', default=1, type=int,
+                        help='JT（结体）字体每个 target 随机选几个标注遮盖')
     parser.add_argument('--mask_coverage_threshold', default=0.5, type=float,
                         help='patch 内 mask 像素覆盖率超过此阈值则标记为遮盖')
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
@@ -268,7 +270,8 @@ def main(args, ds_init):
                                 masked_position_generator=masked_position_generator, use_two_pairs=args.use_two_pairs,
                                 half_mask_ratio=args.half_mask_ratio,
                                 semantic_mask_dir=args.semantic_mask_dir,
-                                num_mask_annotations=args.num_mask_annotations,
+                                num_mask_annotations_bf=args.num_mask_annotations_bf,
+                                num_mask_annotations_jt=args.num_mask_annotations_jt,
                                 mask_coverage_threshold=args.mask_coverage_threshold)
     dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
                               transform3=None, masked_position_generator=masked_position_generator,
