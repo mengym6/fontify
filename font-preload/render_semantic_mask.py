@@ -102,34 +102,65 @@ def pad_and_resize_mask(mask, target_size):
     return resized
 
 
-def render_single_image_mask(image_info, annotations, text_cat_id):
-    """为单张图渲染逐标注独立 mask，返回 (N, H, W) 数组，每层一个标注"""
+def extract_stroke_name(category_name):
+    """从 category name 提取笔画名，如 '1-横-起笔' → '横'，'撇-收笔' → '撇'"""
+    if category_name == 'text':
+        return None
+    # 去掉末尾阶段（起笔/中笔/收笔）
+    base = category_name.rsplit('-', 1)[0]
+    # 去掉开头数字前缀
+    base = base.lstrip('0123456789-')
+    return base if base else None
+
+
+def render_single_image_mask(image_info, annotations, text_cat_id, categories):
+    """为单张图按笔画分组渲染 mask，返回 (K, H, W) 数组，每层一个完整笔画"""
     h = image_info['height']
     w = image_info['width']
     img_id = image_info['id']
+
+    # 构建 category_id → 笔画名 映射
+    cat_id_to_stroke = {}
+    for cat in categories:
+        stroke = extract_stroke_name(cat['name'])
+        if stroke:
+            cat_id_to_stroke[cat['id']] = stroke
 
     # 筛选该图的所有标注
     img_anns = [a for a in annotations if a['image_id'] == img_id]
     if not img_anns:
         return None
 
-    # 逐标注渲染，直接生成 mask（不与 text 轮廓取交集）
-    layers = []
+    # 按笔画名分组，同名笔画的所有标注（含起中收、重复实例）合并为一层
+    from collections import defaultdict
+    stroke_groups = defaultdict(list)
     for ann in img_anns:
         if ann['category_id'] == text_cat_id:
             continue
-        seg = ann['segmentation']
-        if isinstance(seg, dict):
-            part_mask = decode_rle(seg, h, w)
-        else:
-            part_mask = render_polygon(seg, h, w)
-        if part_mask.any():
-            layers.append(part_mask)
+        stroke = cat_id_to_stroke.get(ann['category_id'])
+        if stroke:
+            stroke_groups[stroke].append(ann)
+
+    if not stroke_groups:
+        return None
+
+    # 每个笔画名生成一层 mask
+    layers = []
+    for stroke_name, anns in stroke_groups.items():
+        combined = np.zeros((h, w), dtype=np.uint8)
+        for ann in anns:
+            seg = ann['segmentation']
+            if isinstance(seg, dict):
+                combined |= decode_rle(seg, h, w)
+            else:
+                combined |= render_polygon(seg, h, w)
+        if combined.any():
+            layers.append(combined)
 
     if not layers:
         return None
 
-    return np.stack(layers, axis=0)  # (N, H, W)
+    return np.stack(layers, axis=0)  # (K, H, W)
 
 
 def process_font_dir(font_dir: Path, verbose=False):
@@ -169,7 +200,7 @@ def process_font_dir(font_dir: Path, verbose=False):
     for img_info in images:
         file_name = img_info['file_name']
         char_name = Path(file_name).stem
-        layers = render_single_image_mask(img_info, annotations, text_cat_id)
+        layers = render_single_image_mask(img_info, annotations, text_cat_id, categories)
 
         if layers is None:
             skip_count += 1
@@ -200,7 +231,7 @@ def process_font_dir(font_dir: Path, verbose=False):
 # ============================================================
 
 
-def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: int):
+def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: int, categories: list):
     """测试单张图的逐标注 mask 渲染，输出合并 mask 和叠加对比图"""
     char_name = Path(img_info['file_name']).stem
     print(f"\n  [{font_dir.name}/{char_name}] 尺寸 {img_info['width']}×{img_info['height']}")
@@ -268,7 +299,7 @@ def test_mode():
         font_dirs = sorted([d for d in NEW_DIR.iterdir()
                             if d.is_dir() and not d.name.startswith(('_', '.'))])
 
-    # 收集所有可用的 (font_dir, img_info, annotations, text_cat_id)
+    # 收集所有可用的 (font_dir, img_info, annotations, text_cat_id, categories)
     candidates = []
     for font_dir in font_dirs:
         ann_path = font_dir / ANNOTATIONS_SUBDIR / ANNOTATIONS_FILENAME
@@ -281,7 +312,7 @@ def test_mode():
             continue
         text_cat_id = text_cats[0]['id']
         for img_info in data['images']:
-            candidates.append((font_dir, img_info, data['annotations'], text_cat_id))
+            candidates.append((font_dir, img_info, data['annotations'], text_cat_id, data['categories']))
 
     if not candidates:
         print("错误：未找到任何可用标注")
@@ -290,11 +321,11 @@ def test_mode():
     # 指定字符 or 随机抽样
     if TEST_CHAR is not None:
         target_file = f"{TEST_CHAR}.png"
-        selected = [(fd, ii, anns, tid) for fd, ii, anns, tid in candidates
+        selected = [(fd, ii, anns, tid, cats) for fd, ii, anns, tid, cats in candidates
                     if ii['file_name'] == target_file]
         if not selected:
             print(f"错误：找不到 {target_file}")
-            available = [ii['file_name'] for _, ii, _, _ in candidates[:10]]
+            available = [ii['file_name'] for _, ii, _, _, _ in candidates[:10]]
             print(f"可用文件（前10）：{available}")
             return
     else:
@@ -302,8 +333,8 @@ def test_mode():
         selected = random.sample(candidates, count)
 
     print(f"测试数量：{len(selected)}")
-    for font_dir, img_info, annotations, text_cat_id in selected:
-        test_single(font_dir, img_info, annotations, text_cat_id)
+    for font_dir, img_info, annotations, text_cat_id, categories in selected:
+        test_single(font_dir, img_info, annotations, text_cat_id, categories)
 
 
 # ============================================================
