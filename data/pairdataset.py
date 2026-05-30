@@ -103,6 +103,9 @@ class PairDataset(VisionDataset):
         """加载 .npy 并随机选 K 个标注 OR 合并，返回 PIL Image (mode='L')"""
         if self.semantic_mask_dir is None:
             return None
+        # JT 类型不用语义 mask，回退到随机遮盖
+        if 'JT' in pair_type:
+            return None
         # target_path: "font/train/new/DongqcBF/images_white_bg_mask_denoised/月.png"
         parts = target_path.split('/')
         char_name = os.path.splitext(os.path.basename(target_path))[0]
