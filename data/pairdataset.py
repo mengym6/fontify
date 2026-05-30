@@ -186,7 +186,12 @@ class PairDataset(VisionDataset):
             else:
                 sem_mask = None
 
-        use_half_mask = ('JT' in pair_type) and (torch.rand(1)[0] < 0.05)
+        if self.half_mask_ratio >= 1.0:
+            # val 验证集：强制完全遮盖整个 target
+            use_half_mask = True
+        else:
+            # train：仅 JT 结体 5% 概率走 half mask，BF 走语义遮盖
+            use_half_mask = ('JT' in pair_type) and (torch.rand(1)[0] < 0.05)
         if (self.transforms_seccrop is None) or use_half_mask:
             pass
         else:
