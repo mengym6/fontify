@@ -186,7 +186,7 @@ class PairDataset(VisionDataset):
             else:
                 sem_mask = None
 
-        use_half_mask = torch.rand(1)[0] < self.half_mask_ratio
+        use_half_mask = ('JT' in pair_type) and (torch.rand(1)[0] < 0.05)
         if (self.transforms_seccrop is None) or use_half_mask:
             pass
         else:
