@@ -64,32 +64,6 @@ def train_one_epoch(model: torch.nn.Module,
                 valid=valid, epoch=epoch, no_gan=args.no_gan
             )
 
-            if not args.no_gan:
-                requires_grad_original = {}
-                for name, param in model.module.named_parameters():
-                    requires_grad_original[name] = param.requires_grad
-                    if 'discriminator' not in name:
-                        param.requires_grad = False
-
-                model.module.discriminator.requires_grad_(True)
-                optimizer_d.zero_grad()
-
-                real_imgs = model.module.resize(targets)
-                real_output = model.module.discriminator(real_imgs)
-                real_loss = F.binary_cross_entropy_with_logits(real_output, torch.ones_like(real_output))
-
-                fake_imgs = model.module.resize(pred.detach())
-                fake_output = model.module.discriminator(fake_imgs)
-                fake_loss = F.binary_cross_entropy_with_logits(fake_output, torch.zeros_like(fake_output))
-
-                d_loss = (real_loss + fake_loss) / 2
-                d_loss.backward()
-                optimizer_d.step()
-
-                model.module.discriminator.requires_grad_(False)
-                for name, param in model.module.named_parameters():
-                    param.requires_grad = requires_grad_original[name]
-
         loss_value = loss.item()
 
         if not math.isfinite(loss_value):
@@ -108,13 +82,46 @@ def train_one_epoch(model: torch.nn.Module,
             loss_scale_value, grad_norm = get_loss_scale_for_deepspeed(model)
         else:
             loss /= accum_iter
+            optimizer_params = [
+                p for param_group in optimizer.param_groups
+                for p in param_group["params"]
+            ]
             grad_norm = loss_scaler(loss, optimizer, clip_grad=args.clip_grad,
-                                    parameters=model.parameters(),
+                                    parameters=optimizer_params,
                                     update_grad=(data_iter_step + 1) % accum_iter == 0)
 
             if (data_iter_step + 1) % accum_iter == 0:
                 optimizer.zero_grad()
             loss_scale_value = loss_scaler.state_dict()["scale"]
+
+        if not args.no_gan and optimizer_d is not None:
+            raw_model = model.module if hasattr(model, "module") else model
+            requires_grad_original = {}
+            for name, param in raw_model.named_parameters():
+                requires_grad_original[name] = param.requires_grad
+                if 'discriminator' not in name:
+                    param.requires_grad = False
+
+            raw_model.discriminator.requires_grad_(True)
+            optimizer_d.zero_grad()
+
+            with torch.cuda.amp.autocast(dtype=torch.bfloat16):
+                real_imgs = raw_model.resize(targets)
+                real_output = raw_model.discriminator(real_imgs)
+                real_loss = F.binary_cross_entropy_with_logits(real_output, torch.ones_like(real_output))
+
+                fake_imgs = raw_model.resize(pred.detach())
+                fake_output = raw_model.discriminator(fake_imgs)
+                fake_loss = F.binary_cross_entropy_with_logits(fake_output, torch.zeros_like(fake_output))
+
+                d_loss = (real_loss + fake_loss) / 2
+
+            d_loss.backward()
+            optimizer_d.step()
+
+            raw_model.discriminator.requires_grad_(False)
+            for name, param in raw_model.named_parameters():
+                param.requires_grad = requires_grad_original[name]
 
         torch.cuda.synchronize()
         #print(f"loss:{loss},grad_norm:{grad_norm}")

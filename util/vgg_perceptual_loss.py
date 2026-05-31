@@ -57,7 +57,7 @@ class VGGPerceptualLoss(torch.nn.Module):
         self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
         self.weights = [1.0/2.6, 1.0/4.8, 1.0/3.7, 1.0/5.6, 1.0*10/1.5]
 
-    def forward(self, input_img, target_img):
+    def forward(self, input_img, target_img, return_components=False):
         if input_img.shape[1] != 3:
             input_img = input_img.repeat(1, 3, 1, 1)
         if target_img.shape[1] != 3:
@@ -82,5 +82,7 @@ class VGGPerceptualLoss(torch.nn.Module):
                             self.criterion(gram(x_vgg[2]), gram(y_vgg[2]))+\
                             self.criterion(gram(x_vgg[3]), gram(y_vgg[3]))+\
                             self.criterion(gram(x_vgg[4]), gram(y_vgg[4]))
+        if return_components:
+            # 上层需要分阶段独立加权时，分别返回 content 与 style。
+            return loss['pt_c_loss'], loss['pt_s_loss']
         return loss['pt_s_loss']
-#        return loss['pt_c_loss'] + loss['pt_s_loss']
