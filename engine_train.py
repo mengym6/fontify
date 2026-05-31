@@ -13,7 +13,7 @@ import numpy as np
 
 import time
 
-
+#检索关键词tb调整画图数量
 def get_loss_scale_for_deepspeed(model):
     optimizer = model.optimizer
     loss_scale = None
@@ -218,7 +218,7 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
     # wandb_images = []
     num_batch = 0
     # rank 0 写 TB 比其他 rank 慢一个数量级，间隔写避免拖慢同步导致 NCCL timeout
-    tb_save_every = 20
+    tb_save_every = 1
     for batch in metric_logger.log_every(data_loader, 10, header):
 
         samples = batch[0]
