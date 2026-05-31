@@ -35,5 +35,5 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --semantic_mask_dir $DATA_PATH/font/train/new \
     --num_mask_annotations_bf 3 \
     --num_mask_annotations_jt 1 \
-    --mask_coverage_threshold 0.3 \
+    --mask_coverage_threshold 0.1 \
     --semantic_only_epochs 20 \

@@ -316,13 +316,15 @@ def save_model(args, epoch, model, model_without_ddp, optimizer, optimizer_d, lo
         for checkpoint_path in checkpoint_paths:
             to_save = {
                 'model': model_without_ddp.state_dict(),
-                'discriminator': model.module.discriminator.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                "optimizer_d": optimizer_d.state_dict(),
                 'epoch': epoch,
                 'scaler': loss_scaler.state_dict(),
                 'args': args,
             }
+            if not getattr(args, "no_gan", False):
+                to_save["discriminator"] = model.module.discriminator.state_dict()
+            if optimizer_d is not None:
+                to_save["optimizer_d"] = optimizer_d.state_dict()
 
             save_on_master(to_save, checkpoint_path)
     else:
@@ -400,7 +402,9 @@ def auto_load_model(args, model, model_without_ddp, optimizer,optimizer_d, loss_
                 print(f"[INFO] Unexpected keys in checkpoint (will be ignored): {unexpected_keys[:5]}")
             
             # 尝试加载判别器权重（如果checkpoint中有的话）
-            if 'discriminator' in checkpoint:
+            if getattr(args, "no_gan", False):
+                print("[INFO] Standalone discriminator checkpoint loading skipped by --no_gan")
+            elif 'discriminator' in checkpoint:
                 try:
                     model.module.discriminator.load_state_dict(checkpoint['discriminator'])
                     print("[INFO] Discriminator weights loaded from checkpoint")
@@ -421,12 +425,14 @@ def auto_load_model(args, model, model_without_ddp, optimizer,optimizer_d, loss_
                     print(f"         (This is safe: only momentum/adaptive states are reset)")
                 
                 # 尝试加载判别器优化器（如果checkpoint中有的话）
-                if 'optimizer_d' in checkpoint:
+                if optimizer_d is not None and 'optimizer_d' in checkpoint:
                     try:
                         optimizer_d.load_state_dict(checkpoint['optimizer_d'])
                         print("[INFO] Discriminator optimizer loaded from checkpoint")
                     except Exception as e:
                         print(f"[INFO] Could not load discriminator optimizer (using initialization): {e}")
+                elif optimizer_d is None:
+                    print("[INFO] Discriminator optimizer disabled by --no_gan")
                 else:
                     print("[INFO] Discriminator optimizer not found in checkpoint (using initialization)")
                 
@@ -563,4 +569,3 @@ def get_parameter_groups(model, weight_decay=1e-5, skip_list=(), get_num_layer=N
         parameter_group_names[group_name]["params"].append(name)
     print("Param groups = %s" % json.dumps(parameter_group_names, indent=2))
     return list(parameter_group_vars.values())
-

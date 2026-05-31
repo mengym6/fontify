@@ -328,6 +328,9 @@ def main(args, ds_init):
     )
 
     model.to(device)
+    if args.no_gan:
+        model.discriminator.requires_grad_(False)
+        print("[INFO] --no_gan: discriminator frozen and adversarial loss disabled")
     model_without_ddp = model
     print("Model = %s" % str(model_without_ddp))
 
@@ -342,6 +345,7 @@ def main(args, ds_init):
     print("accumulate grad iterations: %d" % args.accum_iter)
     print("effective batch size: %d" % eff_batch_size)
 
+    optimizer_d = None
     if args.enable_deepspeed:
         loss_scaler = None
         optimizer_params = get_parameter_groups(
@@ -366,10 +370,11 @@ def main(args, ds_init):
                                             layer_decay=args.layer_decay
                                             )
         optimizer = torch.optim.AdamW(param_groups, lr=args.lr, betas=args.opt_betas)
-        optimizer_d = torch.optim.AdamW(
-            model.module.discriminator.parameters(),
-            lr=args.lr * 0.1,
-            betas=(0.5, 0.999))
+        if not args.no_gan:
+            optimizer_d = torch.optim.AdamW(
+                model.module.discriminator.parameters(),
+                lr=args.lr * 0.1,
+                betas=(0.5, 0.999))
         print(optimizer)
         loss_scaler = NativeScaler()
 

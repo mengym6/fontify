@@ -59,7 +59,10 @@ def train_one_epoch(model: torch.nn.Module,
         valid = valid.to(device, non_blocking=True, dtype=torch.bfloat16)
 
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            loss, loss_l1l2, loss_vgg, y, mask, pred = model(samples, targets, bool_masked_pos=bool_masked_pos, valid=valid, epoch=epoch)
+            loss, loss_l1l2, loss_vgg, y, mask, pred = model(
+                samples, targets, bool_masked_pos=bool_masked_pos,
+                valid=valid, epoch=epoch, no_gan=args.no_gan
+            )
 
             if not args.no_gan:
                 requires_grad_original = {}
@@ -229,7 +232,10 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
 
         # compute output
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            loss, loss_l1l2, loss_vgg, y, mask, pred = model(samples, targets, bool_masked_pos=bool_masked_pos, valid=valid, epoch=999)
+            loss, loss_l1l2, loss_vgg, y, mask, pred = model(
+                samples, targets, bool_masked_pos=bool_masked_pos,
+                valid=valid, epoch=999, no_gan=args.no_gan
+            )
 
         metric_logger.update(loss=loss.item())
         metric_logger.update(loss_l1l2=loss_l1l2)

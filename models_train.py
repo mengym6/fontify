@@ -584,7 +584,7 @@ class Fontify(nn.Module):
         x = self.decoder_pred(x) # Bx3xHxW
         return x
 
-    def forward_loss(self, imgs, pred, tgts, mask, valid, epoch=0):
+    def forward_loss(self, imgs, pred, tgts, mask, valid, epoch=0, no_gan=False):
         """
         tgts: [N, 3, H, W]
         pred: [N, 3, H, W]
@@ -630,21 +630,22 @@ class Fontify(nn.Module):
         edge_target = self.improved_edge_detection(target)
         loss_edge = F.l1_loss(edge_pred, edge_target)
 
-        pred_resized = self.resize(pred)
-        fake_output = self.discriminator(pred_resized)
-        real_labels = torch.ones(pred.size(0), device=pred.device)  # [B]
-        adv_loss = F.binary_cross_entropy_with_logits(
-            fake_output.squeeze(1),
-            real_labels
-        )
-        
         # 获取动态损失权重（前10个epoch对抗损失和边缘损失权重为0）
         adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
         
-        loss = loss_l1l2 + loss_vgg + adv_weight * adv_loss + edge_weight * loss_edge
+        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
+        if not no_gan and adv_weight > 0:
+            pred_resized = self.resize(pred)
+            fake_output = self.discriminator(pred_resized)
+            real_labels = torch.ones(pred.size(0), device=pred.device)  # [B]
+            adv_loss = F.binary_cross_entropy_with_logits(
+                fake_output.squeeze(1),
+                real_labels
+            )
+            loss = loss + adv_weight * adv_loss
         return loss, loss_l1l2, loss_vgg
 
-    def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0):
+    def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False):
         #imgs = self.tps(imgs)
         #tgts = self.tps(tgts)
         if bool_masked_pos is None:
@@ -653,7 +654,9 @@ class Fontify(nn.Module):
             bool_masked_pos = bool_masked_pos.flatten(1).to(torch.bool)
         latent = self.forward_encoder(imgs, tgts, bool_masked_pos)
         pred = self.forward_decoder(latent)  # [N, L, p*p*3]
-        loss, loss_l1l2, loss_vgg = self.forward_loss(imgs, pred, tgts, bool_masked_pos, valid, epoch=epoch)
+        loss, loss_l1l2, loss_vgg = self.forward_loss(
+            imgs, pred, tgts, bool_masked_pos, valid, epoch=epoch, no_gan=no_gan
+        )
         return loss, loss_l1l2, loss_vgg, self.patchify(pred), bool_masked_pos, pred
 
 
@@ -702,4 +705,3 @@ def get_vit_lr_decay_rate(name, lr_decay_rate=1.0, num_layers=12):
             layer_id = int(name[name.find(".blocks.") :].split(".")[2]) + 1
 
     return lr_decay_rate ** (num_layers + 1 - layer_id)
-
