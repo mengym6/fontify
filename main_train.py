@@ -82,8 +82,8 @@ def get_args_parser():
     parser.add_argument('--mask_coverage_threshold', default=0.5, type=float,
                         help='patch 内 mask 像素覆盖率超过此阈值则标记为遮盖')
     parser.add_argument('--semantic_only_epochs', default=0, type=int,
-                        help='前 N 个 epoch 只用笔法(BF)语义遮盖，JT 结体样本重定向到 BF；'
-                             'epoch>=N 后 JT 恢复随机遮盖。0 表示关闭课程学习')
+                        help='前 N 个 epoch 只用结体(JT)随机遮盖，BF 样本重定向到 JT；'
+                             'epoch>=N 后恢复 JT/BF 同步训练，JT 随机遮盖、BF 语义遮盖。0 表示不启用 JT-only 课程')
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
                         help='use checkpoint to save GPU memory')
 
@@ -206,8 +206,7 @@ def main(args, ds_init):
 
     # define the model
     model = models_train.__dict__[args.model]()
-    # adv降权点复用curriculum结束点：让get_dynamic_loss_weights的jt_resume_epoch
-    # 始终等于semantic_only_epochs，改一个参数即可联动
+    # curriculum 切换点：数据端从 JT-only 切到 JT/BF 同步训练，loss 端从禁用 edge/adv 切到 warmup
     model.semantic_only_epochs = args.semantic_only_epochs
 
     if args.finetune:

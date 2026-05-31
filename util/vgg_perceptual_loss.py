@@ -55,7 +55,10 @@ class VGGPerceptualLoss(torch.nn.Module):
         self.criterion = torch.nn.functional.l1_loss
         self.register_buffer("mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
         self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
-        self.weights = [1.0/2.6, 1.0/4.8, 1.0/3.7, 1.0/5.6, 1.0*10/1.5]
+        # conv5 权重从 10/1.5 降到 1/1.5: 原本 conv5 占 content 权重和~86%,
+        # 使 content 偏深层语义且裸值~50量级压过其他损失项; 降权后 content
+        # 转向浅层边缘/细节(更服务笔锋), 裸值也降到可与 l1l2 同量级标定
+        self.weights = [1.0/2.6, 1.0/4.8, 1.0/3.7, 1.0/5.6, 1.0*1/1.5]
 
     def forward(self, input_img, target_img, return_components=False):
         if input_img.shape[1] != 3:
@@ -67,22 +70,18 @@ class VGGPerceptualLoss(torch.nn.Module):
         target_img = (target_img - self.mean) / self.std
 
         x_vgg, y_vgg = self.vgg(input_img), self.vgg(target_img)
-        # print(x_vgg[0].shape, x_vgg[1].shape, x_vgg[2].shape)
-        loss = {}
+        loss_style = self.criterion(gram(x_vgg[0]), gram(y_vgg[0]))+\
+                     self.criterion(gram(x_vgg[1]), gram(y_vgg[1]))+\
+                     self.criterion(gram(x_vgg[2]), gram(y_vgg[2]))+\
+                     self.criterion(gram(x_vgg[3]), gram(y_vgg[3]))+\
+                     self.criterion(gram(x_vgg[4]), gram(y_vgg[4]))
 
-        
-        loss['pt_c_loss'] = self.weights[0] * self.criterion(x_vgg[0], y_vgg[0])+\
-                            self.weights[1] * self.criterion(x_vgg[1], y_vgg[1])+\
-                            self.weights[2] * self.criterion(x_vgg[2], y_vgg[2])+\
-                            self.weights[3] * self.criterion(x_vgg[3], y_vgg[3])+\
-                            self.weights[4] * self.criterion(x_vgg[4], y_vgg[4])
-        
-        loss['pt_s_loss'] = self.criterion(gram(x_vgg[0]), gram(y_vgg[0]))+\
-                            self.criterion(gram(x_vgg[1]), gram(y_vgg[1]))+\
-                            self.criterion(gram(x_vgg[2]), gram(y_vgg[2]))+\
-                            self.criterion(gram(x_vgg[3]), gram(y_vgg[3]))+\
-                            self.criterion(gram(x_vgg[4]), gram(y_vgg[4]))
-        if return_components:
-            # 上层需要分阶段独立加权时，分别返回 content 与 style。
-            return loss['pt_c_loss'], loss['pt_s_loss']
-        return loss['pt_s_loss']
+        if not return_components:
+            return loss_style
+
+        loss_cont = self.weights[0] * self.criterion(x_vgg[0], y_vgg[0])+\
+                    self.weights[1] * self.criterion(x_vgg[1], y_vgg[1])+\
+                    self.weights[2] * self.criterion(x_vgg[2], y_vgg[2])+\
+                    self.weights[3] * self.criterion(x_vgg[3], y_vgg[3])+\
+                    self.weights[4] * self.criterion(x_vgg[4], y_vgg[4])
+        return loss_cont, loss_style

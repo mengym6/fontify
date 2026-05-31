@@ -81,10 +81,9 @@ class PairDataset(VisionDataset):
         self.mask_coverage_threshold = mask_coverage_threshold
         self.semantic_only_epochs = semantic_only_epochs
         self.current_epoch = 0  # 由训练循环每个 epoch 更新
-        # phase1 课程学习用：所有 BF（笔法）样本的下标，JT 样本会被重定向到这里
-        self._bf_indices = [i for i, p in enumerate(self.pairs) if 'BF' in p.get('type', '')]
-        # 对应的采样权重，保证重定向也走文件夹均衡（与 self.weights 一致），而非按文件夹样本数均匀
-        self._bf_weights = [self.weights[i] for i in self._bf_indices]
+        # 课程学习用：前期只抽 JT；切换后恢复原始采样，JT/BF 同步训练。
+        self._jt_indices = [i for i, p in enumerate(self.pairs) if 'JT' in p.get('type', '')]
+        self._jt_weights = [self.weights[i] for i in self._jt_indices]
 
     def set_epoch(self, epoch: int) -> None:
         """训练循环每个 epoch 调用，供课程学习判断当前阶段"""
@@ -155,12 +154,15 @@ class PairDataset(VisionDataset):
         return patch_mask
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
-        # phase1 课程学习：前 N 个 epoch 只用笔法(BF)语义遮盖，
-        # 抽到 JT 结体样本时重定向到一个 BF 样本
-        if (self.current_epoch < self.semantic_only_epochs
-                and self._bf_indices
-                and 'JT' in self.pairs[index].get('type', '')):
-            index = random.choices(self._bf_indices, weights=self._bf_weights, k=1)[0]
+        # curriculum 仅训练集启用：前 N 个 epoch 只用 JT；
+        # epoch>=N 后恢复原始采样分布，让 JT 随机遮盖和 BF 语义遮盖同步训练。
+        # 验证集没有 semantic_mask_dir，不重定向。
+        if self.semantic_mask_dir is not None and self.semantic_only_epochs > 0:
+            pair_type_cur = self.pairs[index].get('type', '')
+            if (self.current_epoch < self.semantic_only_epochs
+                    and self._jt_indices
+                    and 'JT' not in pair_type_cur):
+                index = random.choices(self._jt_indices, weights=self._jt_weights, k=1)[0]
         pair = self.pairs[index]
         image = self._load_image(pair['image_path'])
         target = self._load_image(pair['target_path'])
@@ -207,8 +209,8 @@ class PairDataset(VisionDataset):
             # val 验证集：强制完全遮盖整个 target
             use_half_mask = True
         else:
-            # train：仅 JT 结体 5% 概率走 half mask，BF 走语义遮盖
-            use_half_mask = ('JT' in pair_type) and (torch.rand(1)[0] < 0.05)
+            # train：按 half_mask_ratio 概率全程走 half mask，JT/BF 都生效。
+            use_half_mask = torch.rand(1)[0] < self.half_mask_ratio
         if (self.transforms_seccrop is None) or use_half_mask:
             pass
         else:

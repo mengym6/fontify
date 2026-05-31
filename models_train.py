@@ -398,53 +398,45 @@ class Fontify(nn.Module):
         
         self.apply(self._init_weights)
 
-    def get_dynamic_loss_weights(self, epoch):
+    def get_loss_phase(self, epoch):
         """
-        分阶段动态损失权重。阶段边界 B 与数据端 curriculum 切换点
-        (semantic_only_epochs) 对齐：epoch<B 为 BF 笔法语义遮盖阶段，
-        epoch>=B 为混入 JT 结体随机遮盖阶段。两阶段间用过渡窗 T 线性插值，
-        避免 loss 地形在边界突变。
-
-        Returns:
-            (w_l1l2, w_cont, w_style, w_edge, w_adv)
-            w_l1l2 : 像素重建/间架结构, JT 阶段增强
-            w_cont : VGG content(空间逐位特征, 管笔画位置/完整), 两阶段都保留
-            w_style: VGG style(Gram 纹理, 管笔法质感/锐利), BF 强 JT 弱
-            w_edge : 边缘锐度, BF 强 JT 弱
-            w_adv  : 对抗(去生成痕迹), BF 强 JT 关
+        semantic_only_epochs 现在表示 JT 随机遮盖阶段长度。
+        epoch>=B 后进入 JT/BF 同步训练阶段，edge/adv 从该阶段起重新 warmup。
         """
-        B = getattr(self, 'semantic_only_epochs', 50)  # BF→JT 切换点(与数据端对齐)
-        use_curriculum = B > 0
-        T = 5            # 阶段过渡窗(epoch), 平滑切换
-        edge_warmup = 8  # BF 阶段内 edge 早期 warmup 终点
-        adv_warmup = 12  # BF 阶段内 adv 早期 warmup 终点
+        B = getattr(self, 'semantic_only_epochs', 50)
+        if B > 0 and epoch < B:
+            return "jt_random", epoch
+        return "jt_bf_sync", max(0, epoch - max(B, 0))
 
-        # (BF 目标值, JT 目标值)
-        l1l2_bf,  l1l2_jt  = 1.0,  1.8
-        cont_bf,  cont_jt  = 0.3,  0.5
-        style_bf, style_jt = 1.0,  0.2
-        edge_bf,  edge_jt  = 0.4,  0.05
-        adv_bf,   adv_jt   = 0.05, 0.0
+    def get_dynamic_loss_weights(self, epoch, adv_warmup_epochs=8, edge_warmup_epochs=10,
+                                 warmup_duration=8):
+        """
+        原作者式固定系数组合：
+            total = recon + style + edge_weight * edge + adv_weight * adv
+        JT-only 阶段禁用 edge/adv；JT/BF 同步阶段通用一套 loss，
+        edge/adv 按原作者 warmup 形状升到 adv=0.3、edge=0.2。
+        """
+        phase, phase_epoch = self.get_loss_phase(epoch)
+        if phase == "jt_random":
+            return phase, 0.0, 0.0
 
-        def ramp(e, s, d):
-            if e < s:        return 0.0
-            if e >= s + d:   return 1.0
-            return (e - s) / d
+        if phase_epoch < adv_warmup_epochs:
+            adv_weight = 0.0
+        elif phase_epoch < adv_warmup_epochs + warmup_duration:
+            progress = (phase_epoch - adv_warmup_epochs) / warmup_duration
+            adv_weight = 0.3 * progress
+        else:
+            adv_weight = 0.3
 
-        def lerp(a, b, t):
-            return a + (b - a) * t
+        if phase_epoch < edge_warmup_epochs:
+            edge_weight = 0.0
+        elif phase_epoch < edge_warmup_epochs + warmup_duration:
+            progress = (phase_epoch - edge_warmup_epochs) / warmup_duration
+            edge_weight = 0.2 * progress
+        else:
+            edge_weight = 0.2
 
-        # semantic_only_epochs<=0 表示数据端关闭课程学习；此时没有 BF-only
-        # 阶段，loss 也直接使用混合/JT 阶段权重。
-        s = ramp(epoch, B, T) if use_curriculum else 1.0
-
-        w_l1l2  = lerp(l1l2_bf,  l1l2_jt,  s)
-        w_cont  = lerp(cont_bf,  cont_jt,  s)
-        w_style = lerp(style_bf, style_jt, s)
-        # edge/adv 先在 BF 内 warmup 到 bf 目标, 再随阶段过渡降到 jt 目标
-        w_edge  = lerp(edge_bf * ramp(epoch, 0, edge_warmup), edge_jt, s)
-        w_adv   = lerp(adv_bf  * ramp(epoch, 0, adv_warmup),  adv_jt,  s)
-        return w_l1l2, w_cont, w_style, w_edge, w_adv
+        return phase, adv_weight, edge_weight
 
     def improved_edge_detection(self, img):
         """
@@ -635,41 +627,63 @@ class Fontify(nn.Module):
         with torch.cuda.amp.autocast(enabled=False):
             pred_img = transform_vgg(pred).float()
             target_img = transform_vgg(target).float()
-            # VGG 拆两路: content(空间逐位, 管笔画位置/完整) + style(Gram, 管笔法质感)
-            loss_cont, loss_style = self.vgg_loss(pred_img, target_img, return_components=True)
-            loss_vgg = loss_cont + loss_style  # 仅用于日志汇总, 不参与加权
+            # 原作者设置：VGG loss 使用 Gram style；content 不进入总 loss。
+            loss_style = self.vgg_loss(pred_img, target_img)
+            loss_vgg = loss_style
             # Edge Loss
 
         edge_pred = self.improved_edge_detection(pred)
         edge_target = self.improved_edge_detection(target)
         loss_edge = F.l1_loss(edge_pred, edge_target)
 
-        # 分阶段动态权重: 边界与数据端 curriculum(semantic_only_epochs) 对齐
-        w_l1l2, w_cont, w_style, w_edge, w_adv = self.get_dynamic_loss_weights(epoch)
+        phase, adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
+        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
 
-        loss = (w_l1l2 * loss_l1l2 + w_cont * loss_cont
-                + w_style * loss_style + w_edge * loss_edge)
-        # === 临时调试: 打印三项裸值与权重, 标定 w_cont 后删除 ===
+        adv_loss = pred.new_tensor(0.0)
+        if not no_gan:
+            # DDP static_graph requires the set of used parameters to stay fixed.
+            # Keep the discriminator branch in the graph even while adv_weight is 0.
+            pred_resized = self.resize(pred)
+            fake_output = self.discriminator(pred_resized)
+            fake_logits = fake_output.squeeze(1)
+            real_labels = torch.ones_like(fake_logits)
+            adv_loss = F.binary_cross_entropy_with_logits(fake_logits, real_labels)
+            loss = loss + adv_weight * adv_loss
+
+        # === 调试: 打印原作者式固定系数与本 batch 数值贡献 ===
         self._dbg_step = getattr(self, '_dbg_step', 0) + 1
         _rank0 = (not torch.distributed.is_initialized()) or torch.distributed.get_rank() == 0
         if _rank0 and self._dbg_step % 50 == 1:
-            print(f"[loss-dbg] epoch={epoch} step={self._dbg_step} "
-                  f"raw: l1l2={loss_l1l2.item():.4f} cont={loss_cont.item():.4f} "
-                  f"style={loss_style.item():.4f} edge={loss_edge.item():.4f} | "
-                  f"w: l1l2={w_l1l2:.3f} cont={w_cont:.3f} style={w_style:.3f} "
-                  f"edge={w_edge:.3f} adv={w_adv:.3f}", flush=True)
+            contribs = {
+                "recon": loss_l1l2.detach(),
+                "style": loss_style.detach(),
+                "edge": loss_edge.detach() * loss_edge.new_tensor(edge_weight),
+                "adv": adv_loss.detach() * adv_loss.new_tensor(adv_weight),
+            }
+            contrib_total = loss_l1l2.new_tensor(0.0)
+            for contrib in contribs.values():
+                contrib_total = contrib_total + contrib
+            contrib_total = contrib_total.clamp_min(1e-12)
+            actual_shares = {name: contribs[name] / contrib_total for name in contribs}
+
+            def scalar(x):
+                return float(x.detach().item())
+
+            print(f"[loss-dbg] epoch={epoch} phase={phase} step={self._dbg_step} "
+                  f"raw: recon({self.loss_func})={scalar(loss_l1l2):.4f} "
+                  f"style={scalar(loss_style):.4f} edge={scalar(loss_edge):.4f} "
+                  f"adv={scalar(adv_loss):.4f} | "
+                  f"w: recon=1.000 style=1.000 "
+                  f"edge={edge_weight:.3f} adv={adv_weight:.3f} | "
+                  f"contrib: recon={scalar(contribs['recon']):.4f} "
+                  f"style={scalar(contribs['style']):.4f} "
+                  f"edge={scalar(contribs['edge']):.4f} "
+                  f"adv={scalar(contribs['adv']):.4f} | "
+                  f"share%: recon={scalar(actual_shares['recon'])*100:.1f} "
+                  f"style={scalar(actual_shares['style'])*100:.1f} "
+                  f"edge={scalar(actual_shares['edge'])*100:.1f} "
+                  f"adv={scalar(actual_shares['adv'])*100:.1f}", flush=True)
         # === 临时调试结束 ===
-        if not no_gan:
-            # DDP static_graph requires the set of used parameters to stay fixed.
-            # Keep the discriminator branch in the graph even while w_adv is 0.
-            pred_resized = self.resize(pred)
-            fake_output = self.discriminator(pred_resized)
-            real_labels = torch.ones(pred.size(0), device=pred.device)  # [B]
-            adv_loss = F.binary_cross_entropy_with_logits(
-                fake_output.squeeze(1),
-                real_labels
-            )
-            loss = loss + w_adv * adv_loss
         return loss, loss_l1l2, loss_vgg
 
     def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False):
