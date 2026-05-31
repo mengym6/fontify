@@ -145,6 +145,13 @@ def get_args_parser():
     parser.add_argument('--no_gan', action='store_true',
                         help='disable discriminator training (for finetuning)')
     parser.set_defaults(no_gan=False)
+    parser.add_argument('--freeze_encoder', action='store_true',
+                        help='冻结encoder（与--freeze_blocks配合决定深度），仅微调时使用')
+    parser.set_defaults(freeze_encoder=False)
+    parser.add_argument('--freeze_blocks', default=-1, type=int,
+                        help='--freeze_encoder开启时的冻结深度：'
+                             '-1=冻整个encoder(embedding+全部block+norm，只训decoder)；'
+                             'N=冻embedding+blocks[0:N]；0=只冻embedding')
 
     # distributed training parameters
     parser.add_argument('--world_size', default=1, type=int,
@@ -331,6 +338,26 @@ def main(args, ds_init):
     if args.no_gan:
         model.discriminator.requires_grad_(False)
         print("[INFO] --no_gan: discriminator frozen and adversarial loss disabled")
+    if args.freeze_encoder:
+        # embedding层（patch_embed/pos_embed/三个token）始终冻结
+        emb_params = [model.patch_embed, model.mask_token,
+                      model.segment_token_x, model.segment_token_y]
+        for m in emb_params:
+            m.requires_grad_(False) if hasattr(m, "requires_grad_") else None
+        if model.pos_embed is not None:
+            model.pos_embed.requires_grad_(False)
+        n_blocks = len(model.blocks)
+        # freeze_blocks: -1=全部block+norm；N=blocks[0:N]；0=只冻embedding
+        n_freeze = n_blocks if args.freeze_blocks < 0 else min(args.freeze_blocks, n_blocks)
+        for i in range(n_freeze):
+            model.blocks[i].requires_grad_(False)
+        # 只有冻满全部block时才连norm一起冻（norm服务于深层抽特征）
+        if n_freeze == n_blocks:
+            model.norm.requires_grad_(False)
+        n_train = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"[INFO] --freeze_encoder: embedding + blocks[0:{n_freeze}]"
+              f"{' + norm' if n_freeze == n_blocks else ''} frozen, "
+              f"{n_train/1e6:.2f}M params trainable")
     model_without_ddp = model
     print("Model = %s" % str(model_without_ddp))
 

@@ -12,7 +12,7 @@ PRETRAIN_CKPT=models/vit_base_font/checkpoint-14.pth
 python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
 	--use_env main_train.py  \
     --batch_size 2 \
-    --accum_iter 48  \
+    --accum_iter 24  \
     --model vit_base_patch16_input896x448_win_dec64_8glb_sl1 \
     --num_mask_patches 784 \
     --max_mask_patches_per_block 392 \
@@ -32,6 +32,8 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --finetune $PRETRAIN_CKPT \
     --auto_resume \
     --no_gan \
+    --freeze_encoder \
+    --freeze_blocks -1 \
     --semantic_mask_dir $DATA_PATH/font/train/new \
     --num_mask_annotations_bf 3 \
     --num_mask_annotations_jt 1 \
