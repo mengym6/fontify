@@ -206,6 +206,9 @@ def main(args, ds_init):
 
     # define the model
     model = models_train.__dict__[args.model]()
+    # adv降权点复用curriculum结束点：让get_dynamic_loss_weights的jt_resume_epoch
+    # 始终等于semantic_only_epochs，改一个参数即可联动
+    model.semantic_only_epochs = args.semantic_only_epochs
 
     if args.finetune:
         checkpoint = torch.load(args.finetune, map_location='cpu')
@@ -389,7 +392,12 @@ def main(args, ds_init):
         if args.distributed:
             model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
             model_without_ddp = model.module
-            model._set_static_graph()
+
+        # Exclude discriminator from the reconstruction optimizer. It has its own
+        # optimizer below, while the generator still receives adversarial gradients.
+        train_discriminator = not args.no_gan
+        if train_discriminator:
+            model_without_ddp.discriminator.requires_grad_(False)
 
         # following timm: set wd as 0 for bias and norm layers
         param_groups = lrd.param_groups_lrd(model_without_ddp, args.weight_decay,
@@ -397,13 +405,16 @@ def main(args, ds_init):
                                             layer_decay=args.layer_decay
                                             )
         optimizer = torch.optim.AdamW(param_groups, lr=args.lr, betas=args.opt_betas)
-        if not args.no_gan:
+        if train_discriminator:
+            model_without_ddp.discriminator.requires_grad_(True)
             optimizer_d = torch.optim.AdamW(
-                model.module.discriminator.parameters(),
+                model_without_ddp.discriminator.parameters(),
                 lr=args.lr * 0.1,
                 betas=(0.5, 0.999))
         print(optimizer)
         loss_scaler = NativeScaler()
+        if args.distributed:
+            model._set_static_graph()
 
     misc.auto_load_model(
         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, optimizer_d=optimizer_d, loss_scaler=loss_scaler)

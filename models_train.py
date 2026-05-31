@@ -398,8 +398,9 @@ class Fontify(nn.Module):
         
         self.apply(self._init_weights)
 
-    def get_dynamic_loss_weights(self, epoch, adv_warmup_epochs=8, edge_warmup_epochs=10, 
-                                warmup_duration=8):
+    def get_dynamic_loss_weights(self, epoch, adv_warmup_epochs=30, edge_warmup_epochs=35,
+                                warmup_duration=10, adv_full_weight=0.05,
+                                jt_resume_epoch=50, adv_weight_late=0.001):
         """
         计算动态损失权重，实现渐进式损失加入策略
         
@@ -419,9 +420,13 @@ class Fontify(nn.Module):
         elif epoch < adv_warmup_epochs + warmup_duration:
             # 线性warmup
             progress = (epoch - adv_warmup_epochs) / warmup_duration
-            adv_weight = 0.3 * progress  # 从0.1提高到0.3，加快对抗损失收敛
+            adv_weight = adv_full_weight * progress
         else:
-            adv_weight = 0.3  # 从0.1提高到0.3，加快对抗损失收敛
+            adv_weight = adv_full_weight
+        # JT结体回归(curriculum结束)后降低对抗权重：GAN主要服务BF笔法的高频细节，
+        # JT混入后降低adv避免对抗信号干扰间架结构的重建
+        if epoch >= jt_resume_epoch:
+            adv_weight = adv_weight_late
         
         # 边缘损失权重
         if epoch < edge_warmup_epochs:
@@ -630,11 +635,16 @@ class Fontify(nn.Module):
         edge_target = self.improved_edge_detection(target)
         loss_edge = F.l1_loss(edge_pred, edge_target)
 
-        # 获取动态损失权重（前10个epoch对抗损失和边缘损失权重为0）
-        adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
+        # 获取动态损失权重；jt_resume_epoch复用curriculum结束点(semantic_only_epochs)，
+        # 由main_train在构造后挂到self上，未挂时回退50
+        adv_weight, edge_weight = self.get_dynamic_loss_weights(
+            epoch, jt_resume_epoch=getattr(self, 'semantic_only_epochs', 50)
+        )
         
         loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
-        if not no_gan and adv_weight > 0:
+        if not no_gan:
+            # DDP static_graph requires the set of used parameters to stay fixed.
+            # Keep the discriminator branch in the graph even while adv_weight is 0.
             pred_resized = self.resize(pred)
             fake_output = self.discriminator(pred_resized)
             real_labels = torch.ones(pred.size(0), device=pred.device)  # [B]
