@@ -241,7 +241,7 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
             loss, loss_l1l2, loss_vgg, y, mask, pred = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
-                valid=valid, epoch=999, no_gan=args.no_gan
+                valid=valid, epoch=epoch, no_gan=args.no_gan
             )
 
         metric_logger.update(loss=loss.item())

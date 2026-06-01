@@ -408,7 +408,7 @@ class Fontify(nn.Module):
             return "jt_random", epoch
         return "jt_bf_sync", max(0, epoch - max(B, 0))
 
-    def get_dynamic_loss_weights(self, epoch, adv_warmup_epochs=8, edge_warmup_epochs=10,
+    def get_dynamic_loss_weights(self, epoch, adv_warmup_epochs=15, edge_warmup_epochs=20,
                                  warmup_duration=8):
         """
         原作者式固定系数组合：
