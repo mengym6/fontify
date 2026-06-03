@@ -226,6 +226,7 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
     num_batch = 0
     # rank 0 写 TB 比其他 rank 慢一个数量级，间隔写避免拖慢同步导致 NCCL timeout
     tb_save_every = 1
+    val_tb_image_limit = getattr(args, "val_tb_image_limit", 0) if args is not None else 0
     for batch in metric_logger.log_every(data_loader, 10, header):
 
         samples = batch[0]
@@ -250,7 +251,10 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         """
             在tensorboard内展示图片nchw->nhwc
         """
-        if log_writer is not None and num_batch % tb_save_every == 0:
+        write_tb_image = log_writer is not None and num_batch % tb_save_every == 0
+        if val_tb_image_limit > 0:
+            write_tb_image = write_tb_image and num_batch < val_tb_image_limit
+        if write_tb_image:
             imagenet_mean = np.array([0.485, 0.456, 0.406])
             imagenet_std = np.array([0.229, 0.224, 0.225])
             y = y[[0]]

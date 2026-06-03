@@ -13,6 +13,7 @@ MASTER_PORT_BASE=${MASTER_PORT_BASE:-29555}
 SAVE_FREQ=${SAVE_FREQ:-10}
 EXPORT_VAL_IMAGES=${EXPORT_VAL_IMAGES:-1}
 VAL_IMAGE_LIMIT=${VAL_IMAGE_LIMIT:-4}
+VAL_EXPORT_TIMEOUT=${VAL_EXPORT_TIMEOUT:-300}
 
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1}
 
@@ -35,6 +36,7 @@ Environment variables:
   SAVE_FREQ         Default: 10
   EXPORT_VAL_IMAGES Default: 1
   VAL_IMAGE_LIMIT   Default: 4
+  VAL_EXPORT_TIMEOUT Default: 300 seconds; 0 disables timeout; ignored when GNU timeout is unavailable
 
 The CSV controls --batch_size and target_effective_batch.
 The launcher computes accum_iter = target_effective_batch / (batch_size * NPROC_PER_NODE).
@@ -105,6 +107,7 @@ while IFS=, read -r run_id batch_size target_effective_batch lr weight_decay lay
   fi
   effective_batch_size=$((batch_size * accum_iter * NPROC_PER_NODE))
   master_port=$((MASTER_PORT_BASE + run_index))
+  val_image_epoch=$((epochs - 1))
   run_name="${run_id}_eb${effective_batch_size}_bs${batch_size}_acc${accum_iter}_ep${epochs}_sem0"
   output_dir="${BASE_OUTPUT_DIR}/${STAGE}/${run_name}"
   log_dir="${output_dir}/logs"
@@ -132,6 +135,8 @@ log_dir=${log_dir}
 cuda_visible_devices=${CUDA_VISIBLE_DEVICES}
 nproc_per_node=${NPROC_PER_NODE}
 master_port=${master_port}
+val_tb_image_limit=${VAL_IMAGE_LIMIT}
+val_image_epoch=${val_image_epoch}
 EOF
 
   echo "==== Running ${run_id} (${STAGE}) ===="
@@ -158,6 +163,7 @@ EOF
       --clip_grad 1.0 \
       --input_size 896 448 \
       --save_freq "$SAVE_FREQ" \
+      --val_tb_image_limit "$VAL_IMAGE_LIMIT" \
       --data_path "${DATA_PATH}/" \
       --json_path "${DATA_PATH}/train_json_new/"*.json \
       --val_json_path "${DATA_PATH}/val_json_new/"*.json \
@@ -175,10 +181,17 @@ EOF
 
   if [[ "$EXPORT_VAL_IMAGES" == "1" ]]; then
     echo "==== Exporting ${VAL_IMAGE_LIMIT} validation image(s) for ${run_id} ===="
-    if "$PYTHON_BIN" tools/export_tb_val_images.py \
+    export_cmd=(
+      "$PYTHON_BIN" tools/export_tb_val_images.py
       --log_dir "$log_dir" \
       --output_dir "${output_dir}/val_images" \
-      --limit "$VAL_IMAGE_LIMIT" 2>&1 | tee "${output_dir}/export_val_images.log"; then
+      --limit "$VAL_IMAGE_LIMIT" \
+      --epoch "$val_image_epoch"
+    )
+    if [[ "$VAL_EXPORT_TIMEOUT" != "0" ]] && command -v timeout >/dev/null 2>&1; then
+      export_cmd=(timeout "$VAL_EXPORT_TIMEOUT" "${export_cmd[@]}")
+    fi
+    if "${export_cmd[@]}" 2>&1 | tee "${output_dir}/export_val_images.log"; then
       echo "val_images=${output_dir}/val_images"
     else
       echo "Warning: failed to export validation images for ${run_id}" >&2

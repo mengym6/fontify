@@ -105,6 +105,8 @@ def get_args_parser():
                         help='epochs to warmup LR')
     parser.add_argument('--save_freq', type=int, default=100,
                         help='save checkkpoints frequency')
+    parser.add_argument('--val_tb_image_limit', type=int, default=0,
+                        help='maximum validation images written to TensorBoard per epoch. 0 keeps the original unlimited behavior')
     parser.add_argument('--clip_grad', type=float, default=3.0, metavar='NORM',
                         help='Clip gradient norm (default: None, no clipping)')
     parser.add_argument('--opt_eps', default=1e-8, type=float, metavar='EPSILON',
@@ -280,16 +282,23 @@ def main(args, ds_init):
         min_num_patches=args.min_mask_patches_per_block,
     )
 
-    dataset_train = PairDataset(args.data_path, args.json_path, transform=transform_train, transform2=transform_train2,
-                                transform3=transform_train3, transform_seccrop=transform_train_seccrop,
-                                masked_position_generator=masked_position_generator, use_two_pairs=args.use_two_pairs,
-                                half_mask_ratio=args.half_mask_ratio,
-                                semantic_mask_dir=args.semantic_mask_dir,
-                                num_mask_annotations_bf=args.num_mask_annotations_bf,
-                                num_mask_annotations_jt=args.num_mask_annotations_jt,
-                                mask_coverage_threshold=args.mask_coverage_threshold,
-                                semantic_only_epochs=args.semantic_only_epochs,
-                                mask_mix_probs=args.mask_mix_probs)
+    dataset_train_kwargs = dict(
+        transform=transform_train,
+        transform2=transform_train2,
+        transform3=transform_train3,
+        transform_seccrop=transform_train_seccrop,
+        masked_position_generator=masked_position_generator,
+        use_two_pairs=args.use_two_pairs,
+        half_mask_ratio=args.half_mask_ratio,
+        semantic_mask_dir=args.semantic_mask_dir,
+        num_mask_annotations_bf=args.num_mask_annotations_bf,
+        num_mask_annotations_jt=args.num_mask_annotations_jt,
+        mask_coverage_threshold=args.mask_coverage_threshold,
+        semantic_only_epochs=args.semantic_only_epochs,
+    )
+    if args.mask_mix_probs is not None:
+        dataset_train_kwargs["mask_mix_probs"] = args.mask_mix_probs
+    dataset_train = PairDataset(args.data_path, args.json_path, **dataset_train_kwargs)
     dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
                               transform3=None, masked_position_generator=masked_position_generator,
                               use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0)

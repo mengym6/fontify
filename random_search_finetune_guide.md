@@ -58,6 +58,16 @@ x | im_masked | y | tgt
 输入图 | 被 mask 的目标图 | 模型输出 | 目标图
 ```
 
+默认导出的是当前阶段最后一个 epoch：
+
+```text
+short: epoch 29
+mid: epoch 69
+full: epoch 99
+```
+
+random search 启动脚本会把 `VAL_IMAGE_LIMIT` 同步传给训练入口的 `--val_tb_image_limit`。默认 `VAL_IMAGE_LIMIT=4`，因此每个验证 epoch 最多向 TensorBoard 写 4 张 val 图，避免 event 文件过大导致导出阶段卡住。
+
 ## 2. 启动命令
 
 2 卡 short：
@@ -179,6 +189,8 @@ accum_iter = target_effective_batch / (batch_size * NPROC_PER_NODE)
 | `PRETRAIN_CKPT` | 默认 `models/vit_base_font/checkpoint-14.pth` |
 | `DATA_PATH` | 默认 `fontdata_example` |
 | `SAVE_FREQ` | 默认 `10`，可用环境变量覆盖 |
+| `VAL_IMAGE_LIMIT` | 默认 `4`，每个验证 epoch 写入/导出的 val 图数量 |
+| `VAL_EXPORT_TIMEOUT` | 默认 `300` 秒，导图超时后给 warning 并继续后续 run |
 
 启动脚本故意不传 `--auto_resume`，避免 random search 接上旧实验。
 

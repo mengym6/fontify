@@ -183,22 +183,33 @@ def iter_images(files: list[Path], tag_contains: str):
         )
 
 
-def find_target_epoch(files: list[Path], requested_epoch: int | None, tag_contains: str) -> int:
-    if requested_epoch is not None:
-        return requested_epoch
-
+def collect_images(files: list[Path], requested_epoch: int | None, limit: int, tag_contains: str) -> tuple[int, list[ImageRecord]]:
+    records: list[ImageRecord] = []
     latest_epoch: int | None = None
+
     for record in iter_images(files, tag_contains):
+        if requested_epoch is not None:
+            if record.epoch != requested_epoch:
+                continue
+            records.append(record)
+            if len(records) >= limit:
+                return requested_epoch, records
+            continue
+
         if latest_epoch is None or record.epoch > latest_epoch:
             latest_epoch = record.epoch
+            records = [record]
+        elif record.epoch == latest_epoch and len(records) < limit:
+            records.append(record)
 
+    if requested_epoch is not None and not records:
+        raise RuntimeError(f"No validation image summaries were found for epoch {requested_epoch}.")
     if latest_epoch is None:
         raise RuntimeError("No validation image summaries were found.")
-    return latest_epoch
+    return latest_epoch, records
 
 
-def export_images(files: list[Path], output_dir: Path, target_epoch: int, limit: int, tag_contains: str) -> list[Path]:
-    records = [record for record in iter_images(files, tag_contains) if record.epoch == target_epoch]
+def export_images(records: list[ImageRecord], output_dir: Path, target_epoch: int, limit: int) -> list[Path]:
     if not records:
         raise RuntimeError(f"No validation image summaries were found for epoch {target_epoch}.")
 
@@ -243,8 +254,8 @@ def main() -> int:
         raise SystemExit("--output_dir is required unless --list_tags is used.")
 
     try:
-        target_epoch = find_target_epoch(files, args.epoch, args.tag_contains)
-        exported = export_images(files, Path(args.output_dir), target_epoch, args.limit, args.tag_contains)
+        target_epoch, records = collect_images(files, args.epoch, args.limit, args.tag_contains)
+        exported = export_images(records, Path(args.output_dir), target_epoch, args.limit)
     except RuntimeError as exc:
         raise SystemExit(f"{exc}\n{format_available_tags(files)}") from exc
 
