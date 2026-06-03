@@ -45,6 +45,7 @@ class PairDataset(VisionDataset):
         num_mask_annotations_jt: int = 1,
         mask_coverage_threshold: float = 0.5,
         semantic_only_epochs: int = 0,
+        mask_mix_probs: Optional[List[float]] = None,
     ) -> None:
         super().__init__(root, transforms, transform, target_transform)
 
@@ -80,10 +81,44 @@ class PairDataset(VisionDataset):
         self.num_mask_annotations_jt = num_mask_annotations_jt
         self.mask_coverage_threshold = mask_coverage_threshold
         self.semantic_only_epochs = semantic_only_epochs
+        self.mask_mix_probs = None
+        if mask_mix_probs is not None:
+            if len(mask_mix_probs) != 3:
+                raise ValueError("mask_mix_probs must contain 3 values: random, JT semantic, BF semantic")
+            mask_mix_probs = [float(p) for p in mask_mix_probs]
+            if any(p < 0 for p in mask_mix_probs):
+                raise ValueError("mask_mix_probs values must be non-negative")
+            prob_sum = sum(mask_mix_probs)
+            if prob_sum <= 0:
+                raise ValueError("mask_mix_probs sum must be positive")
+            self.mask_mix_probs = [p / prob_sum for p in mask_mix_probs]
         self.current_epoch = 0  # 由训练循环每个 epoch 更新
         # 课程学习用：前期只抽 JT；切换后恢复原始采样，JT/BF 同步训练。
         self._jt_indices = [i for i, p in enumerate(self.pairs) if 'JT' in p.get('type', '')]
         self._jt_weights = [self.weights[i] for i in self._jt_indices]
+        self._bf_indices = [i for i, p in enumerate(self.pairs) if 'BF' in p.get('type', '')]
+        self._bf_weights = [self.weights[i] for i in self._bf_indices]
+        self._semantic_indices_by_type = {}
+        self._jt_semantic_indices = []
+        self._bf_semantic_indices = []
+        for i, pair in enumerate(self.pairs):
+            if self._semantic_mask_path(pair['target_path']) is None:
+                continue
+            pair_type = pair.get('type', '')
+            self._semantic_indices_by_type.setdefault(pair_type, []).append(i)
+            if 'JT' in pair_type:
+                self._jt_semantic_indices.append(i)
+            elif 'BF' in pair_type:
+                self._bf_semantic_indices.append(i)
+        self._jt_semantic_weights = [self.weights[i] for i in self._jt_semantic_indices]
+        self._bf_semantic_weights = [self.weights[i] for i in self._bf_semantic_indices]
+        if self.mask_mix_probs is not None:
+            if (self.mask_mix_probs[1] > 0 or self.mask_mix_probs[2] > 0) and self.semantic_mask_dir is None:
+                raise ValueError("semantic_mask_dir is required when JT/BF semantic mask probability is > 0")
+            if self.mask_mix_probs[1] > 0 and not self._jt_semantic_indices:
+                raise ValueError("mask_mix_probs requests JT semantic masks, but no JT semantic mask files were found")
+            if self.mask_mix_probs[2] > 0 and not self._bf_semantic_indices:
+                raise ValueError("mask_mix_probs requests BF semantic masks, but no BF semantic mask files were found")
 
     def set_epoch(self, epoch: int) -> None:
         """训练循环每个 epoch 调用，供课程学习判断当前阶段"""
@@ -109,17 +144,11 @@ class PairDataset(VisionDataset):
         dst = torch.cat([image, image2], dim=1)
         return dst
 
-    def _load_semantic_mask(self, target_path: str, pair_type: str) -> Optional[Image.Image]:
-        """加载 .npy 并随机选 K 个标注 OR 合并，返回 PIL Image (mode='L')"""
+    def _semantic_mask_path(self, target_path: str) -> Optional[str]:
         if self.semantic_mask_dir is None:
             return None
-        # JT 类型不用语义 mask，回退到随机遮盖
-        if 'JT' in pair_type:
-            return None
-        # target_path: "font/train/new/DongqcBF/images_white_bg_mask_denoised/月.png"
         parts = target_path.split('/')
         char_name = os.path.splitext(os.path.basename(target_path))[0]
-        # 找字体文件夹名（倒数第二级目录的上一级）
         font_dir = None
         for i, p in enumerate(parts):
             if 'images' in p:
@@ -129,6 +158,26 @@ class PairDataset(VisionDataset):
             return None
         npy_path = os.path.join(self.root, font_dir, 'semantic_masks', f'{char_name}.npy')
         if not os.path.exists(npy_path):
+            return None
+        return npy_path
+
+    def _sample_mask_mode(self) -> str:
+        if self.mask_mix_probs is None:
+            return "auto"
+        modes = ["random", "jt_semantic", "bf_semantic"]
+        return random.choices(modes, weights=self.mask_mix_probs, k=1)[0]
+
+    def _sample_semantic_index(self, mask_mode: str) -> int:
+        if mask_mode == "jt_semantic":
+            return random.choices(self._jt_semantic_indices, weights=self._jt_semantic_weights, k=1)[0]
+        if mask_mode == "bf_semantic":
+            return random.choices(self._bf_semantic_indices, weights=self._bf_semantic_weights, k=1)[0]
+        raise ValueError(f"Unsupported semantic mask mode: {mask_mode}")
+
+    def _load_semantic_mask(self, target_path: str, pair_type: str) -> Optional[Image.Image]:
+        """加载 .npy 并随机选 K 个标注 OR 合并，返回 PIL Image (mode='L')"""
+        npy_path = self._semantic_mask_path(target_path)
+        if npy_path is None:
             return None
         layers = np.load(npy_path)  # (N, 448, 448)
         N = layers.shape[0]
@@ -154,15 +203,18 @@ class PairDataset(VisionDataset):
         return patch_mask
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
+        mask_mode = self._sample_mask_mode()
         # curriculum 仅训练集启用：前 N 个 epoch 只用 JT；
         # epoch>=N 后恢复原始采样分布，让 JT 随机遮盖和 BF 语义遮盖同步训练。
         # 验证集没有 semantic_mask_dir，不重定向。
-        if self.semantic_mask_dir is not None and self.semantic_only_epochs > 0:
+        if self.mask_mix_probs is None and self.semantic_mask_dir is not None and self.semantic_only_epochs > 0:
             pair_type_cur = self.pairs[index].get('type', '')
             if (self.current_epoch < self.semantic_only_epochs
                     and self._jt_indices
                     and 'JT' not in pair_type_cur):
                 index = random.choices(self._jt_indices, weights=self._jt_weights, k=1)[0]
+        elif mask_mode in ("jt_semantic", "bf_semantic"):
+            index = self._sample_semantic_index(mask_mode)
         pair = self.pairs[index]
         image = self._load_image(pair['image_path'])
         target = self._load_image(pair['target_path'])
@@ -176,7 +228,10 @@ class PairDataset(VisionDataset):
             interpolation1 = 'bicubic'
             interpolation2 = 'bicubic'
 
-        sem_mask = self._load_semantic_mask(pair['target_path'], pair_type)
+        if mask_mode == "random":
+            sem_mask = None
+        else:
+            sem_mask = self._load_semantic_mask(pair['target_path'], pair_type)
 
         # no aug for instance segmentation
         if "font" in pair['type'] and self.transforms3 is not None:
@@ -190,10 +245,17 @@ class PairDataset(VisionDataset):
             pair_type = pair['type']
             # sample the second pair belonging to the same type
             pair2_index = random.choice(self.pair_type_dict[pair_type])
+            if mask_mode in ("jt_semantic", "bf_semantic"):
+                pair2_pool = self._semantic_indices_by_type.get(pair_type, [])
+                if pair2_pool:
+                    pair2_index = random.choice(pair2_pool)
             pair2 = self.pairs[pair2_index]
             image2 = self._load_image(pair2['image_path'])
             target2 = self._load_image(pair2['target_path'])
-            sem_mask2 = self._load_semantic_mask(pair2['target_path'], pair_type)
+            if mask_mode == "random":
+                sem_mask2 = None
+            else:
+                sem_mask2 = self._load_semantic_mask(pair2['target_path'], pair_type)
             assert pair2['type'] == pair_type
             image2, target2, sem_mask2 = cur_transforms(image2, target2, interpolation1, interpolation2, mask=sem_mask2)
 
@@ -205,7 +267,11 @@ class PairDataset(VisionDataset):
             else:
                 sem_mask = None
 
-        if self.half_mask_ratio >= 1.0:
+        if self.mask_mix_probs is not None:
+            # mask_mix_probs 控制 random/JT semantic/BF semantic 主比例；
+            # half_mask_ratio 只在 random 类内部生效，避免破坏三类主比例。
+            use_half_mask = mask_mode == "random" and torch.rand(1)[0] < self.half_mask_ratio
+        elif self.half_mask_ratio >= 1.0:
             # val 验证集：强制完全遮盖整个 target
             use_half_mask = True
         else:
@@ -224,6 +290,8 @@ class PairDataset(VisionDataset):
             mask[mask.shape[0]//2:, :] = 1
         elif sem_mask is not None:
             mask = self._pixel_mask_to_patch_mask(sem_mask)
+        elif mask_mode in ("jt_semantic", "bf_semantic"):
+            raise RuntimeError(f"{mask_mode} was selected, but semantic mask loading failed")
         else:
             mask = self.masked_position_generator()
 

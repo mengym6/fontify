@@ -81,6 +81,9 @@ def get_args_parser():
                         help='JT（结体）字体每个 target 随机选几个标注遮盖')
     parser.add_argument('--mask_coverage_threshold', default=0.5, type=float,
                         help='patch 内 mask 像素覆盖率超过此阈值则标记为遮盖')
+    parser.add_argument('--mask_mix_probs', default=None, type=float, nargs=3,
+                        help='训练遮盖比例: random JT-semantic BF-semantic，例如 0.7 0.2 0.1。'
+                             '不设置则沿用原数据集遮盖逻辑')
     parser.add_argument('--semantic_only_epochs', default=0, type=int,
                         help='前 N 个 epoch 只用结体(JT)随机遮盖，BF 样本重定向到 JT；'
                              'epoch>=N 后恢复 JT/BF 同步训练，JT 随机遮盖、BF 语义遮盖。0 表示不启用 JT-only 课程')
@@ -285,7 +288,8 @@ def main(args, ds_init):
                                 num_mask_annotations_bf=args.num_mask_annotations_bf,
                                 num_mask_annotations_jt=args.num_mask_annotations_jt,
                                 mask_coverage_threshold=args.mask_coverage_threshold,
-                                semantic_only_epochs=args.semantic_only_epochs)
+                                semantic_only_epochs=args.semantic_only_epochs,
+                                mask_mix_probs=args.mask_mix_probs)
     dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
                               transform3=None, masked_position_generator=masked_position_generator,
                               use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0)
