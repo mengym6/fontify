@@ -417,7 +417,7 @@ class Fontify(nn.Module):
         edge/adv 按原作者 warmup 形状升到 adv=0.5、edge=0.4。
         """
         adv_weight_final = 0.5
-        edge_weigiht_final = 0.8
+        edge_weigiht_final = 0.4
         
         phase, phase_epoch = self.get_loss_phase(epoch)
         if phase == "jt_random":
