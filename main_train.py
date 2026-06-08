@@ -295,13 +295,20 @@ def main(args, ds_init):
         num_mask_annotations_jt=args.num_mask_annotations_jt,
         mask_coverage_threshold=args.mask_coverage_threshold,
         semantic_only_epochs=args.semantic_only_epochs,
+        semantic_mask_fallback_to_random=True,
     )
     if args.mask_mix_probs is not None:
         dataset_train_kwargs["mask_mix_probs"] = args.mask_mix_probs
     dataset_train = PairDataset(args.data_path, args.json_path, **dataset_train_kwargs)
-    dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
-                              transform3=None, masked_position_generator=masked_position_generator,
-                              use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0)
+    dataset_val_kwargs = dict(
+        transform=transform_val,
+        transform2=None,
+        transform3=None,
+        masked_position_generator=masked_position_generator,
+        use_two_pairs=args.use_two_pairs,
+        half_mask_ratio=1.0,
+    )
+    dataset_val = PairDataset(args.data_path, args.val_json_path, **dataset_val_kwargs)
 
     print(dataset_train)
     print(dataset_val)
@@ -464,6 +471,16 @@ def main(args, ds_init):
                 log_writer.add_scalars('test_loss', {
                     'loss': test_stats['loss']
                 }, epoch)
+                if 'edge_offset_count' in test_stats:
+                    log_writer.add_scalar('test_edge_offset_count', test_stats['edge_offset_count'], epoch)
+                if 'edge_offset' in test_stats:
+                    log_writer.add_scalars('test_edge_offset_metric', {
+                        'edge_offset': test_stats['edge_offset'],
+                        'gt_to_pred': test_stats['edge_gt_to_pred'],
+                        'pred_to_gt': test_stats['edge_pred_to_gt'],
+                        'dx': test_stats['edge_offset_dx'],
+                        'dy': test_stats['edge_offset_dy'],
+                    }, epoch)
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
 

@@ -46,6 +46,7 @@ class PairDataset(VisionDataset):
         mask_coverage_threshold: float = 0.5,
         semantic_only_epochs: int = 0,
         mask_mix_probs: Optional[List[float]] = None,
+        semantic_mask_fallback_to_random: bool = False,
     ) -> None:
         super().__init__(root, transforms, transform, target_transform)
 
@@ -81,6 +82,7 @@ class PairDataset(VisionDataset):
         self.num_mask_annotations_jt = num_mask_annotations_jt
         self.mask_coverage_threshold = mask_coverage_threshold
         self.semantic_only_epochs = semantic_only_epochs
+        self.semantic_mask_fallback_to_random = semantic_mask_fallback_to_random
         self.mask_mix_probs = None
         if mask_mix_probs is not None:
             if len(mask_mix_probs) != 3:
@@ -113,12 +115,30 @@ class PairDataset(VisionDataset):
         self._jt_semantic_weights = [self.weights[i] for i in self._jt_semantic_indices]
         self._bf_semantic_weights = [self.weights[i] for i in self._bf_semantic_indices]
         if self.mask_mix_probs is not None:
-            if (self.mask_mix_probs[1] > 0 or self.mask_mix_probs[2] > 0) and self.semantic_mask_dir is None:
-                raise ValueError("semantic_mask_dir is required when JT/BF semantic mask probability is > 0")
+            missing_semantic_dir = (
+                (self.mask_mix_probs[1] > 0 or self.mask_mix_probs[2] > 0)
+                and self.semantic_mask_dir is None
+            )
+            if missing_semantic_dir:
+                if not self.semantic_mask_fallback_to_random:
+                    raise ValueError("semantic_mask_dir is required when JT/BF semantic mask probability is > 0")
+                self.mask_mix_probs[0] += self.mask_mix_probs[1] + self.mask_mix_probs[2]
+                self.mask_mix_probs[1] = 0.0
+                self.mask_mix_probs[2] = 0.0
+                print("[WARN] semantic_mask_dir is missing; semantic mask probabilities fallback to random masking")
+
             if self.mask_mix_probs[1] > 0 and not self._jt_semantic_indices:
-                raise ValueError("mask_mix_probs requests JT semantic masks, but no JT semantic mask files were found")
+                if not self.semantic_mask_fallback_to_random:
+                    raise ValueError("mask_mix_probs requests JT semantic masks, but no JT semantic mask files were found")
+                self.mask_mix_probs[0] += self.mask_mix_probs[1]
+                self.mask_mix_probs[1] = 0.0
+                print("[WARN] JT semantic mask files were not found; JT semantic probability fallback to random masking")
             if self.mask_mix_probs[2] > 0 and not self._bf_semantic_indices:
-                raise ValueError("mask_mix_probs requests BF semantic masks, but no BF semantic mask files were found")
+                if not self.semantic_mask_fallback_to_random:
+                    raise ValueError("mask_mix_probs requests BF semantic masks, but no BF semantic mask files were found")
+                self.mask_mix_probs[0] += self.mask_mix_probs[2]
+                self.mask_mix_probs[2] = 0.0
+                print("[WARN] BF semantic mask files were not found; BF semantic probability fallback to random masking")
 
     def set_epoch(self, epoch: int) -> None:
         """训练循环每个 epoch 调用，供课程学习判断当前阶段"""
@@ -295,7 +315,8 @@ class PairDataset(VisionDataset):
         else:
             mask = self.masked_position_generator()
 
-        return image, target, mask, valid
+        contour_valid = torch.tensor(1.0 if mask_mode == "jt_semantic" else 0.0, dtype=torch.float32)
+        return image, target, mask, valid, contour_valid
 
     def __len__(self) -> int:
         return len(self.pairs)

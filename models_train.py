@@ -495,6 +495,113 @@ class Fontify(nn.Module):
 
         return magnitude
 
+    @torch.no_grad()
+    def _select_masked_edge_points(self, edge_score, mask_score, scale_y, scale_x,
+                                   edge_threshold=0.45, max_points=512):
+        edge_score = edge_score.float()
+        mask_bool = mask_score > 0.5
+        keep = mask_bool & (edge_score > edge_threshold)
+        if keep.sum() == 0:
+            return None
+
+        coords = torch.nonzero(keep, as_tuple=False)
+        values = edge_score[keep]
+        if coords.shape[0] > max_points:
+            top_idx = torch.topk(values, k=max_points, largest=True).indices
+            coords = coords[top_idx]
+
+        coords = coords.float()
+        coords[:, 0] = coords[:, 0] * scale_y
+        coords[:, 1] = coords[:, 1] * scale_x
+        return coords
+
+    @torch.no_grad()
+    def masked_edge_offset_metric(self, edge_pred, edge_target, mask, contour_valid=None):
+        """
+        Compute masked edge offset metrics for JT semantic masks only.
+        Distances are measured in original-image pixels and only inside the selected mask.
+        """
+        device = edge_pred.device
+        zero = edge_pred.new_tensor(0.0)
+        metrics = {
+            "edge_offset_sum": zero.clone(),
+            "edge_offset_gt_to_pred_sum": zero.clone(),
+            "edge_offset_pred_to_gt_sum": zero.clone(),
+            "edge_offset_dx_sum": zero.clone(),
+            "edge_offset_dy_sum": zero.clone(),
+            "edge_offset_count": zero.clone(),
+        }
+        if contour_valid is None:
+            return metrics
+
+        contour_valid = contour_valid.reshape(-1).to(device=device, dtype=torch.float32)
+        if contour_valid.sum() <= 0:
+            return metrics
+
+        mask = mask[:, :1].detach().float()
+        _, _, h, w = mask.shape
+        metric_h = min(h, 224)
+        metric_w = max(1, int(round(w * metric_h / h)))
+        scale_y = float(h) / float(metric_h)
+        scale_x = float(w) / float(metric_w)
+
+        edge_pred_small = F.interpolate(edge_pred.detach().float(), size=(metric_h, metric_w),
+                                        mode="bilinear", align_corners=False)
+        edge_target_small = F.interpolate(edge_target.detach().float(), size=(metric_h, metric_w),
+                                          mode="bilinear", align_corners=False)
+        mask_small = F.interpolate(mask, size=(metric_h, metric_w), mode="nearest")
+
+        for i in range(edge_pred_small.shape[0]):
+            if contour_valid[i] <= 0:
+                continue
+
+            pred_points = self._select_masked_edge_points(
+                edge_pred_small[i, 0], mask_small[i, 0], scale_y, scale_x
+            )
+            gt_points = self._select_masked_edge_points(
+                edge_target_small[i, 0], mask_small[i, 0], scale_y, scale_x
+            )
+            if pred_points is None and gt_points is None:
+                continue
+
+            mask_points = torch.nonzero(mask_small[i, 0] > 0.5, as_tuple=False).float()
+            if mask_points.shape[0] == 0:
+                continue
+            bbox_min = mask_points.min(dim=0).values
+            bbox_max = mask_points.max(dim=0).values
+            bbox_size = (bbox_max - bbox_min + 1.0)
+            empty_penalty = torch.sqrt((bbox_size[0] * scale_y) ** 2 + (bbox_size[1] * scale_x) ** 2)
+
+            if pred_points is None:
+                gt_to_pred = empty_penalty
+                pred_to_gt = zero
+                dx = zero
+                dy = zero
+            elif gt_points is None:
+                gt_to_pred = zero
+                pred_to_gt = empty_penalty
+                dx = zero
+                dy = zero
+            else:
+                distances = torch.cdist(gt_points, pred_points, p=2)
+                gt_min_dist, gt_min_idx = distances.min(dim=1)
+                pred_min_dist, _ = distances.min(dim=0)
+                matched_pred = pred_points[gt_min_idx]
+                offsets = matched_pred - gt_points
+                gt_to_pred = gt_min_dist.mean()
+                pred_to_gt = pred_min_dist.mean()
+                dx = offsets[:, 1].mean()
+                dy = offsets[:, 0].mean()
+
+            metrics["edge_offset_gt_to_pred_sum"] += gt_to_pred
+            metrics["edge_offset_pred_to_gt_sum"] += pred_to_gt
+            metrics["edge_offset_sum"] += 0.5 * (gt_to_pred + pred_to_gt)
+            metrics["edge_offset_dx_sum"] += dx
+            metrics["edge_offset_dy_sum"] += dy
+            metrics["edge_offset_count"] += 1.0
+
+        return metrics
+
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
@@ -591,14 +698,20 @@ class Fontify(nn.Module):
         x = self.decoder_pred(x) # Bx3xHxW
         return x
 
-    def forward_loss(self, imgs, pred, tgts, mask, valid, epoch=0, no_gan=False):
+    def forward_loss(self, imgs, pred, tgts, mask, valid, contour_valid=None, epoch=0, no_gan=False):
         """
         tgts: [N, 3, H, W]
         pred: [N, 3, H, W]
         mask: [N, L], 0 is keep, 1 is remove, 
         valid: [N, 3, H, W]
+        contour_valid: [N], 1 means this sample uses JT semantic mask for contour metric/loss
         epoch: 当前训练epoch，用于动态损失权重计算
         """
+        contour_valid_ratio = pred.new_tensor(0.0)
+        if contour_valid is not None:
+            contour_valid = contour_valid.reshape(-1).to(device=tgts.device, dtype=torch.float32)
+            contour_valid_ratio = contour_valid.detach().mean().to(dtype=pred.dtype)
+
         mask = mask[:, :, None].repeat(1, 1, self.patch_size**2 * 3)
         mask = self.unpatchify(mask)
 
@@ -638,6 +751,7 @@ class Fontify(nn.Module):
         edge_pred = self.improved_edge_detection(pred)
         edge_target = self.improved_edge_detection(target)
         loss_edge = F.l1_loss(edge_pred, edge_target)
+        edge_offset_metrics = self.masked_edge_offset_metric(edge_pred, edge_target, mask, contour_valid)
 
         phase, adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
         loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
@@ -672,7 +786,12 @@ class Fontify(nn.Module):
             def scalar(x):
                 return float(x.detach().item())
 
+            edge_offset_count = edge_offset_metrics["edge_offset_count"].clamp_min(1.0)
+            edge_offset = edge_offset_metrics["edge_offset_sum"] / edge_offset_count
             print(f"[loss-dbg] epoch={epoch} phase={phase} step={self._dbg_step} "
+                  f"contour_valid={scalar(contour_valid_ratio):.3f} "
+                  f"edge_offset_px={scalar(edge_offset):.2f} "
+                  f"edge_offset_n={scalar(edge_offset_metrics['edge_offset_count']):.0f} "
                   f"raw: recon({self.loss_func})={scalar(loss_l1l2):.4f} "
                   f"style={scalar(loss_style):.4f} edge={scalar(loss_edge):.4f} "
                   f"adv={scalar(adv_loss):.4f} | "
@@ -687,9 +806,9 @@ class Fontify(nn.Module):
                   f"edge={scalar(actual_shares['edge'])*100:.1f} "
                   f"adv={scalar(actual_shares['adv'])*100:.1f}", flush=True)
         # === 临时调试结束 ===
-        return loss, loss_l1l2, loss_vgg
+        return loss, loss_l1l2, loss_vgg, edge_offset_metrics
 
-    def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False):
+    def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, contour_valid=None, epoch=0, no_gan=False):
         #imgs = self.tps(imgs)
         #tgts = self.tps(tgts)
         if bool_masked_pos is None:
@@ -698,10 +817,10 @@ class Fontify(nn.Module):
             bool_masked_pos = bool_masked_pos.flatten(1).to(torch.bool)
         latent = self.forward_encoder(imgs, tgts, bool_masked_pos)
         pred = self.forward_decoder(latent)  # [N, L, p*p*3]
-        loss, loss_l1l2, loss_vgg = self.forward_loss(
-            imgs, pred, tgts, bool_masked_pos, valid, epoch=epoch, no_gan=no_gan
+        loss, loss_l1l2, loss_vgg, edge_offset_metrics = self.forward_loss(
+            imgs, pred, tgts, bool_masked_pos, valid, contour_valid=contour_valid, epoch=epoch, no_gan=no_gan
         )
-        return loss, loss_l1l2, loss_vgg, self.patchify(pred), bool_masked_pos, pred
+        return loss, loss_l1l2, loss_vgg, self.patchify(pred), bool_masked_pos, pred, edge_offset_metrics
 
 
 

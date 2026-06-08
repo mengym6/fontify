@@ -14,6 +14,44 @@ import numpy as np
 import time
 
 #检索关键词tb调整画图数量
+def _metric_item(metric, name):
+    return float(metric[name].detach().item())
+
+
+def _reduce_edge_offset_metrics(edge_offset_metrics):
+    count = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_count"))
+    if count <= 0:
+        return {"count": 0.0}
+
+    edge_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_sum"))
+    gt_to_pred_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_gt_to_pred_sum"))
+    pred_to_gt_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_pred_to_gt_sum"))
+    dx_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_dx_sum"))
+    dy_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_dy_sum"))
+
+    return {
+        "count": count,
+        "edge_offset": edge_sum / count,
+        "edge_gt_to_pred": gt_to_pred_sum / count,
+        "edge_pred_to_gt": pred_to_gt_sum / count,
+        "edge_offset_dx": dx_sum / count,
+        "edge_offset_dy": dy_sum / count,
+    }
+
+
+def _update_edge_offset_logger(metric_logger, edge_offset_values):
+    metric_logger.update(edge_offset_count=edge_offset_values["count"])
+    if edge_offset_values["count"] <= 0:
+        return
+    metric_logger.update(
+        edge_offset=edge_offset_values["edge_offset"],
+        edge_gt_to_pred=edge_offset_values["edge_gt_to_pred"],
+        edge_pred_to_gt=edge_offset_values["edge_pred_to_gt"],
+        edge_offset_dx=edge_offset_values["edge_offset_dx"],
+        edge_offset_dy=edge_offset_values["edge_offset_dy"],
+    )
+
+
 def get_loss_scale_for_deepspeed(model):
     optimizer = model.optimizer
     loss_scale = None
@@ -48,7 +86,12 @@ def train_one_epoch(model: torch.nn.Module,
 
     # wandb_images = []
     tensorboard_images = []
-    for data_iter_step, (samples, targets, bool_masked_pos, valid) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for data_iter_step, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+        if len(batch) == 5:
+            samples, targets, bool_masked_pos, valid, contour_valid = batch
+        else:
+            samples, targets, bool_masked_pos, valid = batch
+            contour_valid = None
         # we use a per iteration (instead of per epoch) lr scheduler
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
@@ -57,11 +100,13 @@ def train_one_epoch(model: torch.nn.Module,
         targets = targets.to(device, non_blocking=True, dtype=torch.bfloat16)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True, dtype=torch.bfloat16)
         valid = valid.to(device, non_blocking=True, dtype=torch.bfloat16)
+        if contour_valid is not None:
+            contour_valid = contour_valid.to(device, non_blocking=True, dtype=torch.float32)
 
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            loss, loss_l1l2, loss_vgg, y, mask, pred = model(
+            loss, loss_l1l2, loss_vgg, y, mask, pred, edge_offset_metrics = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
-                valid=valid, epoch=epoch, no_gan=args.no_gan
+                valid=valid, contour_valid=contour_valid, epoch=epoch, no_gan=args.no_gan
             )
 
         loss_value = loss.item()
@@ -132,10 +177,18 @@ def train_one_epoch(model: torch.nn.Module,
 
         metric_logger.update(loss_scale=loss_scale_value)
         metric_logger.update(grad_norm=grad_norm)
+        contour_valid_ratio = None
+        if contour_valid is not None:
+            contour_valid_ratio = contour_valid.float().mean().item()
+            metric_logger.update(contour_valid=contour_valid_ratio)
 
         loss_value_reduce = misc.all_reduce_mean(loss_value)
         loss_l1l2_reduce = misc.all_reduce_mean(loss_l1l2)
         loss_vgg_reduce = misc.all_reduce_mean(loss_vgg)
+        edge_offset_reduce = _reduce_edge_offset_metrics(edge_offset_metrics)
+        _update_edge_offset_logger(metric_logger, edge_offset_reduce)
+        if contour_valid_ratio is not None:
+            contour_valid_ratio_reduce = misc.all_reduce_mean(contour_valid_ratio)
 
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
@@ -153,18 +206,30 @@ def train_one_epoch(model: torch.nn.Module,
                 'loss_l1l2': loss_l1l2_reduce,
                 'loss_vgg': loss_vgg_reduce
             }, epoch_1000x)
+            if contour_valid_ratio is not None:
+                log_writer.add_scalar('train_contour_valid_ratio', contour_valid_ratio_reduce, epoch_1000x)
+            log_writer.add_scalar('train_edge_offset_count', edge_offset_reduce["count"], epoch_1000x)
+            if edge_offset_reduce["count"] > 0:
+                log_writer.add_scalars('train_edge_offset_metric', {
+                    'edge_offset': edge_offset_reduce["edge_offset"],
+                    'gt_to_pred': edge_offset_reduce["edge_gt_to_pred"],
+                    'pred_to_gt': edge_offset_reduce["edge_pred_to_gt"],
+                    'dx': edge_offset_reduce["edge_offset_dx"],
+                    'dy': edge_offset_reduce["edge_offset_dy"],
+                }, epoch_1000x)
 
 
             with torch.no_grad():
+                raw_model = model.module if hasattr(model, "module") else model
                 imagenet_mean = np.array([0.485, 0.456, 0.406])
                 imagenet_std = np.array([0.229, 0.224, 0.225])
                 y = y[[0]]
-                y = model.module.unpatchify(y)
+                y = raw_model.unpatchify(y)
                 y = torch.einsum('nchw->nhwc', y).detach().cpu()
                 mask = mask[[0]]
                 mask = mask.detach().float().cpu()
-                mask = mask.unsqueeze(-1).repeat(1, 1, model.module.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
-                mask = model.module.unpatchify(mask)  # 1 is removing, 0 is keeping
+                mask = mask.unsqueeze(-1).repeat(1, 1, raw_model.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
+                mask = raw_model.unpatchify(mask)  # 1 is removing, 0 is keeping
                 mask = torch.einsum('nchw->nhwc', mask).detach().cpu()
                 x = samples[[0]]
                 x = x.detach().float().cpu()
@@ -233,21 +298,28 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         targets = batch[1]
         bool_masked_pos = batch[2]
         valid = batch[3]
+        contour_valid = batch[4] if len(batch) == 5 else None
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True)
         valid = valid.to(device, non_blocking=True)
+        if contour_valid is not None:
+            contour_valid = contour_valid.to(device, non_blocking=True, dtype=torch.float32)
 
         # compute output
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            loss, loss_l1l2, loss_vgg, y, mask, pred = model(
+            loss, loss_l1l2, loss_vgg, y, mask, pred, edge_offset_metrics = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
-                valid=valid, epoch=epoch, no_gan=args.no_gan
+                valid=valid, contour_valid=contour_valid, epoch=epoch, no_gan=args.no_gan
             )
 
         metric_logger.update(loss=loss.item())
         metric_logger.update(loss_l1l2=loss_l1l2)
         metric_logger.update(loss_vgg=loss_vgg)
+        if contour_valid is not None:
+            metric_logger.update(contour_valid=contour_valid.float().mean().item())
+        edge_offset_reduce = _reduce_edge_offset_metrics(edge_offset_metrics)
+        _update_edge_offset_logger(metric_logger, edge_offset_reduce)
         """
             在tensorboard内展示图片nchw->nhwc
         """
@@ -255,15 +327,16 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         if val_tb_image_limit > 0:
             write_tb_image = write_tb_image and num_batch < val_tb_image_limit
         if write_tb_image:
+            raw_model = model.module if hasattr(model, "module") else model
             imagenet_mean = np.array([0.485, 0.456, 0.406])
             imagenet_std = np.array([0.229, 0.224, 0.225])
             y = y[[0]]
-            y = model.module.unpatchify(y)
+            y = raw_model.unpatchify(y)
             y = torch.einsum('nchw->nhwc', y).detach().cpu()
             mask = mask[[0]]
             mask = mask.detach().float().cpu()
-            mask = mask.unsqueeze(-1).repeat(1, 1, model.module.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
-            mask = model.module.unpatchify(mask)  # 1 is removing, 0 is keeping
+            mask = mask.unsqueeze(-1).repeat(1, 1, raw_model.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
+            mask = raw_model.unpatchify(mask)  # 1 is removing, 0 is keeping
             mask = torch.einsum('nchw->nhwc', mask).detach().cpu()
             x = samples[[0]]
             x = x.detach().float().cpu()
