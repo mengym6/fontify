@@ -602,6 +602,62 @@ class Fontify(nn.Module):
 
         return metrics
 
+    def jt_edge_offset_loss(self, edge_pred, edge_target, mask, contour_valid=None):
+        """
+        Differentiable JT-only edge alignment loss.
+        Keep masked_edge_offset_metric() as a hard logging metric; this loss uses
+        soft edge weights and normalized centroids so gradients can flow to pred.
+        """
+        zero = edge_pred.new_tensor(0.0)
+        if contour_valid is None:
+            return zero, zero, zero
+
+        edge_pred = edge_pred.float()
+        edge_target = edge_target.float()
+        mask = mask[:, :1].float()
+        if mask.shape[-2:] != edge_pred.shape[-2:]:
+            mask = F.interpolate(mask, size=edge_pred.shape[-2:], mode="nearest")
+
+        contour_valid = contour_valid.reshape(-1).to(device=edge_pred.device, dtype=edge_pred.dtype)
+        jt_mask = mask * contour_valid.reshape(-1, 1, 1, 1)
+        per_sample_mask_sum = jt_mask.sum(dim=(1, 2, 3))
+        active = (per_sample_mask_sum > 0).to(dtype=edge_pred.dtype)
+        valid_count = active.sum()
+        valid_denom = valid_count.clamp_min(1.0)
+
+        edge_abs = (edge_pred - edge_target).abs()
+        loss_jt_edge_per_sample = (
+            (edge_abs * jt_mask).sum(dim=(1, 2, 3))
+            / per_sample_mask_sum.clamp_min(1e-6)
+        )
+        loss_jt_edge = (loss_jt_edge_per_sample * active).sum() / valid_denom
+
+        edge_tau = float(getattr(self, "jt_edge_tau", 0.45))
+        edge_temp = max(float(getattr(self, "jt_edge_temp", 0.05)), 1e-6)
+        soft_pred = torch.sigmoid((edge_pred - edge_tau) / edge_temp) * jt_mask
+        soft_target = torch.sigmoid((edge_target - edge_tau) / edge_temp) * jt_mask
+
+        _, _, h, w = edge_pred.shape
+        x_coords = torch.linspace(-1.0, 1.0, w, device=edge_pred.device, dtype=edge_pred.dtype)
+        y_coords = torch.linspace(-1.0, 1.0, h, device=edge_pred.device, dtype=edge_pred.dtype)
+        x_coords = x_coords.view(1, 1, 1, w)
+        y_coords = y_coords.view(1, 1, h, 1)
+
+        pred_mass = soft_pred.sum(dim=(2, 3)).clamp_min(1e-6)
+        target_mass = soft_target.sum(dim=(2, 3)).clamp_min(1e-6)
+        pred_cx = (soft_pred * x_coords).sum(dim=(2, 3)) / pred_mass
+        pred_cy = (soft_pred * y_coords).sum(dim=(2, 3)) / pred_mass
+        target_cx = (soft_target * x_coords).sum(dim=(2, 3)) / target_mass
+        target_cy = (soft_target * y_coords).sum(dim=(2, 3)) / target_mass
+
+        offset_vec = torch.cat([pred_cx - target_cx, pred_cy - target_cy], dim=1)
+        loss_jt_vec_per_sample = F.smooth_l1_loss(
+            offset_vec, torch.zeros_like(offset_vec), reduction="none"
+        ).sum(dim=1)
+        loss_jt_vec = (loss_jt_vec_per_sample * active).sum() / valid_denom
+
+        return loss_jt_edge, loss_jt_vec, valid_count
+
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
@@ -752,9 +808,25 @@ class Fontify(nn.Module):
         edge_target = self.improved_edge_detection(target)
         loss_edge = F.l1_loss(edge_pred, edge_target)
         edge_offset_metrics = self.masked_edge_offset_metric(edge_pred, edge_target, mask, contour_valid)
+        loss_jt_edge, loss_jt_vec, jt_edge_valid_count = self.jt_edge_offset_loss(
+            edge_pred, edge_target, mask, contour_valid
+        )
 
         phase, adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
-        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
+        jt_edge_loss_weight = float(getattr(self, "jt_edge_loss_weight", 0.0))
+        jt_edge_vec_weight = float(getattr(self, "jt_edge_vec_weight", 0.1))
+        loss_jt_total = loss_jt_edge + jt_edge_vec_weight * loss_jt_vec
+        jt_edge_weight = edge_weight * jt_edge_loss_weight
+
+        edge_offset_metrics.update({
+            "jt_edge_loss": loss_jt_edge.detach(),
+            "jt_edge_vec_loss": loss_jt_vec.detach(),
+            "jt_edge_total_loss": loss_jt_total.detach(),
+            "jt_edge_loss_contrib": (loss_jt_total * loss_jt_total.new_tensor(jt_edge_weight)).detach(),
+            "jt_edge_valid_count": jt_edge_valid_count.detach(),
+        })
+
+        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge + jt_edge_weight * loss_jt_total
 
         adv_loss = pred.new_tensor(0.0)
         if not no_gan:
@@ -775,6 +847,7 @@ class Fontify(nn.Module):
                 "recon": loss_l1l2.detach(),
                 "style": loss_style.detach(),
                 "edge": loss_edge.detach() * loss_edge.new_tensor(edge_weight),
+                "jt_edge": loss_jt_total.detach() * loss_jt_total.new_tensor(jt_edge_weight),
                 "adv": adv_loss.detach() * adv_loss.new_tensor(adv_weight),
             }
             contrib_total = loss_l1l2.new_tensor(0.0)
@@ -790,20 +863,25 @@ class Fontify(nn.Module):
             edge_offset = edge_offset_metrics["edge_offset_sum"] / edge_offset_count
             print(f"[loss-dbg] epoch={epoch} phase={phase} step={self._dbg_step} "
                   f"contour_valid={scalar(contour_valid_ratio):.3f} "
+                  f"jt_edge_valid={scalar(jt_edge_valid_count):.0f} "
                   f"edge_offset_px={scalar(edge_offset):.2f} "
                   f"edge_offset_n={scalar(edge_offset_metrics['edge_offset_count']):.0f} "
                   f"raw: recon({self.loss_func})={scalar(loss_l1l2):.4f} "
                   f"style={scalar(loss_style):.4f} edge={scalar(loss_edge):.4f} "
+                  f"jt_edge={scalar(loss_jt_edge):.4f} jt_vec={scalar(loss_jt_vec):.4f} "
                   f"adv={scalar(adv_loss):.4f} | "
                   f"w: recon=1.000 style=1.000 "
-                  f"edge={edge_weight:.3f} adv={adv_weight:.3f} | "
+                  f"edge={edge_weight:.3f} jt_edge={jt_edge_weight:.3f} "
+                  f"jt_vec={jt_edge_vec_weight:.3f} adv={adv_weight:.3f} | "
                   f"contrib: recon={scalar(contribs['recon']):.4f} "
                   f"style={scalar(contribs['style']):.4f} "
                   f"edge={scalar(contribs['edge']):.4f} "
+                  f"jt_edge={scalar(contribs['jt_edge']):.4f} "
                   f"adv={scalar(contribs['adv']):.4f} | "
                   f"share%: recon={scalar(actual_shares['recon'])*100:.1f} "
                   f"style={scalar(actual_shares['style'])*100:.1f} "
                   f"edge={scalar(actual_shares['edge'])*100:.1f} "
+                  f"jt_edge={scalar(actual_shares['jt_edge'])*100:.1f} "
                   f"adv={scalar(actual_shares['adv'])*100:.1f}", flush=True)
         # === 临时调试结束 ===
         return loss, loss_l1l2, loss_vgg, edge_offset_metrics

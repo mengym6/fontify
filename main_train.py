@@ -87,6 +87,14 @@ def get_args_parser():
     parser.add_argument('--semantic_only_epochs', default=0, type=int,
                         help='前 N 个 epoch 只用结体(JT)随机遮盖，BF 样本重定向到 JT；'
                              'epoch>=N 后恢复 JT/BF 同步训练，JT 随机遮盖、BF 语义遮盖。0 表示不启用 JT-only 课程')
+    parser.add_argument('--jt_edge_loss_weight', default=0.05, type=float,
+                        help='JT semantic mask 区域可导 edge/vector loss 的总权重，仍会乘以 edge warmup 权重')
+    parser.add_argument('--jt_edge_vec_weight', default=0.1, type=float,
+                        help='JT edge loss 内 soft centroid 偏移向量项的相对权重')
+    parser.add_argument('--jt_edge_tau', default=0.45, type=float,
+                        help='JT edge vector loss 的 soft edge 阈值')
+    parser.add_argument('--jt_edge_temp', default=0.05, type=float,
+                        help='JT edge vector loss 的 soft threshold 温度，必须大于 0')
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
                         help='use checkpoint to save GPU memory')
 
@@ -213,6 +221,12 @@ def main(args, ds_init):
     model = models_train.__dict__[args.model]()
     # curriculum 切换点：数据端从 JT-only 切到 JT/BF 同步训练，loss 端从禁用 edge/adv 切到 warmup
     model.semantic_only_epochs = args.semantic_only_epochs
+    if args.jt_edge_temp <= 0:
+        raise ValueError("--jt_edge_temp must be > 0")
+    model.jt_edge_loss_weight = args.jt_edge_loss_weight
+    model.jt_edge_vec_weight = args.jt_edge_vec_weight
+    model.jt_edge_tau = args.jt_edge_tau
+    model.jt_edge_temp = args.jt_edge_temp
 
     if args.finetune:
         checkpoint = torch.load(args.finetune, map_location='cpu')
@@ -481,6 +495,14 @@ def main(args, ds_init):
                         'dx': test_stats['edge_offset_dx'],
                         'dy': test_stats['edge_offset_dy'],
                     }, epoch)
+                if 'jt_edge_loss' in test_stats:
+                    log_writer.add_scalars('test_jt_edge_loss', {
+                        'loss_jt_edge': test_stats['jt_edge_loss'],
+                        'loss_jt_vec': test_stats['jt_edge_vec_loss'],
+                        'loss_jt_total': test_stats['jt_edge_total_loss'],
+                        'loss_jt_contrib': test_stats['jt_edge_loss_contrib'],
+                    }, epoch)
+                    log_writer.add_scalar('test_jt_edge_valid_count', test_stats['jt_edge_valid_count'], epoch)
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
 
