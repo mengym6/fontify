@@ -1,22 +1,25 @@
 import cv2
 import numpy as np
 import os
-import shutil
 import random
 from multiprocessing import Pool, cpu_count
+from pathlib import Path
+
+from preprocess_common import DEFAULT_NEW_DIR, image_files, iter_font_dirs, prepare_output_dir
 
 # ============================================================
 # 路径配置
 # ============================================================
-INPUT_DIR = r"/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new/柳公权结体/images"
-
-# 输出文件夹自动在 INPUT_DIR 同级创建，名为 <原文件夹名>_white_bg
-OUTPUT_SUFFIX = "_white_bg"
+NEW_DIR = DEFAULT_NEW_DIR
+INPUT_SUBDIR = "images"
+OUTPUT_SUBDIR = "images_white_bg"
+CONTRAST_SUBDIR = "images_contrast"
+CLEAR_OUTPUT = True
 
 # ============================================================
 # 运行模式：改这里切换测试/批量
 # ============================================================
-TEST_MODE = True          # True=测试模式(随机抽样), False=批量处理全部
+TEST_MODE = False         # True=测试模式(随机抽样), False=批量处理全部
 TEST_SAMPLE_NUM = 2       # 测试模式下随机抽取的图片数量
 
 # ============================================================
@@ -70,17 +73,6 @@ PARAMS = {
 # ============================================================
 # 核心函数
 # ============================================================
-
-def setup_output_dir(input_dir, suffix):
-    """创建输出目录（已存在则清空重建）"""
-    parent = os.path.dirname(input_dir)
-    name = os.path.basename(input_dir)
-    output_dir = os.path.join(parent, name + suffix)
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-    os.makedirs(output_dir)
-    return output_dir
-
 
 def estimate_background(gray, params):
     """形态学闭运算估计背景光照"""
@@ -217,16 +209,16 @@ def _worker(args):
     return fname, False
 
 
-def main():
-    output_dir = setup_output_dir(INPUT_DIR, OUTPUT_SUFFIX)
-    contrast_dir = setup_output_dir(INPUT_DIR, "_contrast")
-    exts = ('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif')
-    files = sorted([f for f in os.listdir(INPUT_DIR)
-                    if f.lower().endswith(exts)])
+def process_font_dir(font_dir: Path):
+    input_dir = font_dir / INPUT_SUBDIR
+    files = image_files(input_dir)
 
     if not files:
-        print(f"未找到图片文件: {INPUT_DIR}")
-        return
+        print(f"[跳过] {font_dir.name}: 未找到图片文件 {input_dir}")
+        return 0, 0
+
+    output_dir = prepare_output_dir(font_dir / OUTPUT_SUBDIR, clear=CLEAR_OUTPUT)
+    contrast_dir = prepare_output_dir(font_dir / CONTRAST_SUBDIR, clear=CLEAR_OUTPUT)
 
     # 测试模式：随机抽样
     if TEST_MODE:
@@ -236,17 +228,18 @@ def main():
     else:
         mode_str = "批量处理 (全部)"
 
-    num_workers = min(cpu_count(), len(files))
-    print(f"输入目录: {INPUT_DIR}")
+    num_workers = max(1, min(cpu_count(), len(files)))
+    print(f"[{font_dir.name}]")
+    print(f"输入目录: {input_dir}")
     print(f"输出目录: {output_dir}")
     print(f"对比度中间图: {contrast_dir}")
     print(f"运行模式: {mode_str}")
     print(f"待处理: {len(files)} 张, 进程数: {num_workers}")
     if TEST_MODE:
-        print(f"抽样文件: {files}")
+        print(f"抽样文件: {[p.name for p in files]}")
     print("-" * 40)
 
-    tasks = [(f, INPUT_DIR, output_dir, contrast_dir, PARAMS)
+    tasks = [(f.name, str(input_dir), str(output_dir), str(contrast_dir), PARAMS)
              for f in files]
 
     success = 0
@@ -262,6 +255,26 @@ def main():
 
     print("-" * 40)
     print(f"完成，成功处理 {success}/{len(files)} 张")
+    return success, len(files)
+
+
+def process_all_fonts(new_dir=NEW_DIR):
+    font_dirs = iter_font_dirs(new_dir)
+    total_success = 0
+    total_files = 0
+    print(f"根目录: {Path(new_dir)}")
+    print(f"发现 {len(font_dirs)} 个字体目录")
+    print("=" * 50)
+    for font_dir in font_dirs:
+        success, count = process_font_dir(font_dir)
+        total_success += success
+        total_files += count
+    print("=" * 50)
+    print(f"全部完成，共处理 {total_success}/{total_files} 张")
+
+
+def main():
+    process_all_fonts()
 
 
 if __name__ == "__main__":

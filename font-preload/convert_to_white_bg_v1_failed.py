@@ -1,44 +1,79 @@
 import cv2
 import numpy as np
-import os
+from pathlib import Path
 
-input_folder = "/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new/颜真卿结体/images"
+from preprocess_common import DEFAULT_NEW_DIR, image_files, iter_font_dirs, prepare_output_dir
 
-parent_dir = os.path.dirname(input_folder)
-folder_name = os.path.basename(input_folder)
-output_folder = os.path.join(parent_dir, folder_name + "_white_bg_v1")
-os.makedirs(output_folder, exist_ok=True)
 
-exts = ('.png', '.jpg', '.jpeg', '.bmp', '.tiff')
-files = [f for f in os.listdir(input_folder) if f.lower().endswith(exts)]
+NEW_DIR = DEFAULT_NEW_DIR
+INPUT_SUBDIR = "images"
+OUTPUT_SUBDIR = "images_white_bg_v1"
+CLEAR_OUTPUT = True
 
-for fname in files:
-    img = cv2.imread(os.path.join(input_folder, fname), cv2.IMREAD_GRAYSCALE)
+
+def process_single(img_path: Path):
+    img = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
     if img is None:
-        continue
+        return None
+
     h, w = img.shape
-    # 中值滤波去石头纹理
     blurred = cv2.medianBlur(img, 19)
-    # Otsu 二值化
     _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    # 闭运算填补笔画空洞
     kernel = np.ones((3, 3), np.uint8)
     closed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel, iterations=3)
-    # 连通域过滤去噪点
     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(closed)
     min_area = h * w * 0.002
     filtered = np.zeros_like(closed)
     for i in range(1, num_labels):
         if stats[i, cv2.CC_STAT_AREA] >= min_area:
             filtered[labels == i] = 255
-    # 开运算去掉边缘小突起和毛刺
+
     circ = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
     filtered = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, circ)
-    # 高斯模糊不二值化，保留灰度抗锯齿
     smooth = cv2.GaussianBlur(filtered, (7, 7), 0)
-    # 反色：白底黑字
-    result = 255 - smooth
-    cv2.imwrite(os.path.join(output_folder, fname), result)
+    return 255 - smooth
 
-print(f"完成，共处理 {len(files)} 张图片")
-print(f"输出目录: {output_folder}")
+
+def process_font_dir(font_dir: Path):
+    input_dir = font_dir / INPUT_SUBDIR
+    files = image_files(input_dir)
+    if not files:
+        print(f"[跳过] {font_dir.name}: 未找到图片文件 {input_dir}")
+        return 0, 0
+
+    output_dir = prepare_output_dir(font_dir / OUTPUT_SUBDIR, clear=CLEAR_OUTPUT)
+    success = 0
+    print(f"[{font_dir.name}] 输入 {len(files)} 张 -> {output_dir}")
+    for idx, path in enumerate(files, 1):
+        result = process_single(path)
+        if result is None:
+            print(f"  [跳过] {path.name} (读取失败)")
+            continue
+        cv2.imwrite(str(output_dir / path.name), result)
+        success += 1
+        if idx % 50 == 0 or idx == len(files):
+            print(f"  进度: {idx}/{len(files)}")
+    return success, len(files)
+
+
+def process_all_fonts(new_dir=NEW_DIR):
+    total_success = 0
+    total_files = 0
+    font_dirs = iter_font_dirs(new_dir)
+    print(f"根目录: {Path(new_dir)}")
+    print(f"发现 {len(font_dirs)} 个字体目录")
+    print("=" * 50)
+    for font_dir in font_dirs:
+        success, count = process_font_dir(font_dir)
+        total_success += success
+        total_files += count
+    print("=" * 50)
+    print(f"全部完成，共处理 {total_success}/{total_files} 张")
+
+
+def main():
+    process_all_fonts()
+
+
+if __name__ == "__main__":
+    main()

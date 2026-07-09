@@ -1,88 +1,170 @@
-import os
 import json
 import random
+import shutil
+from pathlib import Path
+
 
 random.seed(42)
 
-# ============ 手动修改区 ============
-# new 下每个字体文件夹 -> ttf 下对应的字体文件夹（image_path 从这里取）
-# 按你的实际对应关系修改下面的右值即可
-folder_to_ttf = {
-    "DongqcBF":  "MaShanZheng-Regular",
-    "DongqcJT":  "MaShanZheng-Regular",
-    "LiugqBF":   "MaShanZheng-Regular",
-    "LiugqJT":   "MaShanZheng-Regular",
-    "OuyxBF":    "ZhiMangXing-Regular",
-    "OuyxJT":    "ZhiMangXing-Regular",
-    "SushBF":    "ZhiMangXing-Regular",
-    "SushJT":    "ZhiMangXing-Regular",
-    "YanzqBF":   "MaShanZheng-Regular",
-    "YanzqJT":   "MaShanZheng-Regular",
-    "ZhaomfBF":  "ZhiMangXing-Regular",
-    "ZhaomfJT":  "ZhiMangXing-Regular",
-}
-ttf_base = "ttf"
-# ===================================
+DATA_ROOT = Path(__file__).resolve().parent
+NEW_BASE = Path("font/train/new")
+TRAIN_OUTPUT_DIR = Path("train_json_new")
+VAL_OUTPUT_DIR = Path("val_json_new")
+VAL_RATIO = 0.15
+CLEAR_OUTPUT = True
 
-new_base = "font/train/new"
-fallback_source_dir = "ttf/SourceHanSansSC-Regular"  # ttf 找不到对应字时，回退到这个大库
-train_output_dir = "train_json_new"
-val_output_dir = "val_json_new"
-val_ratio = 0.15
+DEFAULT_SOURCE_DIR = Path("ttf/SourceHanSansSC-Regular")
+TARGET_SUBDIR_CANDIDATES = [
+    "images_white_bg_mask_denoised",
+    "images_white_bg",
+    "images",
+]
+ANNOTATIONS_SUBDIR = "annotations"
+ANNOTATIONS_FILENAME = "instances_default.json"
+SEMANTIC_MASKS_SUBDIR = "semantic_masks"
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif", ".webp"}
 
-abs_root = os.path.dirname(os.path.abspath(__file__))
+# 可选：如果某些字体必须使用特定 source 字体，在这里填。
+# 未配置的字体自动使用 DEFAULT_SOURCE_DIR。
+FOLDER_TO_TTF = {}
 
-# 大库只需加载一次，所有字体共用
-fallback_files = set(os.listdir(os.path.join(abs_root, fallback_source_dir)))
 
-os.makedirs(os.path.join(abs_root, train_output_dir), exist_ok=True)
-os.makedirs(os.path.join(abs_root, val_output_dir), exist_ok=True)
+def infer_role(folder_name: str) -> str:
+    if "BF" in folder_name or "笔法" in folder_name:
+        return "BF"
+    if "JT" in folder_name or "结体" in folder_name:
+        return "JT"
+    return ""
 
-new_abs = os.path.join(abs_root, new_base)
-for folder in sorted(os.listdir(new_abs)):
-    wb_dir = os.path.join(new_abs, folder, "images_white_bg_mask_denoised")
-    if not os.path.isdir(wb_dir):
-        continue
 
-    ttf_folder = folder_to_ttf.get(folder)
-    if ttf_folder is None:
-        print(f"{folder}: 未在 folder_to_ttf 中配置，跳过")
-        continue
-    source_dir = f"{ttf_base}/{ttf_folder}"
-    source_files = set(os.listdir(os.path.join(abs_root, source_dir)))
+def pair_type_for(folder_name: str) -> str:
+    role = infer_role(folder_name)
+    if role and role not in folder_name:
+        return f"font_{folder_name}_{role}"
+    return f"font_{folder_name}"
+
+
+def choose_target_dir(font_dir: Path) -> Path | None:
+    for subdir in TARGET_SUBDIR_CANDIDATES:
+        candidate = font_dir / subdir
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def choose_source_dir(folder_name: str) -> Path:
+    configured = FOLDER_TO_TTF.get(folder_name)
+    if configured:
+        return Path("ttf") / configured
+    return DEFAULT_SOURCE_DIR
+
+
+def rel(path: Path) -> str:
+    return path.as_posix()
+
+
+def prepare_output_dirs():
+    train_abs = DATA_ROOT / TRAIN_OUTPUT_DIR
+    val_abs = DATA_ROOT / VAL_OUTPUT_DIR
+    if CLEAR_OUTPUT:
+        for path in (train_abs, val_abs):
+            if path.exists():
+                shutil.rmtree(path)
+    train_abs.mkdir(parents=True, exist_ok=True)
+    val_abs.mkdir(parents=True, exist_ok=True)
+    return train_abs, val_abs
+
+
+def build_pairs_for_font(font_dir: Path):
+    folder_name = font_dir.name
+    target_dir = choose_target_dir(font_dir)
+    if target_dir is None:
+        print(f"{folder_name}: 未找到目标图片目录，跳过")
+        return []
+
+    source_dir = choose_source_dir(folder_name)
+    source_abs = DATA_ROOT / source_dir
+    fallback_abs = DATA_ROOT / DEFAULT_SOURCE_DIR
+    if not fallback_abs.is_dir():
+        print(f"{folder_name}: 缺少默认 source 目录 {fallback_abs}，跳过")
+        return []
+
+    source_files = set()
+    if source_abs.is_dir():
+        source_files = {p.name for p in source_abs.iterdir() if p.suffix.lower() in IMAGE_EXTS}
+    fallback_files = {p.name for p in fallback_abs.iterdir() if p.suffix.lower() in IMAGE_EXTS}
+
+    ann_path = font_dir / ANNOTATIONS_SUBDIR / ANNOTATIONS_FILENAME
+    rel_ann = rel(NEW_BASE / folder_name / ANNOTATIONS_SUBDIR / ANNOTATIONS_FILENAME) if ann_path.is_file() else None
 
     pairs = []
-    unpaired = []       # ttf 和大库都找不到对应字的目标图片
-    fallback_count = 0  # 走大库回退配对的数量
-    for f in sorted(os.listdir(wb_dir)):
-        name, ext = os.path.splitext(f)
-        source_name = name[0] + ext
+    unpaired = []
+    fallback_count = 0
+    target_files = sorted(p for p in target_dir.iterdir() if p.suffix.lower() in IMAGE_EXTS)
+    for target_file in target_files:
+        source_name = target_file.stem[0] + target_file.suffix
         if source_name in source_files:
-            img_path = f"{source_dir}/{source_name}"
+            image_path = source_dir / source_name
         elif source_name in fallback_files:
-            img_path = f"{fallback_source_dir}/{source_name}"
+            image_path = DEFAULT_SOURCE_DIR / source_name
             fallback_count += 1
         else:
-            unpaired.append(f)
+            unpaired.append(target_file.name)
             continue
-        pairs.append({
-            "image_path": img_path,
-            "target_path": f"{new_base}/{folder}/images_white_bg_mask_denoised/{f}",
-            "type": f"font_{folder}"
-        })
 
-    random.shuffle(pairs)
-    val_count = max(1, int(len(pairs) * val_ratio))
-    val_pairs = pairs[:val_count]
-    train_pairs = pairs[val_count:]
+        char_name = target_file.stem
+        semantic_mask_path = NEW_BASE / folder_name / SEMANTIC_MASKS_SUBDIR / f"{char_name}.npy"
+        item = {
+            "image_path": rel(image_path),
+            "target_path": rel(NEW_BASE / folder_name / target_dir.name / target_file.name),
+            "type": pair_type_for(folder_name),
+            "font_folder": folder_name,
+        }
+        if rel_ann:
+            item["annotation_path"] = rel_ann
+        if (DATA_ROOT / semantic_mask_path).is_file():
+            item["semantic_mask_path"] = rel(semantic_mask_path)
+        pairs.append(item)
 
-    train_path = os.path.join(abs_root, train_output_dir, f"font_train_{folder}.json")
-    val_path = os.path.join(abs_root, val_output_dir, f"font_val_{folder}.json")
-    with open(train_path, "w", encoding="utf-8") as fp:
-        json.dump(train_pairs, fp, ensure_ascii=False, indent=2)
-    with open(val_path, "w", encoding="utf-8") as fp:
-        json.dump(val_pairs, fp, ensure_ascii=False, indent=2)
-    print(f"{folder} <- {ttf_folder}: train {len(train_pairs)}, val {len(val_pairs)}, 大库回退 {fallback_count}, 未配对 {len(unpaired)}")
+    print(
+        f"{folder_name}: target_dir={target_dir.name}, pairs={len(pairs)}, "
+        f"fallback={fallback_count}, unpaired={len(unpaired)}"
+    )
     if unpaired:
-        sample = "、".join(os.path.splitext(x)[0] for x in unpaired[:10])
-        print(f"    丢弃(ttf 和大库都无对应字): {sample}{' ...' if len(unpaired) > 10 else ''}")
+        sample = "、".join(Path(x).stem for x in unpaired[:10])
+        print(f"    丢弃(source 无对应字): {sample}{' ...' if len(unpaired) > 10 else ''}")
+    return pairs
+
+
+def main():
+    train_abs, val_abs = prepare_output_dirs()
+    new_abs = DATA_ROOT / NEW_BASE
+    font_dirs = sorted(p for p in new_abs.iterdir() if p.is_dir() and not p.name.startswith(("_", ".")))
+
+    total_train = 0
+    total_val = 0
+    for font_dir in font_dirs:
+        pairs = build_pairs_for_font(font_dir)
+        if not pairs:
+            continue
+        random.shuffle(pairs)
+        val_count = max(1, int(len(pairs) * VAL_RATIO))
+        val_pairs = pairs[:val_count]
+        train_pairs = pairs[val_count:]
+
+        train_path = train_abs / f"font_train_{font_dir.name}.json"
+        val_path = val_abs / f"font_val_{font_dir.name}.json"
+        with train_path.open("w", encoding="utf-8") as fp:
+            json.dump(train_pairs, fp, ensure_ascii=False, indent=2)
+        with val_path.open("w", encoding="utf-8") as fp:
+            json.dump(val_pairs, fp, ensure_ascii=False, indent=2)
+
+        total_train += len(train_pairs)
+        total_val += len(val_pairs)
+
+    print(f"完成：train={total_train}, val={total_val}")
+    print(f"输出目录：{train_abs} / {val_abs}")
+
+
+if __name__ == "__main__":
+    main()

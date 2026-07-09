@@ -5,7 +5,9 @@ joblib==1.4.2
 jsonlib-python3==1.6.1
 lpips==0.1.4
 natsort==8.4.0
+opencv-python==4.10.0.84
 PySocks==1.7.1
+pycocotools==2.0.8
 scikit-image==0.24.0
 sconf==0.2.5
 timm==0.3.2

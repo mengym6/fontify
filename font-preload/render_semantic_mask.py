@@ -11,7 +11,12 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from pycocotools import mask as mask_util
+try:
+    from pycocotools import mask as mask_util
+except ImportError:
+    mask_util = None
+
+from preprocess_common import DEFAULT_NEW_DIR, annotation_json_path, iter_font_dirs
 
 # ============================================================
 # 模式选择（二选一）
@@ -38,7 +43,7 @@ CLEAR_OUTPUT = True      # True=运行前清空输出文件夹再重新生成，
 # ============================================================
 
 # new/ 目录，包含所有字体文件夹（DongqcBF, LiugqJT, ...）
-NEW_DIR = Path("/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new")
+NEW_DIR = DEFAULT_NEW_DIR
 
 # 标注 JSON 所在子目录名
 ANNOTATIONS_SUBDIR = "annotations"
@@ -71,6 +76,8 @@ MASK_BG_VALUE = 0
 
 def decode_rle(segmentation, h, w):
     """解码 RLE 格式的 segmentation 为二值 mask"""
+    if mask_util is None:
+        raise RuntimeError("RLE segmentation requires pycocotools")
     rle = segmentation
     if isinstance(rle['counts'], list):
         rle = mask_util.frPyObjects(rle, h, w)
@@ -80,7 +87,12 @@ def decode_rle(segmentation, h, w):
 def render_polygon(segmentation, h, w):
     """渲染 polygon 格式的 segmentation 为二值 mask"""
     mask = np.zeros((h, w), dtype=np.uint8)
-    for poly in segmentation:
+    if not segmentation:
+        return mask
+    polygons = segmentation
+    if isinstance(segmentation[0], (int, float)):
+        polygons = [segmentation]
+    for poly in polygons:
         pts = np.array(poly, dtype=np.float32).reshape(-1, 2)
         pts = pts.astype(np.int32)
         cv2.fillPoly(mask, [pts], 1)
@@ -165,8 +177,8 @@ def render_single_image_mask(image_info, annotations, text_cat_id, categories):
 
 def process_font_dir(font_dir: Path, verbose=False):
     """处理单个字体文件夹，渲染所有图的逐标注 mask 并保存为 .npy"""
-    ann_path = font_dir / ANNOTATIONS_SUBDIR / ANNOTATIONS_FILENAME
-    if not ann_path.exists():
+    ann_path = annotation_json_path(font_dir, ANNOTATIONS_SUBDIR, ANNOTATIONS_FILENAME)
+    if ann_path is None:
         if verbose:
             print(f"  [跳过] {font_dir.name}：无标注文件")
         return 0, 0
@@ -236,7 +248,7 @@ def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: 
     char_name = Path(img_info['file_name']).stem
     print(f"\n  [{font_dir.name}/{char_name}] 尺寸 {img_info['width']}×{img_info['height']}")
 
-    layers = render_single_image_mask(img_info, annotations, text_cat_id)
+    layers = render_single_image_mask(img_info, annotations, text_cat_id, categories)
     if layers is None:
         print("    无有效标注，跳过")
         return
@@ -302,8 +314,8 @@ def test_mode():
     # 收集所有可用的 (font_dir, img_info, annotations, text_cat_id, categories)
     candidates = []
     for font_dir in font_dirs:
-        ann_path = font_dir / ANNOTATIONS_SUBDIR / ANNOTATIONS_FILENAME
-        if not ann_path.exists():
+        ann_path = annotation_json_path(font_dir, ANNOTATIONS_SUBDIR, ANNOTATIONS_FILENAME)
+        if ann_path is None:
             continue
         with open(ann_path, 'r') as f:
             data = json.load(f)
@@ -344,8 +356,7 @@ def test_mode():
 
 def batch_mode(verbose=False):
     """遍历 NEW_DIR 下所有字体文件夹，批量渲染语义 mask"""
-    font_dirs = sorted([d for d in NEW_DIR.iterdir()
-                        if d.is_dir() and not d.name.startswith(('_', '.'))])
+    font_dirs = iter_font_dirs(NEW_DIR)
 
     print(f"扫描目录：{NEW_DIR}")
     print(f"找到 {len(font_dirs)} 个字体文件夹")

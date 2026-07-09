@@ -4,11 +4,13 @@ import os
 import shutil
 import random
 
+from preprocess_common import DEFAULT_NEW_DIR
+
 # ============================================================
 # 路径配置
 # ============================================================
 # new 文件夹根路径，脚本会自动遍历其中每个字体子目录
-NEW_DIR = r"/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new"
+NEW_DIR = str(DEFAULT_NEW_DIR)
 
 # 每个字体子目录中的子文件夹名
 CLEAN_SUBDIR = "images_white_bg_v1"   # 干净图（用于生成 mask）

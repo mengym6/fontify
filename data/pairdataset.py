@@ -3,7 +3,7 @@ import json
 from typing import Any, Callable, List, Optional, Tuple
 import random
 
-from PIL import Image
+from PIL import Image, ImageDraw
 import numpy as np
 
 import torch
@@ -46,6 +46,10 @@ class PairDataset(VisionDataset):
         mask_coverage_threshold: float = 0.5,
         semantic_only_epochs: int = 0,
         mask_mix_probs: Optional[List[float]] = None,
+        annotation_subdir: str = "annotations",
+        annotation_filename: str = "instances_default.json",
+        use_annotation_masks: Optional[bool] = None,
+        annotation_mask_size: int = 448,
     ) -> None:
         super().__init__(root, transforms, transform, target_transform)
 
@@ -81,6 +85,11 @@ class PairDataset(VisionDataset):
         self.num_mask_annotations_jt = num_mask_annotations_jt
         self.mask_coverage_threshold = mask_coverage_threshold
         self.semantic_only_epochs = semantic_only_epochs
+        self.annotation_subdir = annotation_subdir
+        self.annotation_filename = annotation_filename
+        self.use_annotation_masks = semantic_mask_dir is not None if use_annotation_masks is None else use_annotation_masks
+        self.annotation_mask_size = annotation_mask_size
+        self._annotation_cache = {}
         self.mask_mix_probs = None
         if mask_mix_probs is not None:
             if len(mask_mix_probs) != 3:
@@ -102,7 +111,7 @@ class PairDataset(VisionDataset):
         self._jt_semantic_indices = []
         self._bf_semantic_indices = []
         for i, pair in enumerate(self.pairs):
-            if self._semantic_mask_path(pair['target_path']) is None:
+            if not self._has_semantic_source(pair):
                 continue
             pair_type = pair.get('type', '')
             self._semantic_indices_by_type.setdefault(pair_type, []).append(i)
@@ -113,8 +122,6 @@ class PairDataset(VisionDataset):
         self._jt_semantic_weights = [self.weights[i] for i in self._jt_semantic_indices]
         self._bf_semantic_weights = [self.weights[i] for i in self._bf_semantic_indices]
         if self.mask_mix_probs is not None:
-            if (self.mask_mix_probs[1] > 0 or self.mask_mix_probs[2] > 0) and self.semantic_mask_dir is None:
-                raise ValueError("semantic_mask_dir is required when JT/BF semantic mask probability is > 0")
             if self.mask_mix_probs[1] > 0 and not self._jt_semantic_indices:
                 raise ValueError("mask_mix_probs requests JT semantic masks, but no JT semantic mask files were found")
             if self.mask_mix_probs[2] > 0 and not self._bf_semantic_indices:
@@ -144,22 +151,206 @@ class PairDataset(VisionDataset):
         dst = torch.cat([image, image2], dim=1)
         return dst
 
-    def _semantic_mask_path(self, target_path: str) -> Optional[str]:
-        if self.semantic_mask_dir is None:
-            return None
+    def _abs_data_path(self, path: str) -> str:
+        if os.path.isabs(path):
+            return path
+        return os.path.join(self.root, path)
+
+    def _font_dir_from_target(self, target_path: str) -> Optional[str]:
         parts = target_path.split('/')
-        char_name = os.path.splitext(os.path.basename(target_path))[0]
-        font_dir = None
         for i, p in enumerate(parts):
             if 'images' in p:
-                font_dir = '/'.join(parts[:i])
-                break
+                return '/'.join(parts[:i])
+        return None
+
+    def _semantic_mask_path(self, pair: dict) -> Optional[str]:
+        explicit = pair.get("semantic_mask_path")
+        if explicit:
+            explicit_path = self._abs_data_path(explicit)
+            if os.path.exists(explicit_path):
+                return explicit_path
+
+        target_path = pair['target_path']
+        char_name = os.path.splitext(os.path.basename(target_path))[0]
+        font_dir = self._font_dir_from_target(target_path)
         if font_dir is None:
             return None
         npy_path = os.path.join(self.root, font_dir, 'semantic_masks', f'{char_name}.npy')
         if not os.path.exists(npy_path):
             return None
         return npy_path
+
+    def _annotation_path(self, pair: dict) -> Optional[str]:
+        explicit = pair.get("annotation_path")
+        if explicit:
+            explicit_path = self._abs_data_path(explicit)
+            if os.path.exists(explicit_path):
+                return explicit_path
+
+        font_dir = self._font_dir_from_target(pair['target_path'])
+        if font_dir is None:
+            return None
+        ann_dir = os.path.join(self.root, font_dir, self.annotation_subdir)
+        preferred = os.path.join(ann_dir, self.annotation_filename)
+        if os.path.exists(preferred):
+            return preferred
+        if os.path.isdir(ann_dir):
+            candidates = sorted(
+                os.path.join(ann_dir, name)
+                for name in os.listdir(ann_dir)
+                if name.lower().endswith(".json")
+            )
+            if candidates:
+                return candidates[0]
+        return None
+
+    def _extract_stroke_name(self, category_name: str) -> Optional[str]:
+        if category_name == "text":
+            return None
+        base = category_name.rsplit("-", 1)[0]
+        base = base.lstrip("0123456789-")
+        return base if base else None
+
+    def _load_annotation_index(self, ann_path: str) -> Optional[dict]:
+        if ann_path in self._annotation_cache:
+            return self._annotation_cache[ann_path]
+
+        try:
+            with open(ann_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            self._annotation_cache[ann_path] = None
+            return None
+
+        categories = data.get("categories", [])
+        text_ids = {c["id"] for c in categories if c.get("name") == "text"}
+        cat_id_to_stroke = {}
+        for cat in categories:
+            stroke = self._extract_stroke_name(cat.get("name", ""))
+            if stroke:
+                cat_id_to_stroke[cat["id"]] = stroke
+
+        images = data.get("images", [])
+        images_by_name = {img.get("file_name"): img for img in images}
+        images_by_stem = {
+            os.path.splitext(os.path.basename(img.get("file_name", "")))[0]: img
+            for img in images
+        }
+        anns_by_image_id = {}
+        for ann in data.get("annotations", []):
+            anns_by_image_id.setdefault(ann.get("image_id"), []).append(ann)
+
+        index = {
+            "text_ids": text_ids,
+            "cat_id_to_stroke": cat_id_to_stroke,
+            "images_by_name": images_by_name,
+            "images_by_stem": images_by_stem,
+            "anns_by_image_id": anns_by_image_id,
+        }
+        self._annotation_cache[ann_path] = index
+        return index
+
+    def _annotation_has_target(self, pair: dict) -> bool:
+        if not self.use_annotation_masks:
+            return False
+        ann_path = self._annotation_path(pair)
+        if ann_path is None:
+            return False
+        index = self._load_annotation_index(ann_path)
+        if index is None:
+            return False
+        char_name = os.path.splitext(os.path.basename(pair["target_path"]))[0]
+        file_name = os.path.basename(pair["target_path"])
+        return file_name in index["images_by_name"] or char_name in index["images_by_stem"]
+
+    def _has_semantic_source(self, pair: dict) -> bool:
+        return self._semantic_mask_path(pair) is not None or self._annotation_has_target(pair)
+
+    def _decode_rle(self, segmentation, h: int, w: int) -> Optional[np.ndarray]:
+        try:
+            from pycocotools import mask as mask_util
+        except ImportError:
+            return None
+        rle = segmentation
+        if isinstance(rle.get("counts"), list):
+            rle = mask_util.frPyObjects(rle, h, w)
+        return mask_util.decode(rle).astype(np.uint8)
+
+    def _render_polygon(self, segmentation, h: int, w: int) -> np.ndarray:
+        mask_img = Image.new("L", (w, h), 0)
+        draw = ImageDraw.Draw(mask_img)
+        if not segmentation:
+            return np.zeros((h, w), dtype=np.uint8)
+        polygons = segmentation
+        if isinstance(segmentation[0], (int, float)):
+            polygons = [segmentation]
+        for poly in polygons:
+            if len(poly) < 6:
+                continue
+            pts = [(poly[i], poly[i + 1]) for i in range(0, len(poly), 2)]
+            draw.polygon(pts, fill=1)
+        return np.array(mask_img, dtype=np.uint8)
+
+    def _render_segmentation(self, segmentation, h: int, w: int) -> Optional[np.ndarray]:
+        if segmentation is None:
+            return None
+        if isinstance(segmentation, dict):
+            return self._decode_rle(segmentation, h, w)
+        return self._render_polygon(segmentation, h, w)
+
+    def _pad_and_resize_annotation_layer(self, layer: np.ndarray) -> np.ndarray:
+        h, w = layer.shape[:2]
+        max_side = max(h, w)
+        square = np.zeros((max_side, max_side), dtype=np.uint8)
+        offset_x = (max_side - w) // 2
+        offset_y = (max_side - h) // 2
+        square[offset_y:offset_y + h, offset_x:offset_x + w] = layer
+        mask_img = Image.fromarray((square > 0).astype(np.uint8) * 255, mode="L")
+        mask_img = mask_img.resize((self.annotation_mask_size, self.annotation_mask_size), Image.NEAREST)
+        return (np.array(mask_img) > 0).astype(np.uint8)
+
+    def _render_annotation_layers(self, pair: dict) -> Optional[np.ndarray]:
+        if not self.use_annotation_masks:
+            return None
+        ann_path = self._annotation_path(pair)
+        if ann_path is None:
+            return None
+        index = self._load_annotation_index(ann_path)
+        if index is None:
+            return None
+
+        target_name = os.path.basename(pair["target_path"])
+        char_name = os.path.splitext(target_name)[0]
+        image_info = index["images_by_name"].get(target_name) or index["images_by_stem"].get(char_name)
+        if image_info is None:
+            return None
+
+        h = int(image_info["height"])
+        w = int(image_info["width"])
+        anns = index["anns_by_image_id"].get(image_info["id"], [])
+        stroke_groups = {}
+        for ann in anns:
+            cat_id = ann.get("category_id")
+            if cat_id in index["text_ids"]:
+                continue
+            stroke = index["cat_id_to_stroke"].get(cat_id)
+            if not stroke:
+                continue
+            stroke_groups.setdefault(stroke, []).append(ann)
+
+        layers = []
+        for anns in stroke_groups.values():
+            combined = np.zeros((h, w), dtype=np.uint8)
+            for ann in anns:
+                layer = self._render_segmentation(ann.get("segmentation"), h, w)
+                if layer is not None:
+                    combined |= layer.astype(np.uint8)
+            if combined.any():
+                layers.append(self._pad_and_resize_annotation_layer(combined))
+
+        if not layers:
+            return None
+        return np.stack(layers, axis=0)
 
     def _sample_mask_mode(self) -> str:
         if self.mask_mix_probs is None:
@@ -174,13 +365,20 @@ class PairDataset(VisionDataset):
             return random.choices(self._bf_semantic_indices, weights=self._bf_semantic_weights, k=1)[0]
         raise ValueError(f"Unsupported semantic mask mode: {mask_mode}")
 
-    def _load_semantic_mask(self, target_path: str, pair_type: str) -> Optional[Image.Image]:
-        """加载 .npy 并随机选 K 个标注 OR 合并，返回 PIL Image (mode='L')"""
-        npy_path = self._semantic_mask_path(target_path)
-        if npy_path is None:
+    def _load_semantic_layers(self, pair: dict) -> Optional[np.ndarray]:
+        npy_path = self._semantic_mask_path(pair)
+        if npy_path is not None:
+            return np.load(npy_path)  # (N, 448, 448)
+        return self._render_annotation_layers(pair)
+
+    def _load_semantic_mask(self, pair: dict, pair_type: str) -> Optional[Image.Image]:
+        """加载 .npy 或 COCO JSON，并随机选 K 个标注 OR 合并。"""
+        layers = self._load_semantic_layers(pair)
+        if layers is None:
             return None
-        layers = np.load(npy_path)  # (N, 448, 448)
         N = layers.shape[0]
+        if N <= 0:
+            return None
         # 根据 pair_type 选择对应的标注数量
         if 'JT' in pair_type:
             num_ann = self.num_mask_annotations_jt
@@ -207,7 +405,9 @@ class PairDataset(VisionDataset):
         # curriculum 仅训练集启用：前 N 个 epoch 只用 JT；
         # epoch>=N 后恢复原始采样分布，让 JT 随机遮盖和 BF 语义遮盖同步训练。
         # 验证集没有 semantic_mask_dir，不重定向。
-        if self.mask_mix_probs is None and self.semantic_mask_dir is not None and self.semantic_only_epochs > 0:
+        if (self.mask_mix_probs is None
+                and (self.semantic_mask_dir is not None or self.use_annotation_masks)
+                and self.semantic_only_epochs > 0):
             pair_type_cur = self.pairs[index].get('type', '')
             if (self.current_epoch < self.semantic_only_epochs
                     and self._jt_indices
@@ -231,7 +431,7 @@ class PairDataset(VisionDataset):
         if mask_mode == "random":
             sem_mask = None
         else:
-            sem_mask = self._load_semantic_mask(pair['target_path'], pair_type)
+            sem_mask = self._load_semantic_mask(pair, pair_type)
 
         # no aug for instance segmentation
         if "font" in pair['type'] and self.transforms3 is not None:
@@ -255,7 +455,7 @@ class PairDataset(VisionDataset):
             if mask_mode == "random":
                 sem_mask2 = None
             else:
-                sem_mask2 = self._load_semantic_mask(pair2['target_path'], pair_type)
+                sem_mask2 = self._load_semantic_mask(pair2, pair_type)
             assert pair2['type'] == pair_type
             image2, target2, sem_mask2 = cur_transforms(image2, target2, interpolation1, interpolation2, mask=sem_mask2)
 

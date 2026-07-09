@@ -7,12 +7,15 @@
 from pathlib import Path
 from PIL import Image
 
-# ===== 在这里修改输入路径 =====
-INPUT_DIR = "/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new/颜真卿结体/images_white_bg"
-# ==============================
+from preprocess_common import DEFAULT_NEW_DIR, image_files, iter_font_dirs, prepare_output_dir
+
+
+NEW_DIR = DEFAULT_NEW_DIR
+INPUT_SUBDIR = "images_white_bg"
+OUTPUT_SUBDIR = "images_white_bg_448"
+CLEAR_OUTPUT = True
 
 TARGET_SIZE = 448
-SUPPORTED_EXT = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif', '.webp'}
 
 
 def center_crop_square(img: Image.Image) -> Image.Image:
@@ -23,23 +26,18 @@ def center_crop_square(img: Image.Image) -> Image.Image:
     return img.crop((left, top, left + side, top + side))
 
 
-def process_folder(input_dir: str):
+def process_folder(input_dir: Path, output_path: Path):
     input_path = Path(input_dir).resolve()
     if not input_path.is_dir():
         print(f"错误：路径不存在或不是文件夹 -> {input_path}")
-        return
+        return 0
 
-    output_path = input_path.parent / f"{input_path.name}_{TARGET_SIZE}"
-    output_path.mkdir(exist_ok=True)
-
-    files = [
-        f for f in input_path.iterdir()
-        if f.is_file() and f.suffix.lower() in SUPPORTED_EXT
-    ]
+    output_path = prepare_output_dir(output_path, clear=CLEAR_OUTPUT)
+    files = image_files(input_path)
 
     if not files:
         print(f"未找到支持的图片文件: {input_path}")
-        return
+        return 0
 
     print(f"输入: {input_path}")
     print(f"输出: {output_path}")
@@ -52,7 +50,19 @@ def process_folder(input_dir: str):
         img.save(output_path / f.name)
 
     print("处理完成。")
+    return len(files)
+
+
+def process_all_fonts(new_dir=NEW_DIR):
+    total = 0
+    for font_dir in iter_font_dirs(new_dir):
+        input_dir = font_dir / INPUT_SUBDIR
+        if not input_dir.is_dir():
+            print(f"[跳过] {font_dir.name}: 缺少 {INPUT_SUBDIR}")
+            continue
+        total += process_folder(input_dir, font_dir / OUTPUT_SUBDIR)
+    print(f"全部处理完成，共处理 {total} 张。")
 
 
 if __name__ == "__main__":
-    process_folder(INPUT_DIR)
+    process_all_fonts()

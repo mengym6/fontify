@@ -24,9 +24,10 @@ except ImportError:
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-ROOT_DIR = r"/root/autodl-tmp/new"
+ROOT_DIR = r"/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new"
 INPUT_FOLDER = "images"
 OUTPUT_SUFFIX = "_white_bg"
+CLEAR_OUTPUT = True
 
 TEST_MODE = False
 TEST_SAMPLE_NUM = 5
@@ -204,21 +205,22 @@ def process_single(img_path, params):
 # 主程序
 # ============================================================
 
-def main():
+def process_all_fonts(root_dir=ROOT_DIR):
+    root_dir = str(root_dir)
     exts = ('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif')
 
     input_dirs = []
-    for name in sorted(os.listdir(ROOT_DIR)):
-        sub = os.path.join(ROOT_DIR, name)
+    for name in sorted(os.listdir(root_dir)):
+        sub = os.path.join(root_dir, name)
         img_dir = os.path.join(sub, INPUT_FOLDER)
         if os.path.isdir(sub) and os.path.isdir(img_dir):
             input_dirs.append((name, img_dir))
 
     if not input_dirs:
-        print(f"未找到包含 '{INPUT_FOLDER}' 的子文件夹: {ROOT_DIR}")
+        print(f"未找到包含 '{INPUT_FOLDER}' 的子文件夹: {root_dir}")
         return
 
-    print(f"根目录: {ROOT_DIR}")
+    print(f"根目录: {root_dir}")
     print(f"设备: {DEVICE} ({'GPU' if DEVICE.type == 'cuda' else 'CPU'})")
     print(f"kornia: {'可用' if HAS_KORNIA else '不可用'}")
     print(f"发现 {len(input_dirs)} 个待处理文件夹")
@@ -230,6 +232,10 @@ def main():
         parent = os.path.dirname(img_dir)
         output_dir = os.path.join(parent, INPUT_FOLDER + OUTPUT_SUFFIX)
         contrast_dir = os.path.join(parent, INPUT_FOLDER + "_contrast")
+        if CLEAR_OUTPUT and os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        if CLEAR_OUTPUT and os.path.exists(contrast_dir):
+            shutil.rmtree(contrast_dir)
         os.makedirs(output_dir, exist_ok=True)
         os.makedirs(contrast_dir, exist_ok=True)
 
@@ -261,6 +267,10 @@ def main():
 
     print("\n" + "=" * 50)
     print(f"全部完成，共处理 {total_success}/{total_files} 张")
+
+
+def main():
+    process_all_fonts(ROOT_DIR)
 
 
 if __name__ == "__main__":

@@ -5,8 +5,10 @@
 from pathlib import Path
 from PIL import Image
 
-# ===== 在这里设置路径 =====
-NEW_DIR = Path("/Users/root1/Desktop/Fontify-main/fontdata_example/font/train/new")
+from preprocess_common import DEFAULT_NEW_DIR, image_files, iter_font_dirs
+
+
+NEW_DIR = DEFAULT_NEW_DIR
 SUBFOLDER = "images_white_bg_mask_denoised"
 TARGET_SIZE = 448
 
@@ -24,24 +26,25 @@ def pad_and_resize(img: Image.Image, target_size: int = 64) -> Image.Image:
 
 
 def main():
-    exts = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
-    font_dirs = [d for d in NEW_DIR.iterdir() if d.is_dir()]
-
-    for font_dir in font_dirs:
+    total = 0
+    for font_dir in iter_font_dirs(NEW_DIR):
         input_dir = font_dir / SUBFOLDER
         if not input_dir.is_dir():
+            print(f"[跳过] {font_dir.name}: 缺少 {SUBFOLDER}")
             continue
-        files = [f for f in input_dir.iterdir() if f.suffix.lower() in exts]
+        files = image_files(input_dir)
         if not files:
+            print(f"[跳过] {font_dir.name}: {SUBFOLDER} 内无图片")
             continue
         print(f"[{font_dir.name}] 找到 {len(files)} 张图片，开始处理...")
         for f in files:
             img = Image.open(f).convert("RGB")
             result = pad_and_resize(img, TARGET_SIZE)
             result.save(f)
+        total += len(files)
         print(f"[{font_dir.name}] 完成")
 
-    print("全部处理完成。")
+    print(f"全部处理完成，共处理 {total} 张。")
 
 
 if __name__ == "__main__":
