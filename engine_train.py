@@ -20,56 +20,36 @@ def _metric_item(metric, name):
 
 def _reduce_edge_offset_metrics(edge_offset_metrics):
     count = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_count"))
-    reduced = {"count": count}
+    if count <= 0:
+        return {"count": 0.0}
 
-    if count > 0:
-        edge_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_sum"))
-        gt_to_pred_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_gt_to_pred_sum"))
-        pred_to_gt_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_pred_to_gt_sum"))
-        dx_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_dx_sum"))
-        dy_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_dy_sum"))
+    edge_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_sum"))
+    gt_to_pred_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_gt_to_pred_sum"))
+    pred_to_gt_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_pred_to_gt_sum"))
+    dx_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_dx_sum"))
+    dy_sum = misc.all_reduce_mean(_metric_item(edge_offset_metrics, "edge_offset_dy_sum"))
 
-        reduced.update({
-            "edge_offset": edge_sum / count,
-            "edge_gt_to_pred": gt_to_pred_sum / count,
-            "edge_pred_to_gt": pred_to_gt_sum / count,
-            "edge_offset_dx": dx_sum / count,
-            "edge_offset_dy": dy_sum / count,
-        })
-
-    optional_metric_names = [
-        "jt_edge_loss",
-        "jt_edge_vec_loss",
-        "jt_edge_total_loss",
-        "jt_edge_loss_contrib",
-        "jt_edge_valid_count",
-    ]
-    for name in optional_metric_names:
-        if name in edge_offset_metrics:
-            reduced[name] = misc.all_reduce_mean(_metric_item(edge_offset_metrics, name))
-
-    return reduced
+    return {
+        "count": count,
+        "edge_offset": edge_sum / count,
+        "edge_gt_to_pred": gt_to_pred_sum / count,
+        "edge_pred_to_gt": pred_to_gt_sum / count,
+        "edge_offset_dx": dx_sum / count,
+        "edge_offset_dy": dy_sum / count,
+    }
 
 
 def _update_edge_offset_logger(metric_logger, edge_offset_values):
     metric_logger.update(edge_offset_count=edge_offset_values["count"])
-    for name in [
-        "jt_edge_loss",
-        "jt_edge_vec_loss",
-        "jt_edge_total_loss",
-        "jt_edge_loss_contrib",
-        "jt_edge_valid_count",
-    ]:
-        if name in edge_offset_values:
-            metric_logger.update(**{name: edge_offset_values[name]})
-    if edge_offset_values["count"] > 0:
-        metric_logger.update(
-            edge_offset=edge_offset_values["edge_offset"],
-            edge_gt_to_pred=edge_offset_values["edge_gt_to_pred"],
-            edge_pred_to_gt=edge_offset_values["edge_pred_to_gt"],
-            edge_offset_dx=edge_offset_values["edge_offset_dx"],
-            edge_offset_dy=edge_offset_values["edge_offset_dy"],
-        )
+    if edge_offset_values["count"] <= 0:
+        return
+    metric_logger.update(
+        edge_offset=edge_offset_values["edge_offset"],
+        edge_gt_to_pred=edge_offset_values["edge_gt_to_pred"],
+        edge_pred_to_gt=edge_offset_values["edge_pred_to_gt"],
+        edge_offset_dx=edge_offset_values["edge_offset_dx"],
+        edge_offset_dy=edge_offset_values["edge_offset_dy"],
+    )
 
 
 def get_loss_scale_for_deepspeed(model):
@@ -222,22 +202,12 @@ def train_one_epoch(model: torch.nn.Module,
             epoch_1000x = int((data_iter_step / len(data_loader) + epoch) * 1000)
             log_writer.add_scalar('train_loss', loss_value_reduce, epoch_1000x)
             log_writer.add_scalar('lr', lr, epoch_1000x)
-            train_loss_detail = {
+            log_writer.add_scalars('train_loss_detail', {
                 'loss_l1l2': loss_l1l2_reduce,
                 'loss_vgg': loss_vgg_reduce
-            }
-            if "jt_edge_loss" in edge_offset_reduce:
-                train_loss_detail.update({
-                    'loss_jt_edge': edge_offset_reduce["jt_edge_loss"],
-                    'loss_jt_vec': edge_offset_reduce["jt_edge_vec_loss"],
-                    'loss_jt_total': edge_offset_reduce["jt_edge_total_loss"],
-                    'loss_jt_contrib': edge_offset_reduce["jt_edge_loss_contrib"],
-                })
-            log_writer.add_scalars('train_loss_detail', train_loss_detail, epoch_1000x)
+            }, epoch_1000x)
             if contour_valid_ratio is not None:
                 log_writer.add_scalar('train_contour_valid_ratio', contour_valid_ratio_reduce, epoch_1000x)
-            if "jt_edge_valid_count" in edge_offset_reduce:
-                log_writer.add_scalar('train_jt_edge_valid_count', edge_offset_reduce["jt_edge_valid_count"], epoch_1000x)
             log_writer.add_scalar('train_edge_offset_count', edge_offset_reduce["count"], epoch_1000x)
             if edge_offset_reduce["count"] > 0:
                 log_writer.add_scalars('train_edge_offset_metric', {
