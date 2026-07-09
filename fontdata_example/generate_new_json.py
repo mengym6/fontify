@@ -2,6 +2,7 @@ import json
 import random
 import shutil
 from pathlib import Path
+from typing import Optional
 
 
 random.seed(42)
@@ -44,7 +45,7 @@ def pair_type_for(folder_name: str) -> str:
     return f"font_{folder_name}"
 
 
-def choose_target_dir(font_dir: Path) -> Path | None:
+def choose_target_dir(font_dir: Path) -> Optional[Path]:
     for subdir in TARGET_SUBDIR_CANDIDATES:
         candidate = font_dir / subdir
         if candidate.is_dir():
