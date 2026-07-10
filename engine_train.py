@@ -227,6 +227,13 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
     # rank 0 写 TB 比其他 rank 慢一个数量级，间隔写避免拖慢同步导致 NCCL timeout
     tb_save_every = 1
     val_tb_image_limit = getattr(args, "val_tb_image_limit", 0) if args is not None else 0
+    val_tb_image_freq = max(1, getattr(args, "val_tb_image_freq", 1) if args is not None else 1)
+    write_tb_image_this_epoch = True
+    if epoch is not None and val_tb_image_freq > 1:
+        write_tb_image_this_epoch = (epoch + 1) % val_tb_image_freq == 0
+        total_epochs = getattr(args, "epochs", None) if args is not None else None
+        if total_epochs is not None:
+            write_tb_image_this_epoch = write_tb_image_this_epoch or (epoch + 1 == total_epochs)
     for batch in metric_logger.log_every(data_loader, 10, header):
 
         samples = batch[0]
@@ -251,7 +258,7 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         """
             在tensorboard内展示图片nchw->nhwc
         """
-        write_tb_image = log_writer is not None and num_batch % tb_save_every == 0
+        write_tb_image = log_writer is not None and write_tb_image_this_epoch and num_batch % tb_save_every == 0
         if val_tb_image_limit > 0:
             write_tb_image = write_tb_image and num_batch < val_tb_image_limit
         if write_tb_image:

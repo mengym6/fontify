@@ -12,6 +12,7 @@ MASTER_PORT_BASE=${MASTER_PORT_BASE:-29555}
 SAVE_FREQ=${SAVE_FREQ:-10}
 EXPORT_VAL_IMAGES=${EXPORT_VAL_IMAGES:-1}
 VAL_IMAGE_LIMIT=${VAL_IMAGE_LIMIT:-4}
+VAL_TB_IMAGE_FREQ=${VAL_TB_IMAGE_FREQ:-5}
 VAL_EXPORT_TIMEOUT=${VAL_EXPORT_TIMEOUT:-300}
 STAGE1_EPOCHS=${STAGE1_EPOCHS:-30}
 STAGE2_EPOCHS=${STAGE2_EPOCHS:-30}
@@ -37,6 +38,7 @@ Environment variables:
   SAVE_FREQ         Default: 10
   EXPORT_VAL_IMAGES Default: 1
   VAL_IMAGE_LIMIT   Default: 4
+  VAL_TB_IMAGE_FREQ  Default: 5, write validation TensorBoard images every 5 epochs
   VAL_EXPORT_TIMEOUT Default: 300 seconds; 0 disables timeout; ignored when GNU timeout is unavailable
   STAGE1_EPOCHS     Default: 30
   STAGE2_EPOCHS     Default: 30
@@ -130,6 +132,7 @@ cuda_visible_devices=${CUDA_VISIBLE_DEVICES}
 nproc_per_node=${NPROC_PER_NODE}
 master_port=${master_port}
 val_tb_image_limit=${VAL_IMAGE_LIMIT}
+val_tb_image_freq=${VAL_TB_IMAGE_FREQ}
 val_image_epoch=${val_image_epoch}
 EOF
 
@@ -153,6 +156,7 @@ EOF
     --input_size 896 448
     --save_freq "$SAVE_FREQ"
     --val_tb_image_limit "$VAL_IMAGE_LIMIT"
+    --val_tb_image_freq "$VAL_TB_IMAGE_FREQ"
     --data_path "${DATA_PATH}/"
     --json_path "${DATA_PATH}/train_json_new/"*.json
     --val_json_path "${DATA_PATH}/val_json_new/"*.json

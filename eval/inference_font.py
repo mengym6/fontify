@@ -18,7 +18,6 @@ from PIL import Image
 sys.path.append('.')
 import models_eval
 
-import torch.distributed as dist
 import torch.multiprocessing as mp
 
 import random
@@ -45,17 +44,6 @@ def get_args_parser():
     return parser.parse_args()
 
 
-def setup(rank, world_size):
-    os.environ['MASTER_ADDR'] = '127.0.0.1'
-    os.environ['MASTER_PORT'] = '29555'
-    dist.init_process_group("nccl", rank=rank, world_size=world_size)
-
-
-def cleanup():
-    if dist.is_initialized():
-        dist.destroy_process_group()
-
-
 def set_seed(seed, rank):
     torch.manual_seed(seed + rank)
     torch.cuda.manual_seed(seed + rank)
@@ -64,15 +52,14 @@ def set_seed(seed, rank):
 
 
 def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_sl1', rank=0):
+    torch.cuda.set_device(rank)
+    device = torch.device("cuda:{}".format(rank))
     model = getattr(models_eval, arch)()
-    checkpoint = torch.load(chkpt_dir, map_location='cuda:{}'.format(rank))
+    checkpoint = torch.load(chkpt_dir, map_location=device)
     msg = model.load_state_dict(checkpoint['model'], strict=False)
     print(msg)
 
-    device = torch.device("cuda:{}".format(rank))
     model.to(device)
-
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[rank])
     return model
 
 
@@ -83,15 +70,17 @@ def run_batch_images(imgs, tgts, sizes, model, device):
     x = x.to(device)
     tgt = tgt.to(device)
 
-    bool_masked_pos = torch.zeros(model.module.patch_embed.num_patches)
-    bool_masked_pos[model.module.patch_embed.num_patches // 2:] = 1
+    model_without_ddp = model.module if hasattr(model, "module") else model
+    bool_masked_pos = torch.zeros(model_without_ddp.patch_embed.num_patches)
+    bool_masked_pos[model_without_ddp.patch_embed.num_patches // 2:] = 1
     bool_masked_pos = bool_masked_pos.unsqueeze(dim=0).repeat(len(imgs), 1)
 
     valid = torch.ones_like(tgt)
-    with torch.cuda.amp.autocast():
-        y, mask, pred = model(x.float().to(device), tgt.float().to(device),
-                               bool_masked_pos.to(device), valid.float().to(device))
-    y = model.module.unpatchify(y)
+    with torch.inference_mode():
+        with torch.cuda.amp.autocast():
+            y, mask, pred = model(x.float().to(device), tgt.float().to(device),
+                                   bool_masked_pos.to(device), valid.float().to(device))
+    y = model_without_ddp.unpatchify(y)
     y = torch.einsum('nchw->nhwc', y).detach().cpu().numpy()
 
     outputs = []
@@ -108,7 +97,7 @@ def run_batch_images(imgs, tgts, sizes, model, device):
 
 
 def main(rank, world_size):
-    setup(rank, world_size)
+    torch.cuda.set_device(rank)
     device = torch.device("cuda:{}".format(rank))
 
     base_seed = 42
