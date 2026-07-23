@@ -408,17 +408,17 @@ class Fontify(nn.Module):
             return "jt_random", epoch
         return "jt_bf_sync", max(0, epoch - max(B, 0))
 
-    def get_dynamic_loss_weights(self, epoch, adv_warmup_epochs=59, edge_warmup_epochs=29,
+    def get_dynamic_loss_weights(self, epoch, adv_warmup_epochs=8, edge_warmup_epochs=10,
                                  warmup_duration=8):
         """
         原作者式固定系数组合：
             total = recon + style + edge_weight * edge + adv_weight * adv
         JT-only 阶段禁用 edge/adv；JT/BF 同步阶段通用一套 loss，
-        edge/adv 按原作者 warmup 形状升到 adv=0.5、edge=0.4。
+        edge/adv 按原作者 warmup 形状升到 adv=0.4、edge=0.3。
         """
-        adv_weight_final = 0.5
-        edge_weigiht_final = 0.4
-        
+        adv_weight_final = 0.4
+        edge_weigiht_final = 0.3
+
         phase, phase_epoch = self.get_loss_phase(epoch)
         if phase == "jt_random":
             return phase, 0.0, 0.0

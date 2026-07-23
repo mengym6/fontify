@@ -371,23 +371,29 @@ class PairDataset(VisionDataset):
             return np.load(npy_path)  # (N, 448, 448)
         return self._render_annotation_layers(pair)
 
+    def _sample_semantic_block_mask(self, layers: np.ndarray, num_blocks: int) -> Image.Image:
+        """Randomly select labeled semantic mask layers generated from annotations."""
+        n = layers.shape[0]
+        k = min(max(0, int(num_blocks)), n)
+        if k == 0:
+            combined = np.zeros(layers.shape[1:], dtype=np.uint8)
+        else:
+            indices = random.sample(range(n), k)
+            combined = np.any(layers[indices], axis=0).astype(np.uint8) * 255
+        return Image.fromarray(combined, mode='L')
+
     def _load_semantic_mask(self, pair: dict, pair_type: str) -> Optional[Image.Image]:
-        """加载 .npy 或 COCO JSON，并随机选 K 个标注 OR 合并。"""
+        """加载 .npy 或 COCO JSON，并生成 JT/BF 对应的语义遮盖。"""
         layers = self._load_semantic_layers(pair)
         if layers is None:
             return None
         N = layers.shape[0]
         if N <= 0:
             return None
-        # 根据 pair_type 选择对应的标注数量
         if 'JT' in pair_type:
-            num_ann = self.num_mask_annotations_jt
-        else:
-            num_ann = self.num_mask_annotations_bf
-        k = min(num_ann, N)
-        indices = random.sample(range(N), k)
-        combined = np.any(layers[indices], axis=0).astype(np.uint8) * 255
-        return Image.fromarray(combined, mode='L')
+            return self._sample_semantic_block_mask(layers, self.num_mask_annotations_jt)
+
+        return self._sample_semantic_block_mask(layers, self.num_mask_annotations_bf)
 
     def _pixel_mask_to_patch_mask(self, sem_mask: torch.Tensor) -> np.ndarray:
         """将像素级 mask (1, H, W) 转为 patch 网格级 mask (Hp, Wp)"""

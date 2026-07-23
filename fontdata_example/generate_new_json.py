@@ -12,6 +12,7 @@ NEW_BASE = Path("font/train/new")
 TRAIN_OUTPUT_DIR = Path("train_json_new")
 VAL_OUTPUT_DIR = Path("val_json_new")
 VAL_RATIO = 0.15
+SAMPLE_RATIO = 0.5
 CLEAR_OUTPUT = True
 
 DEFAULT_SOURCE_DIR = Path("ttf/SourceHanSansSC-Regular")
@@ -137,6 +138,18 @@ def build_pairs_for_font(font_dir: Path):
     return pairs
 
 
+def sample_pairs_for_font(folder_name: str, pairs: list[dict]) -> list[dict]:
+    if not 0 < SAMPLE_RATIO <= 1:
+        raise ValueError(f"SAMPLE_RATIO must be in (0, 1], got {SAMPLE_RATIO}")
+    if SAMPLE_RATIO == 1 or len(pairs) <= 1:
+        return pairs
+
+    sample_count = max(1, int(len(pairs) * SAMPLE_RATIO))
+    sampled = random.sample(pairs, sample_count)
+    print(f"{folder_name}: random_sample={sample_count}/{len(pairs)}")
+    return sampled
+
+
 def main():
     train_abs, val_abs = prepare_output_dirs()
     new_abs = DATA_ROOT / NEW_BASE
@@ -148,6 +161,7 @@ def main():
         pairs = build_pairs_for_font(font_dir)
         if not pairs:
             continue
+        pairs = sample_pairs_for_font(font_dir.name, pairs)
         random.shuffle(pairs)
         val_count = max(1, int(len(pairs) * VAL_RATIO))
         val_pairs = pairs[:val_count]

@@ -76,7 +76,7 @@ def get_args_parser():
     parser.add_argument('--semantic_mask_dir', default=None, type=str,
                         help='预渲染语义 mask .npy 根目录，None 则使用随机 mask')
     parser.add_argument('--num_mask_annotations_bf', default=3, type=int,
-                        help='BF（笔法）字体每个 target 随机选几个标注遮盖')
+                        help='BF（笔法）字体每个 target 随机选几个 annotation/npy 语义遮盖块')
     parser.add_argument('--num_mask_annotations_jt', default=1, type=int,
                         help='JT（结体）字体每个 target 随机选几个标注遮盖')
     parser.add_argument('--mask_coverage_threshold', default=0.5, type=float,
@@ -250,30 +250,16 @@ def main(args, ds_init):
 
 
     transform_train = pair_transforms.Compose([
-        pair_transforms.PadToSquare(fill=255),
-        pair_transforms.RandomResizedCrop(args.input_size[1], scale=(args.min_random_scale, 1.0), interpolation=3),
-        pair_transforms.RandomApply([
-            pair_transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)
-        ], p=0.8),
-        pair_transforms.RandomHorizontalFlip(),
         pair_transforms.ToTensor(),
         pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     transform_train2 = pair_transforms.Compose([
-        pair_transforms.PadToSquare(fill=255),
-        pair_transforms.RandomResizedCrop(args.input_size[1], scale=(0.9999, 1.0), interpolation=3),  # 3 is bicubic
         pair_transforms.ToTensor(),
         pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     transform_train3 = pair_transforms.Compose([
-        pair_transforms.PadToSquare(fill=255),
-        pair_transforms.RandomResizedCrop(args.input_size[1], scale=(0.9999, 1.0), interpolation=3),  # 3 is bicubic
         pair_transforms.ToTensor(),
         pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    transform_train_seccrop = pair_transforms.Compose([
-        pair_transforms.RandomResizedCrop(args.input_size, scale=(args.min_random_scale, 1.0), ratio=(0.3, 0.7),
-                                          interpolation=3),  # 3 is bicubic
-    ])
+    transform_train_seccrop = None
     transform_val = pair_transforms.Compose([
-        pair_transforms.PadToSquare(fill=255),
         pair_transforms.RandomResizedCrop(args.input_size[1], scale=(0.9999, 1.0), interpolation=3),  # 3 is bicubic
         pair_transforms.ToTensor(),
         pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
@@ -406,12 +392,7 @@ def main(args, ds_init):
         if args.distributed:
             model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
             model_without_ddp = model.module
-
-        # Exclude discriminator from the reconstruction optimizer. It has its own
-        # optimizer below, while the generator still receives adversarial gradients.
-        train_discriminator = not args.no_gan
-        if train_discriminator:
-            model_without_ddp.discriminator.requires_grad_(False)
+            model._set_static_graph()
 
         # following timm: set wd as 0 for bias and norm layers
         param_groups = lrd.param_groups_lrd(model_without_ddp, args.weight_decay,
@@ -419,16 +400,13 @@ def main(args, ds_init):
                                             layer_decay=args.layer_decay
                                             )
         optimizer = torch.optim.AdamW(param_groups, lr=args.lr, betas=args.opt_betas)
-        if train_discriminator:
-            model_without_ddp.discriminator.requires_grad_(True)
+        if not args.no_gan:
             optimizer_d = torch.optim.AdamW(
                 model_without_ddp.discriminator.parameters(),
                 lr=args.lr * 0.1,
                 betas=(0.5, 0.999))
         print(optimizer)
         loss_scaler = NativeScaler()
-        if args.distributed:
-            model._set_static_graph()
 
     misc.auto_load_model(
         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, optimizer_d=optimizer_d, loss_scaler=loss_scaler)

@@ -18,6 +18,7 @@ from PIL import Image
 sys.path.append('.')
 import models_eval
 
+import torch.distributed as dist
 import torch.multiprocessing as mp
 
 import random
@@ -44,6 +45,17 @@ def get_args_parser():
     return parser.parse_args()
 
 
+def setup(rank, world_size):
+    os.environ['MASTER_ADDR'] = '127.0.0.1'
+    os.environ['MASTER_PORT'] = '29555'
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
+
+def cleanup():
+    if dist.is_initialized():
+        dist.destroy_process_group()
+
+
 def set_seed(seed, rank):
     torch.manual_seed(seed + rank)
     torch.cuda.manual_seed(seed + rank)
@@ -52,14 +64,15 @@ def set_seed(seed, rank):
 
 
 def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_sl1', rank=0):
-    torch.cuda.set_device(rank)
-    device = torch.device("cuda:{}".format(rank))
     model = getattr(models_eval, arch)()
-    checkpoint = torch.load(chkpt_dir, map_location=device)
+    checkpoint = torch.load(chkpt_dir, map_location='cuda:{}'.format(rank))
     msg = model.load_state_dict(checkpoint['model'], strict=False)
-    print(f"Rank {rank} checkpoint load: {msg}", flush=True)
+    print(msg)
 
+    device = torch.device("cuda:{}".format(rank))
     model.to(device)
+
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[rank])
     return model
 
 
@@ -70,17 +83,15 @@ def run_batch_images(imgs, tgts, sizes, model, device):
     x = x.to(device)
     tgt = tgt.to(device)
 
-    model_without_ddp = model.module if hasattr(model, "module") else model
-    bool_masked_pos = torch.zeros(model_without_ddp.patch_embed.num_patches, device=device)
-    bool_masked_pos[model_without_ddp.patch_embed.num_patches // 2:] = 1
+    bool_masked_pos = torch.zeros(model.module.patch_embed.num_patches)
+    bool_masked_pos[model.module.patch_embed.num_patches // 2:] = 1
     bool_masked_pos = bool_masked_pos.unsqueeze(dim=0).repeat(len(imgs), 1)
 
     valid = torch.ones_like(tgt)
-    with torch.inference_mode():
-        with torch.cuda.amp.autocast():
-            y, mask, pred = model(x.float().to(device), tgt.float().to(device),
-                                   bool_masked_pos.to(device), valid.float().to(device))
-    y = model_without_ddp.unpatchify(y)
+    with torch.cuda.amp.autocast():
+        y, mask, pred = model(x.float().to(device), tgt.float().to(device),
+                               bool_masked_pos.to(device), valid.float().to(device))
+    y = model.module.unpatchify(y)
     y = torch.einsum('nchw->nhwc', y).detach().cpu().numpy()
 
     outputs = []
@@ -97,7 +108,7 @@ def run_batch_images(imgs, tgts, sizes, model, device):
 
 
 def main(rank, world_size):
-    torch.cuda.set_device(rank)
+    setup(rank, world_size)
     device = torch.device("cuda:{}".format(rank))
 
     base_seed = 42
@@ -110,7 +121,7 @@ def main(rank, world_size):
     font_dir = args.gen_dir
     img_src_dir = args.source_dir
     out_dir = args.out_dir
-    
+
     # 验证路径存在性
     if not os.path.exists(style_dir):
         print(f"ERROR: Reference directory does not exist: {style_dir}")
@@ -121,7 +132,7 @@ def main(rank, world_size):
     if not os.path.exists(img_src_dir):
         print(f"ERROR: Source directory does not exist: {img_src_dir}")
         return
-    
+
     print(f"Reference dir: {style_dir}")
     print(f"Generation dir: {font_dir}")
     print(f"Source dir: {img_src_dir}")
@@ -138,16 +149,12 @@ def main(rank, world_size):
     model_fontify = prepare_model(args.ckpt_path, args.model, rank)
     model_fontify.eval()
 
-    font_folders = [
-        os.path.join(font_dir, d)
-        for d in sorted(os.listdir(font_dir))
-        if not d.startswith(".") and os.path.isdir(os.path.join(font_dir, d))
-    ]
+    font_folders = [os.path.join(font_dir, d) for d in os.listdir(font_dir) if os.path.isdir(os.path.join(font_dir, d))]
     font_folders_split = font_folders[rank::world_size]
 
     for font_folder in font_folders_split:
         font_name = os.path.basename(font_folder)
-        print(f'Rank {rank} processing font: {font_name}', flush=True)
+        print(f'Rank {rank} processing font: {font_name}')
 
         out_path_dir = os.path.join(out_dir, font_name)
         os.makedirs(out_path_dir, exist_ok=True)
@@ -158,13 +165,13 @@ def main(rank, world_size):
         for prompt in prompt_list:
             prompt_path = os.path.join(style_dir, font_name, f"{prompt}.png")
             img2_path = os.path.join(img_src_dir, f"{prompt}.png")
-            
+
             # 调试信息：记录缺失的文件
             if not os.path.exists(prompt_path):
                 missing_files.append(f"ref: {prompt_path}")
             if not os.path.exists(img2_path):
                 missing_files.append(f"src: {img2_path}")
-                
+
             if os.path.exists(prompt_path) and os.path.exists(img2_path):
                 selected_prompt = prompt
                 break
@@ -178,7 +185,7 @@ def main(rank, world_size):
             print(f"Style dir: {style_dir}")
             print(f"Font name: {font_name}")
             print(f"Source dir: {img_src_dir}")
-            
+
             # 检查字体文件夹是否存在
             font_ref_path = os.path.join(style_dir, font_name)
             if not os.path.exists(font_ref_path):
@@ -189,7 +196,7 @@ def main(rank, world_size):
                 print(f"First few reference files: {ref_files[:5]}")
             continue
 
-        print(f"Selected prompt: {selected_prompt} for font {font_name}(Rank {rank})", flush=True)
+        print(f"Selected prompt: {selected_prompt} for font {font_name}(Rank {rank})")
 
         # 加载选中的prompt图片
         prompt_path = os.path.join(style_dir, font_name, f"{selected_prompt}.png")
@@ -211,15 +218,7 @@ def main(rank, world_size):
         tgt_img_names = [os.path.basename(path) for path in glob.glob(os.path.join(font_folder, "*.*"))]
         img_path_list = glob.glob(os.path.join(img_src_dir, "*.png")) + glob.glob(os.path.join(img_src_dir, "*.jpg"))
         img_path_list = [img_path for img_path in img_path_list if os.path.basename(img_path) in tgt_img_names]
-        print(
-            f"Rank {rank} font {font_name}: matched {len(img_path_list)}/{len(tgt_img_names)} target images",
-            flush=True
-        )
-        if not img_path_list:
-            print(f"Rank {rank} font {font_name}: no matched source images, skipped", flush=True)
-            continue
 
-        saved_count = 0
         for i in range(0, len(img_path_list), args.batch_size):
             batch_paths = img_path_list[i:i + args.batch_size]
             imgs = []
@@ -251,9 +250,6 @@ def main(rank, world_size):
                     output = rgb_restored * 255
                     output = Image.fromarray(output.astype(np.uint8))
                     output.convert('RGB').save(out_path, 'PNG', quality=95)
-                    saved_count += 1
-
-        print(f"Rank {rank} finished font {font_name}: saved {saved_count} images", flush=True)
 
 
 if __name__ == '__main__':

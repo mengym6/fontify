@@ -64,37 +64,7 @@ def train_one_epoch(model: torch.nn.Module,
                 valid=valid, epoch=epoch, no_gan=args.no_gan
             )
 
-        loss_value = loss.item()
-
-        if not math.isfinite(loss_value):
-            print("Loss is {}, stopping training".format(loss_value))
-            sys.exit(1)
-
-        if loss_scaler is None:
-            loss /= accum_iter
-            model.backward(loss)
-            model.step()
-
-            # if (data_iter_step + 1) % update_freq == 0:
-                # model.zero_grad()
-                # Deepspeed will call step() & model.zero_grad() automatic
-            # grad_norm = None
-            loss_scale_value, grad_norm = get_loss_scale_for_deepspeed(model)
-        else:
-            loss /= accum_iter
-            optimizer_params = [
-                p for param_group in optimizer.param_groups
-                for p in param_group["params"]
-            ]
-            grad_norm = loss_scaler(loss, optimizer, clip_grad=args.clip_grad,
-                                    parameters=optimizer_params,
-                                    update_grad=(data_iter_step + 1) % accum_iter == 0)
-
-            if (data_iter_step + 1) % accum_iter == 0:
-                optimizer.zero_grad()
-            loss_scale_value = loss_scaler.state_dict()["scale"]
-
-        if not args.no_gan and optimizer_d is not None:
+        if not args.no_gan:
             raw_model = model.module if hasattr(model, "module") else model
             requires_grad_original = {}
             for name, param in raw_model.named_parameters():
@@ -122,6 +92,32 @@ def train_one_epoch(model: torch.nn.Module,
             raw_model.discriminator.requires_grad_(False)
             for name, param in raw_model.named_parameters():
                 param.requires_grad = requires_grad_original[name]
+
+        loss_value = loss.item()
+
+        if not math.isfinite(loss_value):
+            print("Loss is {}, stopping training".format(loss_value))
+            sys.exit(1)
+
+        if loss_scaler is None:
+            loss /= accum_iter
+            model.backward(loss)
+            model.step()
+
+            # if (data_iter_step + 1) % update_freq == 0:
+                # model.zero_grad()
+                # Deepspeed will call step() & model.zero_grad() automatic
+            # grad_norm = None
+            loss_scale_value, grad_norm = get_loss_scale_for_deepspeed(model)
+        else:
+            loss /= accum_iter
+            grad_norm = loss_scaler(loss, optimizer, clip_grad=args.clip_grad,
+                                    parameters=model.parameters(),
+                                    update_grad=(data_iter_step + 1) % accum_iter == 0)
+
+            if (data_iter_step + 1) % accum_iter == 0:
+                optimizer.zero_grad()
+            loss_scale_value = loss_scaler.state_dict()["scale"]
 
         torch.cuda.synchronize()
         #print(f"loss:{loss},grad_norm:{grad_norm}")
