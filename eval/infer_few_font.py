@@ -126,6 +126,7 @@ def main():
     output_dir = args.output_dir
 
     print(f"Please place square reference style images in {reference_font_dir}. Name each image with its corresponding character, such as '夜.png'.")
+    os.makedirs(output_dir, exist_ok=True)
 
     # Check reference font directory
     if not os.path.exists(reference_font_dir):
@@ -161,6 +162,10 @@ def main():
             except FileNotFoundError as e:
                 print(e)
                 continue
+
+        if not generated_images:
+            print(f"No generated images for reference style '{reference_char}', skipped.")
+            continue
 
         # Concatenate images horizontally
         total_width = sum(img.width for img in generated_images)

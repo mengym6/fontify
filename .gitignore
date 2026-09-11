@@ -37,7 +37,7 @@ fontdata_example/train_json/
 fontdata_example/train_json_new/
 fontdata_example/val_json/
 fontdata_example/val_json_new/
-
+figures
 # Large generated files
 *.zip
 *.png

@@ -27,9 +27,10 @@ GT_IMAGE_SUBDIR = "images_white_bg_mask_denoised"
 OUT_DIR = "/Users/root1/Desktop/fontify/generate/cv_fold_3_stroke_mask/40"
 PIXEL_MODE = "gray"  # "gray" or "rgb"
 LPIPS_BACKBONE = "vgg"  # "alex", "vgg", or "squeeze"
-DEVICE = "cpu"  # "auto", "cpu", or "cuda"
+DEVICE = "cuda"  # "auto", "cpu", or "cuda"
 STRICT_PAIRING = False
 WRITE_IMAGE_METRICS = False
+EVAL_SIZE = 448  # Resize both generated and GT glyphs to this square size.
 RESIZE_GT_TO_GEN = True
 
 
@@ -91,10 +92,22 @@ def parse_args() -> argparse.Namespace:
         help="Also write per-image metrics to image_metrics.csv for debugging.",
     )
     parser.add_argument(
+        "--eval_size",
+        type=int,
+        default=EVAL_SIZE,
+        help=(
+            "Resize both generated and GT images to this square size before metrics. "
+            "Use 0 to disable fixed-size resizing."
+        ),
+    )
+    parser.add_argument(
         "--resize_gt_to_gen",
         action="store_true",
         default=RESIZE_GT_TO_GEN,
-        help="Resize GT images to each generated image size before computing metrics.",
+        help=(
+            "When --eval_size 0 is used, resize GT images to each generated image "
+            "size before computing metrics."
+        ),
     )
     parser.add_argument(
         "--no_resize_gt_to_gen",
@@ -163,10 +176,14 @@ def compute_pair(
     mode: str,
     lpips_fn: torch.nn.Module,
     device: torch.device,
+    eval_size: int,
     resize_gt_to_gen: bool,
 ) -> ImageMetrics:
-    gen = load_image(gen_path, mode)
-    gt_size = (gen.shape[1], gen.shape[0]) if resize_gt_to_gen else None
+    fixed_size = (eval_size, eval_size) if eval_size > 0 else None
+    gen = load_image(gen_path, mode, size=fixed_size)
+    gt_size = fixed_size
+    if gt_size is None and resize_gt_to_gen:
+        gt_size = (gen.shape[1], gen.shape[0])
     gt = load_image(gt_path, mode, size=gt_size)
 
     if gen.shape != gt.shape:
@@ -323,6 +340,7 @@ def main() -> None:
                         mode=args.mode,
                         lpips_fn=lpips_fn,
                         device=device,
+                        eval_size=args.eval_size,
                         resize_gt_to_gen=args.resize_gt_to_gen,
                     )
                 )
@@ -356,6 +374,10 @@ def main() -> None:
     print(f"Image pairs evaluated: {len(all_records)}")
     print(f"LPIPS backbone: {args.lpips_net}")
     print(f"Pixel mode: {args.mode}")
+    if args.eval_size > 0:
+        print(f"Evaluation size: {args.eval_size}x{args.eval_size}")
+    else:
+        print("Evaluation size: native generated size")
     print(
         "Overall: "
         f"PSNR={overall['psnr']:.4f}, "
