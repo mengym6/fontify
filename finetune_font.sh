@@ -26,6 +26,12 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --layer_decay 0.8 \
     --drop_path 0.1 \
     --input_size 896 448 \
+    --augmentation_policy finetune \
+    --adv_warmup_epochs 8 \
+    --edge_warmup_epochs 10 \
+    --loss_warmup_duration 8 \
+    --adv_weight_final 0.4 \
+    --edge_weight_final 0.3 \
     --save_freq 5 \
     --data_path $DATA_PATH/ \
     --json_path $DATA_PATH/train_json_new/*.json \

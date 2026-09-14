@@ -15,7 +15,8 @@ SPLITS = [
 
 
 def gen_one_split(split_name, out_subdir):
-    source_dir  = os.path.join(DATA_ROOT, "font", split_name, "source")
+    # 统一使用与 train_json_new 相同的 448×448 中性 source。
+    source_dir  = os.path.join(DATA_ROOT, "ttf", "SourceHanSansSC-Regular")
     chinese_dir = os.path.join(DATA_ROOT, "font", split_name, "chinese")
     out_dir     = os.path.join(DATA_ROOT, out_subdir)
     os.makedirs(out_dir, exist_ok=True)
@@ -40,7 +41,7 @@ def gen_one_split(split_name, out_subdir):
         if not common:
             continue
         pairs = [{
-            "image_path":  f"font/{split_name}/source/{c}",
+            "image_path":  f"ttf/SourceHanSansSC-Regular/{c}",
             "target_path": f"font/{split_name}/chinese/{font_name}/{c}",
             "type":        f"font_{font_name}",
         } for c in common]

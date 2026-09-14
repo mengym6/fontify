@@ -69,6 +69,9 @@ def get_args_parser():
                         help='Drop path rate (default: 0.)')
     parser.add_argument('--min_random_scale', default=0.3, type=float,
                         help='Minimal random scale for randomresizecrop (default: 0.3)')
+    parser.add_argument('--augmentation_policy', default='finetune',
+                        choices=['pretrain', 'finetune'],
+                        help='数据增强策略：pretrain 恢复原预训练增强；finetune 使用当前弱增强')
     parser.add_argument('--last_norm_instance', action='store_true', default=False,
                         help='use instance norm to normalize each channel map before the decoder layer')
     parser.add_argument('--half_mask_ratio', default=0.1, type=float,
@@ -117,6 +120,18 @@ def get_args_parser():
                         help='Optimizer Betas (default: None, use opt default)')
     parser.add_argument('--layer_decay', type=float, default=1.0, metavar='LRD',
                         help='Learning rate layer decay')
+
+    # Loss schedule parameters
+    parser.add_argument('--adv_warmup_epochs', default=8, type=int,
+                        help='epoch when adversarial loss warmup starts')
+    parser.add_argument('--edge_warmup_epochs', default=10, type=int,
+                        help='epoch when edge loss warmup starts')
+    parser.add_argument('--loss_warmup_duration', default=8, type=int,
+                        help='linear warmup duration for adversarial and edge loss weights')
+    parser.add_argument('--adv_weight_final', default=0.4, type=float,
+                        help='final adversarial loss weight')
+    parser.add_argument('--edge_weight_final', default=0.3, type=float,
+                        help='final edge loss weight')
 
     # Dataset parameters
     parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
@@ -193,6 +208,78 @@ def get_args_parser():
     return parser.parse_args(), ds_init
 
 
+def build_data_transforms(args):
+    """Build the original pre-training or current fine-tuning transforms."""
+    normalize = pair_transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225],
+    )
+
+    if args.augmentation_policy == 'pretrain':
+        transform_train = pair_transforms.Compose([
+            pair_transforms.PadToSquare(fill=255),
+            pair_transforms.RandomResizedCrop(
+                args.input_size[1], scale=(args.min_random_scale, 1.0), interpolation=3),
+            pair_transforms.RandomApply([
+                pair_transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)
+            ], p=0.8),
+            pair_transforms.RandomHorizontalFlip(),
+            pair_transforms.ToTensor(),
+            normalize,
+        ])
+        transform_train2 = pair_transforms.Compose([
+            pair_transforms.PadToSquare(fill=255),
+            pair_transforms.RandomResizedCrop(
+                args.input_size[1], scale=(0.9999, 1.0), interpolation=3),
+            pair_transforms.ToTensor(),
+            normalize,
+        ])
+        transform_train3 = pair_transforms.Compose([
+            pair_transforms.PadToSquare(fill=255),
+            pair_transforms.RandomResizedCrop(
+                args.input_size[1], scale=(0.9999, 1.0), interpolation=3),
+            pair_transforms.ToTensor(),
+            normalize,
+        ])
+        transform_train_seccrop = pair_transforms.Compose([
+            pair_transforms.RandomResizedCrop(
+                args.input_size,
+                scale=(args.min_random_scale, 1.0),
+                ratio=(0.3, 0.7),
+                interpolation=3,
+            ),
+        ])
+        transform_val = pair_transforms.Compose([
+            pair_transforms.PadToSquare(fill=255),
+            pair_transforms.RandomResizedCrop(
+                args.input_size[1], scale=(0.9999, 1.0), interpolation=3),
+            pair_transforms.ToTensor(),
+            normalize,
+        ])
+    else:
+        transform_train = pair_transforms.Compose([
+            pair_transforms.ToTensor(),
+            normalize,
+        ])
+        transform_train2 = pair_transforms.Compose([
+            pair_transforms.ToTensor(),
+            normalize,
+        ])
+        transform_train3 = pair_transforms.Compose([
+            pair_transforms.ToTensor(),
+            normalize,
+        ])
+        transform_train_seccrop = None
+        transform_val = pair_transforms.Compose([
+            pair_transforms.RandomResizedCrop(
+                args.input_size[1], scale=(0.9999, 1.0), interpolation=3),
+            pair_transforms.ToTensor(),
+            normalize,
+        ])
+
+    return transform_train, transform_train2, transform_train3, transform_train_seccrop, transform_val
+
+
 def main(args, ds_init):
     misc.init_distributed_mode(args)
 
@@ -215,6 +302,15 @@ def main(args, ds_init):
     model = models_train.__dict__[args.model]()
     # curriculum 切换点：数据端从 JT-only 切到 JT/BF 同步训练，loss 端从禁用 edge/adv 切到 warmup
     model.semantic_only_epochs = args.semantic_only_epochs
+    if min(args.adv_warmup_epochs, args.edge_warmup_epochs, args.loss_warmup_duration) < 0:
+        raise ValueError('loss warmup epochs and duration must be non-negative')
+    if min(args.adv_weight_final, args.edge_weight_final) < 0:
+        raise ValueError('final loss weights must be non-negative')
+    model.adv_warmup_epochs = args.adv_warmup_epochs
+    model.edge_warmup_epochs = args.edge_warmup_epochs
+    model.loss_warmup_duration = args.loss_warmup_duration
+    model.adv_weight_final = args.adv_weight_final
+    model.edge_weight_final = args.edge_weight_final
 
     if args.finetune:
         checkpoint = torch.load(args.finetune, map_location='cpu')
@@ -249,20 +345,13 @@ def main(args, ds_init):
     args.patch_size = patch_size
 
 
-    transform_train = pair_transforms.Compose([
-        pair_transforms.ToTensor(),
-        pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    transform_train2 = pair_transforms.Compose([
-        pair_transforms.ToTensor(),
-        pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    transform_train3 = pair_transforms.Compose([
-        pair_transforms.ToTensor(),
-        pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    transform_train_seccrop = None
-    transform_val = pair_transforms.Compose([
-        pair_transforms.RandomResizedCrop(args.input_size[1], scale=(0.9999, 1.0), interpolation=3),  # 3 is bicubic
-        pair_transforms.ToTensor(),
-        pair_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    transform_train, transform_train2, transform_train3, transform_train_seccrop, transform_val = \
+        build_data_transforms(args)
+    print(f"Data augmentation policy: {args.augmentation_policy}")
+    print("Loss schedule: "
+          f"adv(start={args.adv_warmup_epochs}, final={args.adv_weight_final}), "
+          f"edge(start={args.edge_warmup_epochs}, final={args.edge_weight_final}), "
+          f"duration={args.loss_warmup_duration}")
 
     masked_position_generator = MaskingGenerator(
         args.window_size, num_masking_patches=args.num_mask_patches,

@@ -408,16 +408,18 @@ class Fontify(nn.Module):
             return "jt_random", epoch
         return "jt_bf_sync", max(0, epoch - max(B, 0))
 
-    def get_dynamic_loss_weights(self, epoch, adv_warmup_epochs=8, edge_warmup_epochs=10,
-                                 warmup_duration=8):
+    def get_dynamic_loss_weights(self, epoch):
         """
-        原作者式固定系数组合：
+        参数化的原作者式系数组合：
             total = recon + style + edge_weight * edge + adv_weight * adv
         JT-only 阶段禁用 edge/adv；JT/BF 同步阶段通用一套 loss，
-        edge/adv 按原作者 warmup 形状升到 adv=0.4、edge=0.3。
+        edge/adv 按配置的起点、时长和最终权重进行 warmup。
         """
-        adv_weight_final = 0.4
-        edge_weigiht_final = 0.3
+        adv_warmup_epochs = getattr(self, 'adv_warmup_epochs', 8)
+        edge_warmup_epochs = getattr(self, 'edge_warmup_epochs', 10)
+        warmup_duration = getattr(self, 'loss_warmup_duration', 8)
+        adv_weight_final = getattr(self, 'adv_weight_final', 0.4)
+        edge_weight_final = getattr(self, 'edge_weight_final', 0.3)
 
         phase, phase_epoch = self.get_loss_phase(epoch)
         if phase == "jt_random":
@@ -425,7 +427,7 @@ class Fontify(nn.Module):
 
         if phase_epoch < adv_warmup_epochs:
             adv_weight = 0.0
-        elif phase_epoch < adv_warmup_epochs + warmup_duration:
+        elif warmup_duration > 0 and phase_epoch < adv_warmup_epochs + warmup_duration:
             progress = (phase_epoch - adv_warmup_epochs) / warmup_duration
             adv_weight = adv_weight_final * progress
         else:
@@ -433,11 +435,11 @@ class Fontify(nn.Module):
 
         if phase_epoch < edge_warmup_epochs:
             edge_weight = 0.0
-        elif phase_epoch < edge_warmup_epochs + warmup_duration:
+        elif warmup_duration > 0 and phase_epoch < edge_warmup_epochs + warmup_duration:
             progress = (phase_epoch - edge_warmup_epochs) / warmup_duration
-            edge_weight = edge_weigiht_final * progress
+            edge_weight = edge_weight_final * progress
         else:
-            edge_weight = edge_weigiht_final
+            edge_weight = edge_weight_final
 
         return phase, adv_weight, edge_weight
 
