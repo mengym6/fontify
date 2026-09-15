@@ -408,6 +408,15 @@ class PairDataset(VisionDataset):
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         mask_mode = self._sample_mask_mode()
+        # 阶段 2 混合数据：原电脑字体使用随机 mask，CalliPhase 优先使用样本自带的
+        # semantic_masks/*.npy。source_dataset 由混合 JSON 写入；旧 JSON 保持原行为。
+        source_dataset = self.pairs[index].get('source_dataset', '')
+        if source_dataset == 'calliphase':
+            pair_type_hint = self.pairs[index].get('type', '')
+            if self._has_semantic_source(self.pairs[index]):
+                mask_mode = 'jt_semantic' if 'JT' in pair_type_hint else 'bf_semantic'
+            else:
+                mask_mode = 'random'
         # curriculum 仅训练集启用：前 N 个 epoch 只用 JT；
         # epoch>=N 后恢复原始采样分布，让 JT 随机遮盖和 BF 语义遮盖同步训练。
         # 验证集没有 semantic_mask_dir，不重定向。
@@ -419,7 +428,7 @@ class PairDataset(VisionDataset):
                     and self._jt_indices
                     and 'JT' not in pair_type_cur):
                 index = random.choices(self._jt_indices, weights=self._jt_weights, k=1)[0]
-        elif mask_mode in ("jt_semantic", "bf_semantic"):
+        elif mask_mode in ("jt_semantic", "bf_semantic") and source_dataset != 'calliphase':
             index = self._sample_semantic_index(mask_mode)
         pair = self.pairs[index]
         image = self._load_image(pair['image_path'])
@@ -451,6 +460,11 @@ class PairDataset(VisionDataset):
             pair_type = pair['type']
             # sample the second pair belonging to the same type
             pair2_index = random.choice(self.pair_type_dict[pair_type])
+            if source_dataset == 'calliphase':
+                calli_pool = [i for i in self.pair_type_dict[pair_type]
+                              if self.pairs[i].get('source_dataset') == 'calliphase']
+                if calli_pool:
+                    pair2_index = random.choice(calli_pool)
             if mask_mode in ("jt_semantic", "bf_semantic"):
                 pair2_pool = self._semantic_indices_by_type.get(pair_type, [])
                 if pair2_pool:
