@@ -263,20 +263,32 @@ def build_data_transforms(args):
             normalize,
         ])
     else:
+        # 阶段2混合数据里 chinese target 是 64x64，CalliPhase 是 448x448。
+        # 这里只做等比垫白和确定性缩放，不引入随机增强，避免 collate 尺寸冲突。
         transform_train = pair_transforms.Compose([
+            pair_transforms.PadToSquare(fill=255),
+            pair_transforms.RandomResizedCrop(
+                args.input_size[1], scale=(1.0, 1.0), ratio=(1.0, 1.0), interpolation=3),
             pair_transforms.ToTensor(),
             normalize,
         ])
         transform_train2 = pair_transforms.Compose([
+            pair_transforms.PadToSquare(fill=255),
+            pair_transforms.RandomResizedCrop(
+                args.input_size[1], scale=(1.0, 1.0), ratio=(1.0, 1.0), interpolation=3),
             pair_transforms.ToTensor(),
             normalize,
         ])
         transform_train3 = pair_transforms.Compose([
+            pair_transforms.PadToSquare(fill=255),
+            pair_transforms.RandomResizedCrop(
+                args.input_size[1], scale=(1.0, 1.0), ratio=(1.0, 1.0), interpolation=3),
             pair_transforms.ToTensor(),
             normalize,
         ])
         transform_train_seccrop = None
         transform_val = pair_transforms.Compose([
+            pair_transforms.PadToSquare(fill=255),
             pair_transforms.RandomResizedCrop(
                 args.input_size[1], scale=(0.9999, 1.0), interpolation=3),
             pair_transforms.ToTensor(),
