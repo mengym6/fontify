@@ -49,4 +49,4 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --num_mask_annotations_jt 1 \
     --mask_coverage_threshold 0.1 \
     --semantic_only_epochs 0 \
-    --mask_mix_probs 0.8 0.0 0.2
+    #--mask_mix_probs 0.8 0.0 0.2
