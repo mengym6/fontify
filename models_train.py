@@ -670,14 +670,27 @@ class Fontify(nn.Module):
         loss_centroid = F.l1_loss(pred_cx, tgt_cx) + F.l1_loss(pred_cy, tgt_cy)
         loss_area = F.l1_loss(pred_fg.mean((1, 2)), tgt_fg.mean((1, 2)))
         loss_structure = loss_row + loss_col + loss_centroid + loss_area
-        structure_weight = getattr(self, 'structure_loss_weight', 0.0)
 
         phase, adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
-        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge + structure_weight * loss_structure
+        structure_weight = getattr(self, 'structure_loss_weight', 0.0)
+        structure_warmup_epochs = getattr(self, 'structure_warmup_epochs', 0)
+        structure_warmup_duration = getattr(self, 'structure_warmup_duration', 0)
+        _, phase_epoch = self.get_loss_phase(epoch)
+
+        if phase_epoch < structure_warmup_epochs:
+            structure_weight_current = 0.0
+        elif structure_warmup_duration > 0 and phase_epoch < structure_warmup_epochs + structure_warmup_duration:
+            progress = (phase_epoch - structure_warmup_epochs) / structure_warmup_duration
+            structure_weight_current = structure_weight * progress
+        else:
+            structure_weight_current = structure_weight
+
+        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge + structure_weight_current * loss_structure
         self.last_loss_components = {
             'structure': loss_structure.detach(),
             'structure_row': loss_row.detach(), 'structure_col': loss_col.detach(),
             'structure_centroid': loss_centroid.detach(), 'structure_area': loss_area.detach(),
+            'structure_weight': structure_weight_current,
         }
 
         adv_loss = pred.new_tensor(0.0)

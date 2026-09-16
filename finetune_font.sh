@@ -20,20 +20,22 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --num_mask_patches 784 \
     --max_mask_patches_per_block 392 \
     --epochs 51 \
-    --warmup_epochs 1 \
-    --lr 5e-5 \
+    --warmup_epochs 5 \
+    --lr 1e-3 \
     --clip_grad 3.0 \
     --layer_decay 0.8 \
     --drop_path 0.1 \
     --input_size 896 448 \
     --augmentation_policy finetune \
     --adv_warmup_epochs 8 \
-    --edge_warmup_epochs 10 \
-    --loss_warmup_duration 8 \
+    --edge_warmup_epochs 8 \
+    --loss_warmup_duration 6 \
     --adv_weight_final 0.4 \
-    --edge_weight_final 0.3 \
+    --edge_weight_final 0.1 \
     --no_gan \
     --structure_loss_weight 0.05 \
+    --structure_warmup_epochs 6 \
+    --structure_warmup_duration 4 \
     --save_freq 5 \
     --data_path $DATA_PATH/ \
     --json_path $DATA_PATH/train_json_mix/*.json \

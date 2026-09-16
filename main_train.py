@@ -134,6 +134,10 @@ def get_args_parser():
                         help='final edge loss weight')
     parser.add_argument('--structure_loss_weight', default=0.05, type=float,
                         help='global structure loss weight (row/col/centroid/area)')
+    parser.add_argument('--structure_warmup_epochs', default=0, type=int,
+                        help='epoch when structure loss warmup starts')
+    parser.add_argument('--structure_warmup_duration', default=4, type=int,
+                        help='linear warmup duration for structure loss weight')
 
     # Dataset parameters
     parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
@@ -304,7 +308,8 @@ def main(args, ds_init):
     model = models_train.__dict__[args.model]()
     # curriculum 切换点：数据端从 JT-only 切到 JT/BF 同步训练，loss 端从禁用 edge/adv 切到 warmup
     model.semantic_only_epochs = args.semantic_only_epochs
-    if min(args.adv_warmup_epochs, args.edge_warmup_epochs, args.loss_warmup_duration) < 0:
+    if min(args.adv_warmup_epochs, args.edge_warmup_epochs, args.loss_warmup_duration,
+           args.structure_warmup_epochs, args.structure_warmup_duration) < 0:
         raise ValueError('loss warmup epochs and duration must be non-negative')
     if min(args.adv_weight_final, args.edge_weight_final) < 0:
         raise ValueError('final loss weights must be non-negative')
@@ -313,6 +318,8 @@ def main(args, ds_init):
     model.loss_warmup_duration = args.loss_warmup_duration
     model.adv_weight_final = args.adv_weight_final
     model.edge_weight_final = args.edge_weight_final
+    model.structure_warmup_epochs = args.structure_warmup_epochs
+    model.structure_warmup_duration = args.structure_warmup_duration
     if args.structure_loss_weight < 0:
         raise ValueError('structure_loss_weight must be non-negative')
     model.structure_loss_weight = args.structure_loss_weight
@@ -356,6 +363,8 @@ def main(args, ds_init):
     print("Loss schedule: "
           f"adv(start={args.adv_warmup_epochs}, final={args.adv_weight_final}), "
           f"edge(start={args.edge_warmup_epochs}, final={args.edge_weight_final}), "
+          f"structure(start={args.structure_warmup_epochs}, final={args.structure_loss_weight}, "
+          f"duration={args.structure_warmup_duration}), "
           f"duration={args.loss_warmup_duration}")
 
     masked_position_generator = MaskingGenerator(
