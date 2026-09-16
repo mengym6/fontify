@@ -6,7 +6,7 @@ script traverses every font folder under ``fontdata_example/font/train/new``:
 
   <font>/annotations/instances_default.json
   <font>/images/*.png
-  -> <font>/images_text_mask_denoised/*.png
+  -> <font>/images_text_denoised/*.png (448x448)
 
 Default mode preserves original pixels inside the text mask and sets everything
 outside the mask to white. Set ``MODE = "mask"`` to rebuild pure black glyphs
@@ -47,7 +47,8 @@ FONT_NAMES: list[str] | None = None
 ANNOTATIONS_SUBDIR = "annotations"
 ANNOTATIONS_FILENAME = "instances_default.json"
 IMAGE_SUBDIR = "images"
-OUTPUT_SUBDIR = "images_text_mask_denoised"
+OUTPUT_SUBDIR = "images_text_denoised"
+OUTPUT_SIZE = (448, 448)
 
 
 # ============================================================
@@ -88,6 +89,7 @@ class Config:
     annotations_filename: str = ANNOTATIONS_FILENAME
     image_subdir: str = IMAGE_SUBDIR
     output_subdir: str = OUTPUT_SUBDIR
+    output_size: tuple[int, int] = OUTPUT_SIZE
     category_name: str = CATEGORY_NAME
     mode: str = MODE
     dilate_px: int = DILATE_PX
@@ -369,6 +371,7 @@ def process_font_dir(font_dir: Path, config: Config) -> tuple[int, int]:
                     feather_radius=max(0.0, config.feather_radius),
                 )
                 result = apply_text_mask(image, mask, config.mode)
+                result = result.resize(config.output_size, Image.Resampling.LANCZOS)
                 out_path = output_path_for(output_dir, file_name)
                 result.save(out_path)
         except (OSError, UnidentifiedImageError, NotImplementedError) as exc:

@@ -1,0 +1,26 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/吹.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/吹.png",
+    "type": "font_SushiJT",
+    "font_folder": "SushiJT",
+    "annotation_path": "font/train/new/SushiJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiJT/semantic_masks/吹.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/江.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/江.png",
+    "type": "font_SushiJT",
+    "font_folder": "SushiJT",
+    "annotation_path": "font/train/new/SushiJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiJT/semantic_masks/江.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/今.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/今.png",
+    "type": "font_SushiJT",
+    "font_folder": "SushiJT",
+    "annotation_path": "font/train/new/SushiJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiJT/semantic_masks/今.npy"
+  }
+]

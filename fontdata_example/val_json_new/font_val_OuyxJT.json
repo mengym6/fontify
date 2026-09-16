@@ -1,0 +1,42 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/制.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/制.png",
+    "type": "font_OuyxJT",
+    "font_folder": "OuyxJT",
+    "annotation_path": "font/train/new/OuyxJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxJT/semantic_masks/制.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/洪.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/洪.png",
+    "type": "font_OuyxJT",
+    "font_folder": "OuyxJT",
+    "annotation_path": "font/train/new/OuyxJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxJT/semantic_masks/洪.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/召.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/召.png",
+    "type": "font_OuyxJT",
+    "font_folder": "OuyxJT",
+    "annotation_path": "font/train/new/OuyxJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxJT/semantic_masks/召.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/金.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/金.png",
+    "type": "font_OuyxJT",
+    "font_folder": "OuyxJT",
+    "annotation_path": "font/train/new/OuyxJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxJT/semantic_masks/金.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/光.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/光.png",
+    "type": "font_OuyxJT",
+    "font_folder": "OuyxJT",
+    "annotation_path": "font/train/new/OuyxJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxJT/semantic_masks/光.npy"
+  }
+]

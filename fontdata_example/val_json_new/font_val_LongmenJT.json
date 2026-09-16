@@ -1,0 +1,10 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/列.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/列.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/列.npy"
+  }
+]

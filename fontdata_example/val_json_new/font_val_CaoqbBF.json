@@ -1,0 +1,50 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/光.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/光.png",
+    "type": "font_CaoqbBF",
+    "font_folder": "CaoqbBF",
+    "annotation_path": "font/train/new/CaoqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbBF/semantic_masks/光.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/郡.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/郡.png",
+    "type": "font_CaoqbBF",
+    "font_folder": "CaoqbBF",
+    "annotation_path": "font/train/new/CaoqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbBF/semantic_masks/郡.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/在.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/在.png",
+    "type": "font_CaoqbBF",
+    "font_folder": "CaoqbBF",
+    "annotation_path": "font/train/new/CaoqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbBF/semantic_masks/在.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/右.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/右.png",
+    "type": "font_CaoqbBF",
+    "font_folder": "CaoqbBF",
+    "annotation_path": "font/train/new/CaoqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbBF/semantic_masks/右.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/郎.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/郎.png",
+    "type": "font_CaoqbBF",
+    "font_folder": "CaoqbBF",
+    "annotation_path": "font/train/new/CaoqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbBF/semantic_masks/郎.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/所.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/所.png",
+    "type": "font_CaoqbBF",
+    "font_folder": "CaoqbBF",
+    "annotation_path": "font/train/new/CaoqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbBF/semantic_masks/所.npy"
+  }
+]

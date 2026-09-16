@@ -1,0 +1,50 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/適.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/適.png",
+    "type": "font_DongqcBF",
+    "font_folder": "DongqcBF",
+    "annotation_path": "font/train/new/DongqcBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcBF/semantic_masks/適.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/神.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/神.png",
+    "type": "font_DongqcBF",
+    "font_folder": "DongqcBF",
+    "annotation_path": "font/train/new/DongqcBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcBF/semantic_masks/神.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/遂.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/遂.png",
+    "type": "font_DongqcBF",
+    "font_folder": "DongqcBF",
+    "annotation_path": "font/train/new/DongqcBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcBF/semantic_masks/遂.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/曰.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/曰.png",
+    "type": "font_DongqcBF",
+    "font_folder": "DongqcBF",
+    "annotation_path": "font/train/new/DongqcBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcBF/semantic_masks/曰.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/室.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/室.png",
+    "type": "font_DongqcBF",
+    "font_folder": "DongqcBF",
+    "annotation_path": "font/train/new/DongqcBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcBF/semantic_masks/室.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/令.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/令.png",
+    "type": "font_DongqcBF",
+    "font_folder": "DongqcBF",
+    "annotation_path": "font/train/new/DongqcBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcBF/semantic_masks/令.npy"
+  }
+]

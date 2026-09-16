@@ -1,0 +1,26 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/万.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/万.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/万.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/容.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/容.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/容.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/年.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/年.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/年.npy"
+  }
+]

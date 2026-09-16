@@ -1,0 +1,26 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/泉.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/泉.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/泉.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/守.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/守.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/守.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/完.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/完.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/完.npy"
+  }
+]

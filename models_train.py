@@ -641,8 +641,44 @@ class Fontify(nn.Module):
         edge_target = self.improved_edge_detection(target)
         loss_edge = F.l1_loss(edge_pred, edge_target)
 
+        # Global, differentiable layout prior. Inputs are normalized; recover
+        # grayscale foreground probabilities before computing projections.
+        mean = imagenet_mean.to(dtype=pred.dtype)
+        std = imagenet_std.to(dtype=pred.dtype)
+        pred_rgb = (pred * std + mean).clamp(0, 1)
+        tgt_rgb = (tgts * std + mean).clamp(0, 1)
+        pred_gray = 0.299 * pred_rgb[:, 0] + 0.587 * pred_rgb[:, 1] + 0.114 * pred_rgb[:, 2]
+        tgt_gray = 0.299 * tgt_rgb[:, 0] + 0.587 * tgt_rgb[:, 1] + 0.114 * tgt_rgb[:, 2]
+        pred_fg = torch.sigmoid((0.9 - pred_gray) * 10.0)
+        tgt_fg = torch.sigmoid((0.9 - tgt_gray) * 10.0)
+        eps = pred_fg.new_tensor(1e-6)
+        pred_mass = pred_fg.sum((1, 2), keepdim=True) + eps
+        tgt_mass = tgt_fg.sum((1, 2), keepdim=True) + eps
+        pred_row = pred_fg.sum(2, keepdim=True) / pred_mass
+        tgt_row = tgt_fg.sum(2, keepdim=True) / tgt_mass
+        pred_col = pred_fg.sum(1, keepdim=True) / pred_mass
+        tgt_col = tgt_fg.sum(1, keepdim=True) / tgt_mass
+        h, w = pred_fg.shape[-2:]
+        yy = torch.linspace(-1, 1, h, device=pred.device, dtype=pred.dtype).view(1, h, 1)
+        xx = torch.linspace(-1, 1, w, device=pred.device, dtype=pred.dtype).view(1, 1, w)
+        pred_cx = (pred_fg * xx).sum((1, 2), keepdim=True) / pred_mass
+        tgt_cx = (tgt_fg * xx).sum((1, 2), keepdim=True) / tgt_mass
+        pred_cy = (pred_fg * yy).sum((1, 2), keepdim=True) / pred_mass
+        tgt_cy = (tgt_fg * yy).sum((1, 2), keepdim=True) / tgt_mass
+        loss_row = F.l1_loss(pred_row, tgt_row)
+        loss_col = F.l1_loss(pred_col, tgt_col)
+        loss_centroid = F.l1_loss(pred_cx, tgt_cx) + F.l1_loss(pred_cy, tgt_cy)
+        loss_area = F.l1_loss(pred_fg.mean((1, 2)), tgt_fg.mean((1, 2)))
+        loss_structure = loss_row + loss_col + loss_centroid + loss_area
+        structure_weight = getattr(self, 'structure_loss_weight', 0.0)
+
         phase, adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
-        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
+        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge + structure_weight * loss_structure
+        self.last_loss_components = {
+            'structure': loss_structure.detach(),
+            'structure_row': loss_row.detach(), 'structure_col': loss_col.detach(),
+            'structure_centroid': loss_centroid.detach(), 'structure_area': loss_area.detach(),
+        }
 
         adv_loss = pred.new_tensor(0.0)
         if not no_gan:

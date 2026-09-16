@@ -132,6 +132,8 @@ def train_one_epoch(model: torch.nn.Module,
         loss_value_reduce = misc.all_reduce_mean(loss_value)
         loss_l1l2_reduce = misc.all_reduce_mean(loss_l1l2)
         loss_vgg_reduce = misc.all_reduce_mean(loss_vgg)
+        raw_model = model.module if hasattr(model, 'module') else model
+        structure_reduce = misc.all_reduce_mean(raw_model.last_loss_components['structure'])
 
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
@@ -147,7 +149,8 @@ def train_one_epoch(model: torch.nn.Module,
             log_writer.add_scalar('lr', lr, epoch_1000x)
             log_writer.add_scalars('train_loss_detail', {
                 'loss_l1l2': loss_l1l2_reduce,
-                'loss_vgg': loss_vgg_reduce
+                'loss_vgg': loss_vgg_reduce,
+                'loss_structure': structure_reduce,
             }, epoch_1000x)
 
 

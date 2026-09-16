@@ -32,10 +32,12 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --loss_warmup_duration 8 \
     --adv_weight_final 0.4 \
     --edge_weight_final 0.3 \
+    --no_gan \
+    --structure_loss_weight 0.05 \
     --save_freq 5 \
     --data_path $DATA_PATH/ \
-    --json_path $DATA_PATH/train_json_new/*.json \
-    --val_json_path $DATA_PATH/val_json_new/*.json \
+    --json_path $DATA_PATH/train_json_mix/*.json \
+    --val_json_path $DATA_PATH/val_json_mix/*.json \
     --output_dir models/$name \
     --log_dir models/$name/logs \
     --finetune $PRETRAIN_CKPT \

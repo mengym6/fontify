@@ -1,0 +1,26 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/共.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/共.png",
+    "type": "font_ZhangqbBF",
+    "font_folder": "ZhangqbBF",
+    "annotation_path": "font/train/new/ZhangqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/ZhangqbBF/semantic_masks/共.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/高.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/高.png",
+    "type": "font_ZhangqbBF",
+    "font_folder": "ZhangqbBF",
+    "annotation_path": "font/train/new/ZhangqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/ZhangqbBF/semantic_masks/高.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/更.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/更.png",
+    "type": "font_ZhangqbBF",
+    "font_folder": "ZhangqbBF",
+    "annotation_path": "font/train/new/ZhangqbBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/ZhangqbBF/semantic_masks/更.npy"
+  }
+]

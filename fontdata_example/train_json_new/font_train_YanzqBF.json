@@ -1,0 +1,410 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/手.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/手.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/手.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/亰.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/亰1.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/亰1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/持.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/持.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/持.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/父.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/父.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/父.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/人.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/人.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/人.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/寳.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/寳.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/寳.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/郎.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/郎.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/郎.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/塔.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/塔.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/塔.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/胤.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/胤.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/胤.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/門.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/門.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/門.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/昇.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/昇.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/昇.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/九.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/九.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/九.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/具.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/具.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/具.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/覺.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/覺.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/覺.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/氏.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/氏.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/氏.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/在.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/在.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/在.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/文.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/文.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/文.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/水.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/水.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/水.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/歸.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/歸.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/歸.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/勛.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/勛.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/勛.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/依.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/依.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/依.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/浩.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/浩.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/浩.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/龍.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/龍.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/龍.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/髙.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/髙.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/髙.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/摠.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/摠.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/摠.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/大.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/大.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/大.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/出.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/出.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/出.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/禮.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/禮.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/禮.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/貟.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/貟.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/貟.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/年.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/年.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/年.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/並.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/並.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/並.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/佛1.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/佛1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/現.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/現.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/現.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/如.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/如.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/如.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/家.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/家.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/家.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/諸.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/諸.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/諸.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/佛.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/佛.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/建.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/建.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/建.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/十.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/十.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/十.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/西.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/西1.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/西1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/海.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/海.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/海.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/在.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/在1.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/在1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/程.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/程.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/程.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/應.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/應.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/應.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/宿.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/宿.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/宿.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/證.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/證.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/證.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/千.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/千.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/千.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/住.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/住.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/住.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/探.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/探.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/探.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/顏.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/顏.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/顏.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/多.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/多.png",
+    "type": "font_YanzqBF",
+    "font_folder": "YanzqBF",
+    "annotation_path": "font/train/new/YanzqBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/YanzqBF/semantic_masks/多.npy"
+  }
+]

@@ -1,0 +1,234 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/户.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/户.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/户.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/欲.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/欲.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/欲.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/是.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/是.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/是.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/花.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/花.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/花.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/窮.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/窮.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/窮.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/首.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/首.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/首.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/州.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/州1.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/州1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/春.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/春1.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/春1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/灰.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/灰.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/灰.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/小.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/小.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/小.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/欲.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/欲1.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/欲1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/起.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/起1.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/起1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/吹.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/吹.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/吹.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/庖.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/庖.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/庖.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/萧.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/萧.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/萧.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/三.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/三.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/三.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/寒.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/寒.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/寒.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/江.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/江.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/江.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/也.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/也.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/也.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/又.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/又.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/又.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/病.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/病.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/病.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/月.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/月.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/月.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/污.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/污.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/污.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/惜.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/惜1.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/惜1.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/過.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/過.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/過.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/势.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/势.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/势.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/来.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/来.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/来.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/食.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/食.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/食.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/殊.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/殊.png",
+    "type": "font_SushiBF",
+    "font_folder": "SushiBF",
+    "annotation_path": "font/train/new/SushiBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/SushiBF/semantic_masks/殊.npy"
+  }
+]

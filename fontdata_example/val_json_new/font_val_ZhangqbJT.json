@@ -1,0 +1,10 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/通.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/通.png",
+    "type": "font_ZhangqbJT",
+    "font_folder": "ZhangqbJT",
+    "annotation_path": "font/train/new/ZhangqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/ZhangqbJT/semantic_masks/通.npy"
+  }
+]

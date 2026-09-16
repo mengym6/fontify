@@ -17,6 +17,7 @@ CLEAR_OUTPUT = True
 
 DEFAULT_SOURCE_DIR = Path("ttf/SourceHanSansSC-Regular")
 TARGET_SUBDIR_CANDIDATES = [
+    "images_text_denoised",
     "images_white_bg_mask_denoised",
     "images_white_bg",
     "images",

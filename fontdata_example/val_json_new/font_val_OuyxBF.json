@@ -1,0 +1,58 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/湯.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/湯.png",
+    "type": "font_OuyxBF",
+    "font_folder": "OuyxBF",
+    "annotation_path": "font/train/new/OuyxBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxBF/semantic_masks/湯.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/结.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/结.png",
+    "type": "font_OuyxBF",
+    "font_folder": "OuyxBF",
+    "annotation_path": "font/train/new/OuyxBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxBF/semantic_masks/结.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/文.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/文.png",
+    "type": "font_OuyxBF",
+    "font_folder": "OuyxBF",
+    "annotation_path": "font/train/new/OuyxBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxBF/semantic_masks/文.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/乃.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/乃.png",
+    "type": "font_OuyxBF",
+    "font_folder": "OuyxBF",
+    "annotation_path": "font/train/new/OuyxBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxBF/semantic_masks/乃.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/珎.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/珎.png",
+    "type": "font_OuyxBF",
+    "font_folder": "OuyxBF",
+    "annotation_path": "font/train/new/OuyxBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxBF/semantic_masks/珎.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/往.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/往.png",
+    "type": "font_OuyxBF",
+    "font_folder": "OuyxBF",
+    "annotation_path": "font/train/new/OuyxBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxBF/semantic_masks/往.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/翔.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/翔.png",
+    "type": "font_OuyxBF",
+    "font_folder": "OuyxBF",
+    "annotation_path": "font/train/new/OuyxBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/OuyxBF/semantic_masks/翔.npy"
+  }
+]

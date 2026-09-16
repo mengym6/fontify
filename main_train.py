@@ -132,6 +132,8 @@ def get_args_parser():
                         help='final adversarial loss weight')
     parser.add_argument('--edge_weight_final', default=0.3, type=float,
                         help='final edge loss weight')
+    parser.add_argument('--structure_loss_weight', default=0.05, type=float,
+                        help='global structure loss weight (row/col/centroid/area)')
 
     # Dataset parameters
     parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
@@ -311,6 +313,9 @@ def main(args, ds_init):
     model.loss_warmup_duration = args.loss_warmup_duration
     model.adv_weight_final = args.adv_weight_final
     model.edge_weight_final = args.edge_weight_final
+    if args.structure_loss_weight < 0:
+        raise ValueError('structure_loss_weight must be non-negative')
+    model.structure_loss_weight = args.structure_loss_weight
 
     if args.finetune:
         checkpoint = torch.load(args.finetune, map_location='cpu')

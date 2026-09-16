@@ -1,0 +1,18 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/暎.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/暎.png",
+    "type": "font_LongmenBF",
+    "font_folder": "LongmenBF",
+    "annotation_path": "font/train/new/LongmenBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenBF/semantic_masks/暎.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/十.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/十.png",
+    "type": "font_LongmenBF",
+    "font_folder": "LongmenBF",
+    "annotation_path": "font/train/new/LongmenBF/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenBF/semantic_masks/十.npy"
+  }
+]
