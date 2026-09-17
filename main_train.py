@@ -79,9 +79,9 @@ def get_args_parser():
     parser.add_argument('--semantic_mask_dir', default=None, type=str,
                         help='预渲染语义 mask .npy 根目录，None 则使用随机 mask')
     parser.add_argument('--num_mask_annotations_bf', default=3, type=int,
-                        help='BF（笔法）字体每个 target 随机选几个 annotation/npy 语义遮盖块')
+                        help='BF（笔法）字体从全部起笔/中笔/收笔标注中随机选几个单标签 mask')
     parser.add_argument('--num_mask_annotations_jt', default=1, type=int,
-                        help='JT（结体）字体每个 target 随机选几个标注遮盖')
+                        help='JT（结体）字体每个 target 随机选几个空间标签 mask')
     parser.add_argument('--mask_coverage_threshold', default=0.5, type=float,
                         help='patch 内 mask 像素覆盖率超过此阈值则标记为遮盖')
     parser.add_argument('--mask_mix_probs', default=None, type=float, nargs=3,

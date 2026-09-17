@@ -9,7 +9,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丹.png",
+    "image_path": "ttf/source/丹.png",
     "target_path": "font/test_unknown_content/chinese/The Chinese Dragon Handwritten Chinese Font-Simplified Chinese Fonts/丹.png",
     "type": "font_The Chinese Dragon Handwritten Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -42,7 +42,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/抹.png",
+    "image_path": "ttf/source/抹.png",
     "target_path": "font/test_unknown_content/chinese/Sharp Outstanding Bold Figure Chinese Font-Simplified Chinese Fonts/抹.png",
     "type": "font_Sharp Outstanding Bold Figure Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -66,7 +66,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/宅.png",
+    "image_path": "ttf/source/宅.png",
     "target_path": "font/test_unknown_content/chinese/851CHIKARA-DZUYOKU-kanaB-2/宅.png",
     "type": "font_851CHIKARA-DZUYOKU-kanaB-2",
     "source_dataset": "chinese"
@@ -81,19 +81,19 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/宅.png",
+    "image_path": "ttf/source/宅.png",
     "target_path": "font/test_unknown_content/chinese/The style of the ancient Chinese Font-Simplified Chinese/宅.png",
     "type": "font_The style of the ancient Chinese Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/赤.png",
+    "image_path": "ttf/source/赤.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Pang wa Font-Simplified Chinese/赤.png",
     "type": "font_Fang zheng Pang wa Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/井.png",
+    "image_path": "ttf/source/井.png",
     "target_path": "font/test_unknown_content/chinese/Ye Gen You Small  Song (Ming) Typeface Font-Simplified Chinese/井.png",
     "type": "font_Ye Gen You Small  Song (Ming) Typeface Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -108,7 +108,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/互.png",
+    "image_path": "ttf/source/互.png",
     "target_path": "font/test_unknown_content/chinese/Soft Ink Brush (Writing Brush) & Regular Script Chinese Font – Simplified Chinese Fonts/互.png",
     "type": "font_Soft Ink Brush (Writing Brush) & Regular Script Chinese Font – Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -132,19 +132,19 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/亭.png",
+    "image_path": "ttf/source/亭.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Yi hei Font-Simplified Chinese/亭.png",
     "type": "font_Fang zheng Yi hei Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/尾.png",
+    "image_path": "ttf/source/尾.png",
     "target_path": "font/test_unknown_content/chinese/Sharp (Glory to return) Bold Figure Chinese Font-Simplified Chinese Fonts/尾.png",
     "type": "font_Sharp (Glory to return) Bold Figure Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丸.png",
+    "image_path": "ttf/source/丸.png",
     "target_path": "font/test_unknown_content/chinese/Ma wei Shi zhuang Font-Simplified Chinese/丸.png",
     "type": "font_Ma wei Shi zhuang Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -186,7 +186,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丹.png",
+    "image_path": "ttf/source/丹.png",
     "target_path": "font/test_unknown_content/chinese/Hai liang xing shu Kong xin ti Font-Simplified Chinese/丹.png",
     "type": "font_Hai liang xing shu Kong xin ti Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -219,7 +219,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/井.png",
+    "image_path": "ttf/source/井.png",
     "target_path": "font/test_unknown_content/chinese/Bai zhou Bai yu Shu ti Font(HaKuu)-Traditional Chinese/井.png",
     "type": "font_Bai zhou Bai yu Shu ti Font(HaKuu)-Traditional Chinese",
     "source_dataset": "chinese"
@@ -243,7 +243,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/宅.png",
+    "image_path": "ttf/source/宅.png",
     "target_path": "font/test_unknown_content/chinese/HOT-Gekai11Std-R-2/宅.png",
     "type": "font_HOT-Gekai11Std-R-2",
     "source_dataset": "chinese"
@@ -258,7 +258,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/串.png",
+    "image_path": "ttf/source/串.png",
     "target_path": "font/test_unknown_content/chinese/Standard Rounded Chinese Font – Simplified Chinese/串.png",
     "type": "font_Standard Rounded Chinese Font – Simplified Chinese",
     "source_dataset": "chinese"
@@ -273,19 +273,19 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/毒.png",
+    "image_path": "ttf/source/毒.png",
     "target_path": "font/test_unknown_content/chinese/Meng na Yuan hei(MYuenHK-SemiBold) Font - Traditional Chinese/毒.png",
     "type": "font_Meng na Yuan hei(MYuenHK-SemiBold) Font - Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/尺.png",
+    "image_path": "ttf/source/尺.png",
     "target_path": "font/test_unknown_content/chinese/Huai liu ti Font-Simplified Chinese/尺.png",
     "type": "font_Huai liu ti Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/尺.png",
+    "image_path": "ttf/source/尺.png",
     "target_path": "font/test_unknown_content/chinese/Take off&Good luck Love Cute Chinese Font – Simplified Chinese Fonts/尺.png",
     "type": "font_Take off&Good luck Love Cute Chinese Font – Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -309,7 +309,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/串.png",
+    "image_path": "ttf/source/串.png",
     "target_path": "font/test_unknown_content/chinese/Corn poetry Font-Simplified Chinese/串.png",
     "type": "font_Corn poetry Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -333,19 +333,19 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斑.png",
+    "image_path": "ttf/source/斑.png",
     "target_path": "font/test_unknown_content/chinese/Limit Sha bi ti Font-Traditional Chinese/斑.png",
     "type": "font_Limit Sha bi ti Font-Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/瓦.png",
+    "image_path": "ttf/source/瓦.png",
     "target_path": "font/test_unknown_content/chinese/School days Pen Chinese Font-Simplified Chinese Fonts/瓦.png",
     "type": "font_School days Pen Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斤.png",
+    "image_path": "ttf/source/斤.png",
     "target_path": "font/test_unknown_content/chinese/Senty Zhao Font-Simplified Chinese/斤.png",
     "type": "font_Senty Zhao Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -387,13 +387,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丸.png",
+    "image_path": "ttf/source/丸.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Chao hei Font-Simplified Chinese/丸.png",
     "type": "font_Fang zheng Chao hei Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斑.png",
+    "image_path": "ttf/source/斑.png",
     "target_path": "font/test_unknown_content/chinese/Meng na Yu yi T(MHGHagoromoTHK-Medium)Font - Traditional Chinese/斑.png",
     "type": "font_Meng na Yu yi T(MHGHagoromoTHK-Medium)Font - Traditional Chinese",
     "source_dataset": "chinese"
@@ -408,13 +408,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/互.png",
+    "image_path": "ttf/source/互.png",
     "target_path": "font/test_unknown_content/chinese/Meng na Zhong yuan(MYuenHK-Medium) Font - Traditional Chinese/互.png",
     "type": "font_Meng na Zhong yuan(MYuenHK-Medium) Font - Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/掌.png",
+    "image_path": "ttf/source/掌.png",
     "target_path": "font/test_unknown_content/chinese/Take off&Good luck Love (slender) Cute Chinese Font – Simplified Chinese Fonts/掌.png",
     "type": "font_Take off&Good luck Love (slender) Cute Chinese Font – Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -429,19 +429,19 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/掌.png",
+    "image_path": "ttf/source/掌.png",
     "target_path": "font/test_unknown_content/chinese/HOT-BukotsuStd-U-2/掌.png",
     "type": "font_HOT-BukotsuStd-U-2",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/抹.png",
+    "image_path": "ttf/source/抹.png",
     "target_path": "font/test_unknown_content/chinese/Benmo Jin Bold Elegant Chinese Font -Simplified Chinese Fonts/抹.png",
     "type": "font_Benmo Jin Bold Elegant Chinese Font -Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斤.png",
+    "image_path": "ttf/source/斤.png",
     "target_path": "font/test_unknown_content/chinese/Han yi Hei qi ti Font/斤.png",
     "type": "font_Han yi Hei qi ti Font",
     "source_dataset": "chinese"
@@ -456,7 +456,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/枝.png",
+    "image_path": "ttf/source/枝.png",
     "target_path": "font/test_unknown_content/chinese/Zao Zi Gong Fang (Makefont) Brahma Song (Ming) Typeface Chinese Font-Simplified Chinese Fonts/枝.png",
     "type": "font_Zao Zi Gong Fang (Makefont) Brahma Song (Ming) Typeface Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -471,7 +471,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/泡.png",
+    "image_path": "ttf/source/泡.png",
     "target_path": "font/test_unknown_content/chinese/A-OTF-ShinMGoMin-Line-2/泡.png",
     "type": "font_A-OTF-ShinMGoMin-Line-2",
     "source_dataset": "chinese"
@@ -495,13 +495,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/尺.png",
+    "image_path": "ttf/source/尺.png",
     "target_path": "font/test_unknown_content/chinese/Soft Writing Brush Regular Script Chinese Font-Simplified Chinese/尺.png",
     "type": "font_Soft Writing Brush Regular Script Chinese Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丁.png",
+    "image_path": "ttf/source/丁.png",
     "target_path": "font/test_unknown_content/chinese/Meng na caricature Font-Traditional Chinese/丁.png",
     "type": "font_Meng na caricature Font-Traditional Chinese",
     "source_dataset": "chinese"
@@ -534,13 +534,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/玉.png",
+    "image_path": "ttf/source/玉.png",
     "target_path": "font/test_unknown_content/chinese/XinDiHeiBanBaoTi-1/玉.png",
     "type": "font_XinDiHeiBanBaoTi-1",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/汗.png",
+    "image_path": "ttf/source/汗.png",
     "target_path": "font/test_unknown_content/chinese/Tian shi xi brushes ti Font-Traditional Chinese/汗.png",
     "type": "font_Tian shi xi brushes ti Font-Traditional Chinese",
     "source_dataset": "chinese"
@@ -555,19 +555,19 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/尾.png",
+    "image_path": "ttf/source/尾.png",
     "target_path": "font/test_unknown_content/chinese/JianGang Young Incomplete version Font-Simplified Chinese/尾.png",
     "type": "font_JianGang Young Incomplete version Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/泡.png",
+    "image_path": "ttf/source/泡.png",
     "target_path": "font/test_unknown_content/chinese/WanQiong Pan Beautiful Handwritten Pen Chinese Font-Simplified Chinese/泡.png",
     "type": "font_WanQiong Pan Beautiful Handwritten Pen Chinese Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/亭.png",
+    "image_path": "ttf/source/亭.png",
     "target_path": "font/test_unknown_content/chinese/Sharp Workshop Cappuccino Cosmetic Contact Lenses Chinese Font-Simplified Chinese Fonts/亭.png",
     "type": "font_Sharp Workshop Cappuccino Cosmetic Contact Lenses Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -591,25 +591,25 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/宅.png",
+    "image_path": "ttf/source/宅.png",
     "target_path": "font/test_unknown_content/chinese/Literature and art Hollow Bold figure Font-Simplified Chinese/宅.png",
     "type": "font_Literature and art Hollow Bold figure Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/汗.png",
+    "image_path": "ttf/source/汗.png",
     "target_path": "font/test_unknown_content/chinese/POP(STHeiti J Light)Font-Simplified Chinese-Traditional Chinese/汗.png",
     "type": "font_POP(STHeiti J Light)Font-Simplified Chinese-Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斤.png",
+    "image_path": "ttf/source/斤.png",
     "target_path": "font/test_unknown_content/chinese/LiQun Ye Geometric Trimming Chinese Fontt-Simplified Chinese Fonts/斤.png",
     "type": "font_LiQun Ye Geometric Trimming Chinese Fontt-Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斤.png",
+    "image_path": "ttf/source/斤.png",
     "target_path": "font/test_unknown_content/chinese/Happiness Four Leaf Clover Font-Simplified Chinese-Traditional Chinese+/斤.png",
     "type": "font_Happiness Four Leaf Clover Font-Simplified Chinese-Traditional Chinese+",
     "source_dataset": "chinese"
@@ -642,13 +642,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/枝.png",
+    "image_path": "ttf/source/枝.png",
     "target_path": "font/test_unknown_content/chinese/Sun Yun He Regular script character Font-Simplified Chinese/枝.png",
     "type": "font_Sun Yun He Regular script character Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/申.png",
+    "image_path": "ttf/source/申.png",
     "target_path": "font/test_unknown_content/chinese/Zao zi Gong fang Movie screen(non-commercial) conventional Font-Traditional Chinese/申.png",
     "type": "font_Zao zi Gong fang Movie screen(non-commercial) conventional Font-Traditional Chinese",
     "source_dataset": "chinese"
@@ -663,13 +663,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/串.png",
+    "image_path": "ttf/source/串.png",
     "target_path": "font/test_unknown_content/chinese/Delicate Cursive Script (East Asia) Chinese Font-Simplified Chinese/串.png",
     "type": "font_Delicate Cursive Script (East Asia) Chinese Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/汗.png",
+    "image_path": "ttf/source/汗.png",
     "target_path": "font/test_unknown_content/chinese/Subtitle Hei ti Font-Simplified Chinese/汗.png",
     "type": "font_Subtitle Hei ti Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -693,13 +693,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丁.png",
+    "image_path": "ttf/source/丁.png",
     "target_path": "font/test_unknown_content/chinese/Wen ding Yan shui chinese font/丁.png",
     "type": "font_Wen ding Yan shui chinese font",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/尾.png",
+    "image_path": "ttf/source/尾.png",
     "target_path": "font/test_unknown_content/chinese/Zao Zi Gong Fang(Font manual mill) Cube Bold Figure Chinese Font -Simplified Chinese/尾.png",
     "type": "font_Zao Zi Gong Fang(Font manual mill) Cube Bold Figure Chinese Font -Simplified Chinese",
     "source_dataset": "chinese"
@@ -714,55 +714,55 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/玉.png",
+    "image_path": "ttf/source/玉.png",
     "target_path": "font/test_unknown_content/chinese/Hua kang Hei zi Font-Traditional Chinese/玉.png",
     "type": "font_Hua kang Hei zi Font-Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/佳.png",
+    "image_path": "ttf/source/佳.png",
     "target_path": "font/test_unknown_content/chinese/Fashion ink Chinese Font-Simplified Chinese/佳.png",
     "type": "font_Fashion ink Chinese Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斤.png",
+    "image_path": "ttf/source/斤.png",
     "target_path": "font/test_unknown_content/chinese/Zao zi Gong fang Carving Simsun Bold Font-Simplified Chinese/斤.png",
     "type": "font_Zao zi Gong fang Carving Simsun Bold Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/瓜.png",
+    "image_path": "ttf/source/瓜.png",
     "target_path": "font/test_unknown_content/chinese/Take off&Good luck Galli Bold Figure Chinese Font – Simplified Chinese Fonts/瓜.png",
     "type": "font_Take off&Good luck Galli Bold Figure Chinese Font – Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/玉.png",
+    "image_path": "ttf/source/玉.png",
     "target_path": "font/test_unknown_content/chinese/Subtitle Hei ti Font-Simplified Chinese/玉.png",
     "type": "font_Subtitle Hei ti Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/尺.png",
+    "image_path": "ttf/source/尺.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Tie jing Li shu Font-Simplified Chinese/尺.png",
     "type": "font_Fang zheng Tie jing Li shu Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/瓦.png",
+    "image_path": "ttf/source/瓦.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Cu yuan Font-Simplified Chinese/瓦.png",
     "type": "font_Fang zheng Cu yuan Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/毒.png",
+    "image_path": "ttf/source/毒.png",
     "target_path": "font/test_unknown_content/chinese/HuXiaoBoSaoBaoTi-2/毒.png",
     "type": "font_HuXiaoBoSaoBaoTi-2",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/串.png",
+    "image_path": "ttf/source/串.png",
     "target_path": "font/test_unknown_content/chinese/XuKe Li Pen Cursive Script Chinese Font-Simplified Chinese Fonts/串.png",
     "type": "font_XuKe Li Pen Cursive Script Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -777,7 +777,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/泡.png",
+    "image_path": "ttf/source/泡.png",
     "target_path": "font/test_unknown_content/chinese/Zhong qi meng Xian min Gang bi ti Font-Simplified Chinese/泡.png",
     "type": "font_Zhong qi meng Xian min Gang bi ti Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -792,13 +792,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/井.png",
+    "image_path": "ttf/source/井.png",
     "target_path": "font/test_unknown_content/chinese/Summer Dream Handwriting Chinese Font-Simplified Chinese Fonts/井.png",
     "type": "font_Summer Dream Handwriting Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/毒.png",
+    "image_path": "ttf/source/毒.png",
     "target_path": "font/test_unknown_content/chinese/XuDong Chen Handwritten Pen (CXD6763_Newest) Chinese Font-Simplified Chinese/毒.png",
     "type": "font_XuDong Chen Handwritten Pen (CXD6763_Newest) Chinese Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -849,7 +849,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/瓦.png",
+    "image_path": "ttf/source/瓦.png",
     "target_path": "font/test_unknown_content/chinese/Wang han zong Hai bao ti Font/瓦.png",
     "type": "font_Wang han zong Hai bao ti Font",
     "source_dataset": "chinese"
@@ -864,7 +864,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/抹.png",
+    "image_path": "ttf/source/抹.png",
     "target_path": "font/test_unknown_content/chinese/Hua Kang Yasong ti Font/抹.png",
     "type": "font_Hua Kang Yasong ti Font",
     "source_dataset": "chinese"
@@ -879,31 +879,31 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/佳.png",
+    "image_path": "ttf/source/佳.png",
     "target_path": "font/test_unknown_content/chinese/HongLiang Yu Handwritten Pen Chinese Font-Simplified Chinese/佳.png",
     "type": "font_HongLiang Yu Handwritten Pen Chinese Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/枝.png",
+    "image_path": "ttf/source/枝.png",
     "target_path": "font/test_unknown_content/chinese/Zao zi gong fang Yue hei ti Font/枝.png",
     "type": "font_Zao zi gong fang Yue hei ti Font",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/亭.png",
+    "image_path": "ttf/source/亭.png",
     "target_path": "font/test_unknown_content/chinese/Han yi Haha Font/亭.png",
     "type": "font_Han yi Haha Font",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/瓦.png",
+    "image_path": "ttf/source/瓦.png",
     "target_path": "font/test_unknown_content/chinese/Classic Shu tong Font/瓦.png",
     "type": "font_Classic Shu tong Font",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斑.png",
+    "image_path": "ttf/source/斑.png",
     "target_path": "font/test_unknown_content/chinese/Ye gen you Tang dynasty Regular script Font-Simplified Chinese/斑.png",
     "type": "font_Ye gen you Tang dynasty Regular script Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -918,13 +918,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/亭.png",
+    "image_path": "ttf/source/亭.png",
     "target_path": "font/test_unknown_content/chinese/Stylish Wood Font – Simplified Chinese/亭.png",
     "type": "font_Stylish Wood Font – Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丘.png",
+    "image_path": "ttf/source/丘.png",
     "target_path": "font/test_unknown_content/chinese/Fine Jade Handwriting Pen(BoLeZhuSunTi) Chinese Font-Simplified Chinese Fonts/丘.png",
     "type": "font_Fine Jade Handwriting Pen(BoLeZhuSunTi) Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -939,7 +939,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/掌.png",
+    "image_path": "ttf/source/掌.png",
     "target_path": "font/test_unknown_content/chinese/Take off&Good luck Jia Li Slender Rounded Corners Font-Traditional Chinese/掌.png",
     "type": "font_Take off&Good luck Jia Li Slender Rounded Corners Font-Traditional Chinese",
     "source_dataset": "chinese"
@@ -963,7 +963,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/泡.png",
+    "image_path": "ttf/source/泡.png",
     "target_path": "font/test_unknown_content/chinese/Fang Zhen Miao ming Font-Simplified Chinese-Traditional Chinese/泡.png",
     "type": "font_Fang Zhen Miao ming Font-Simplified Chinese-Traditional Chinese",
     "source_dataset": "chinese"
@@ -996,7 +996,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/掌.png",
+    "image_path": "ttf/source/掌.png",
     "target_path": "font/test_unknown_content/chinese/Han Yi (Prohibit commercial use) Ink Brush (Writing Brush) Chinese Font-Simplified Chinese Fonts/掌.png",
     "type": "font_Han Yi (Prohibit commercial use) Ink Brush (Writing Brush) Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -1011,13 +1011,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/二.png",
+    "image_path": "ttf/source/二.png",
     "target_path": "font/test_unknown_content/chinese/Meng na Gu yuan T(MHGReithicTHK-Light)Font - Traditional Chinese/二.png",
     "type": "font_Meng na Gu yuan T(MHGReithicTHK-Light)Font - Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/亭.png",
+    "image_path": "ttf/source/亭.png",
     "target_path": "font/test_unknown_content/chinese/Cool Graffiti Handwriting Chinese Font-Simplified Chinese Fonts/亭.png",
     "type": "font_Cool Graffiti Handwriting Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -1032,13 +1032,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/汗.png",
+    "image_path": "ttf/source/汗.png",
     "target_path": "font/test_unknown_content/chinese/Rage comic(BoLeBaoZaoti) Handwritten Chinese Font-Simplified Chinese Fonts/汗.png",
     "type": "font_Rage comic(BoLeBaoZaoti) Handwritten Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丸.png",
+    "image_path": "ttf/source/丸.png",
     "target_path": "font/test_unknown_content/chinese/Wang jin yan Xing shu ti Font-Simplified Chinese/丸.png",
     "type": "font_Wang jin yan Xing shu ti Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1080,25 +1080,25 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斑.png",
+    "image_path": "ttf/source/斑.png",
     "target_path": "font/test_unknown_content/chinese/Lovely handwritten kids Font-Simplified Chinese/斑.png",
     "type": "font_Lovely handwritten kids Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丁.png",
+    "image_path": "ttf/source/丁.png",
     "target_path": "font/test_unknown_content/chinese/HOT-MamerakuStd-R-2/丁.png",
     "type": "font_HOT-MamerakuStd-R-2",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/玉.png",
+    "image_path": "ttf/source/玉.png",
     "target_path": "font/test_unknown_content/chinese/Xiaobo hu Qv yuan ti Font-Traditional Chinese/玉.png",
     "type": "font_Xiaobo hu Qv yuan ti Font-Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/瓜.png",
+    "image_path": "ttf/source/瓜.png",
     "target_path": "font/test_unknown_content/chinese/Original paper cutting Bold Elegant Chinese Font -Simplified Chinese Fonts/瓜.png",
     "type": "font_Original paper cutting Bold Elegant Chinese Font -Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -1149,7 +1149,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/申.png",
+    "image_path": "ttf/source/申.png",
     "target_path": "font/test_unknown_content/chinese/Mini amber Font-Simplified Chinese/申.png",
     "type": "font_Mini amber Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1164,7 +1164,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斑.png",
+    "image_path": "ttf/source/斑.png",
     "target_path": "font/test_unknown_content/chinese/Han yi Xi Xing kai Font-Simplified Chinese/斑.png",
     "type": "font_Han yi Xi Xing kai Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1206,13 +1206,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/泡.png",
+    "image_path": "ttf/source/泡.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Jing Lei bold Font- Simplified Chinese/泡.png",
     "type": "font_Fang zheng Jing Lei bold Font- Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/毒.png",
+    "image_path": "ttf/source/毒.png",
     "target_path": "font/test_unknown_content/chinese/Take off&Good luck Xiaoge Fan Regular script font-Simplified Chinese/毒.png",
     "type": "font_Take off&Good luck Xiaoge Fan Regular script font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1227,13 +1227,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/井.png",
+    "image_path": "ttf/source/井.png",
     "target_path": "font/test_unknown_content/chinese/Bai zhou jing hai zui hou shu ti Font-Traditional Chinese/井.png",
     "type": "font_Bai zhou jing hai zui hou shu ti Font-Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/佳.png",
+    "image_path": "ttf/source/佳.png",
     "target_path": "font/test_unknown_content/chinese/Proud Chinese Dragon Ink Brush (Writing Brush) Chinese Font-Traditional Chinese Fonts/佳.png",
     "type": "font_Proud Chinese Dragon Ink Brush (Writing Brush) Chinese Font-Traditional Chinese Fonts",
     "source_dataset": "chinese"
@@ -1248,7 +1248,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/抹.png",
+    "image_path": "ttf/source/抹.png",
     "target_path": "font/test_unknown_content/chinese/Take off&Good luck Tie shan Regular script character font-Simplified Chinese/抹.png",
     "type": "font_Take off&Good luck Tie shan Regular script character font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1263,7 +1263,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/佳.png",
+    "image_path": "ttf/source/佳.png",
     "target_path": "font/test_unknown_content/chinese/Soft Ink Brush (Writing Brush) & Regular Script Chinese Font – Simplified Chinese Fonts/佳.png",
     "type": "font_Soft Ink Brush (Writing Brush) & Regular Script Chinese Font – Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -1278,19 +1278,19 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斑.png",
+    "image_path": "ttf/source/斑.png",
     "target_path": "font/test_unknown_content/chinese/Original paper cutting Bold Elegant Chinese Font -Simplified Chinese Fonts/斑.png",
     "type": "font_Original paper cutting Bold Elegant Chinese Font -Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斤.png",
+    "image_path": "ttf/source/斤.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Jing lei xu Font-Simplified Chinese/斤.png",
     "type": "font_Fang zheng Jing lei xu Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/毒.png",
+    "image_path": "ttf/source/毒.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Qi ti Font-Simplified Chinese/毒.png",
     "type": "font_Fang zheng Qi ti Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1305,7 +1305,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丸.png",
+    "image_path": "ttf/source/丸.png",
     "target_path": "font/test_unknown_content/chinese/Han yi Radish Font/丸.png",
     "type": "font_Han yi Radish Font",
     "source_dataset": "chinese"
@@ -1329,19 +1329,19 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/孔.png",
+    "image_path": "ttf/source/孔.png",
     "target_path": "font/test_unknown_content/chinese/Dream Pianist Chinese Font-Simplified Chinese Fonts/孔.png",
     "type": "font_Dream Pianist Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/枝.png",
+    "image_path": "ttf/source/枝.png",
     "target_path": "font/test_unknown_content/chinese/A Li Da Slender Bold Elegant Chinese Font -Simplified Chinese Fonts/枝.png",
     "type": "font_A Li Da Slender Bold Elegant Chinese Font -Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/佳.png",
+    "image_path": "ttf/source/佳.png",
     "target_path": "font/test_unknown_content/chinese/Hua kang ribbons ti Font-Traditional Chinese/佳.png",
     "type": "font_Hua kang ribbons ti Font-Traditional Chinese",
     "source_dataset": "chinese"
@@ -1356,7 +1356,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/井.png",
+    "image_path": "ttf/source/井.png",
     "target_path": "font/test_unknown_content/chinese/Zao Zi Gong Fang(Prohibition of commercial use)Beautiful Art Chinese Font -Simplified Chinese Fonts/井.png",
     "type": "font_Zao Zi Gong Fang(Prohibition of commercial use)Beautiful Art Chinese Font -Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -1416,13 +1416,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/枝.png",
+    "image_path": "ttf/source/枝.png",
     "target_path": "font/test_unknown_content/chinese/Take off&Good luck Super Coarse cylinder Font-Simplified Chinese/枝.png",
     "type": "font_Take off&Good luck Super Coarse cylinder Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丹.png",
+    "image_path": "ttf/source/丹.png",
     "target_path": "font/test_unknown_content/chinese/Font Housekeeper-QisiAaBanSong- Song (Ming) Typeface Chinese Font – Simplified Chinese Fonts/丹.png",
     "type": "font_Font Housekeeper-QisiAaBanSong- Song (Ming) Typeface Chinese Font – Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -1473,13 +1473,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/泡.png",
+    "image_path": "ttf/source/泡.png",
     "target_path": "font/test_unknown_content/chinese/Zao zi Gong fang strong boldface(non-commercial) conventional Font-Traditional Chinese/泡.png",
     "type": "font_Zao zi Gong fang strong boldface(non-commercial) conventional Font-Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/私.png",
+    "image_path": "ttf/source/私.png",
     "target_path": "font/test_unknown_content/chinese/Han yi Xun jun ti Font-Simplified Chinese/私.png",
     "type": "font_Han yi Xun jun ti Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1530,7 +1530,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丘.png",
+    "image_path": "ttf/source/丘.png",
     "target_path": "font/test_unknown_content/chinese/My Leaves Font-Simplified Chinese/丘.png",
     "type": "font_My Leaves Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1554,25 +1554,25 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/斑.png",
+    "image_path": "ttf/source/斑.png",
     "target_path": "font/test_unknown_content/chinese/Chen Jishi Guai guai ti Font-Simplified Chinese/斑.png",
     "type": "font_Chen Jishi Guai guai ti Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丸.png",
+    "image_path": "ttf/source/丸.png",
     "target_path": "font/test_unknown_content/chinese/Han yi Jing shi ti Font-Simplified Chinese/丸.png",
     "type": "font_Han yi Jing shi ti Font-Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/二.png",
+    "image_path": "ttf/source/二.png",
     "target_path": "font/test_unknown_content/chinese/ZhuLang Semi-Cursive Script Chinese Font-Simplified Chinese Fonts/二.png",
     "type": "font_ZhuLang Semi-Cursive Script Chinese Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/私.png",
+    "image_path": "ttf/source/私.png",
     "target_path": "font/test_unknown_content/chinese/Zao Zi Gong Fang (Makefont) Naive China Font-Simplified Chinese Fonts/私.png",
     "type": "font_Zao Zi Gong Fang (Makefont) Naive China Font-Simplified Chinese Fonts",
     "source_dataset": "chinese"
@@ -1587,13 +1587,13 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/玉.png",
+    "image_path": "ttf/source/玉.png",
     "target_path": "font/test_unknown_content/chinese/Su xin Shi rough Font–Simplified Chinese/玉.png",
     "type": "font_Su xin Shi rough Font–Simplified Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/私.png",
+    "image_path": "ttf/source/私.png",
     "target_path": "font/test_unknown_content/chinese/Ye gen you New zhuan ti Font-Simplified Chinese/私.png",
     "type": "font_Ye gen you New zhuan ti Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1608,7 +1608,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/尺.png",
+    "image_path": "ttf/source/尺.png",
     "target_path": "font/test_unknown_content/chinese/Fang zheng Tao tao ti Font-Simplified Chinese/尺.png",
     "type": "font_Fang zheng Tao tao ti Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1632,7 +1632,7 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/玉.png",
+    "image_path": "ttf/source/玉.png",
     "target_path": "font/test_unknown_content/chinese/Deformation calligraphy Chinese Font-Simplified Chinese/玉.png",
     "type": "font_Deformation calligraphy Chinese Font-Simplified Chinese",
     "source_dataset": "chinese"
@@ -1656,37 +1656,37 @@
     "source_dataset": "calliphase"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/宅.png",
+    "image_path": "ttf/source/宅.png",
     "target_path": "font/test_unknown_content/chinese/Super century Xi hei ti Font - Traditional Chinese/宅.png",
     "type": "font_Super century Xi hei ti Font - Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/井.png",
+    "image_path": "ttf/source/井.png",
     "target_path": "font/test_unknown_content/chinese/Take off&Good luck Wheat Bold Figure Chinese Font-Traditional Chinese Fonts/井.png",
     "type": "font_Take off&Good luck Wheat Bold Figure Chinese Font-Traditional Chinese Fonts",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丁.png",
+    "image_path": "ttf/source/丁.png",
     "target_path": "font/test_unknown_content/chinese/Bai zhou Bai yu Shu ti Font(HaKuu)-Traditional Chinese/丁.png",
     "type": "font_Bai zhou Bai yu Shu ti Font(HaKuu)-Traditional Chinese",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/丹.png",
+    "image_path": "ttf/source/丹.png",
     "target_path": "font/test_unknown_content/chinese/DFT-CCMY-1/丹.png",
     "type": "font_DFT-CCMY-1",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/私.png",
+    "image_path": "ttf/source/私.png",
     "target_path": "font/test_unknown_content/chinese/Han yi Radish Font/私.png",
     "type": "font_Han yi Radish Font",
     "source_dataset": "chinese"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/枝.png",
+    "image_path": "ttf/source/枝.png",
     "target_path": "font/test_unknown_content/chinese/Meng na Square lattice(MBitmapSquareHK-Light)Font - Traditional Chinese/枝.png",
     "type": "font_Meng na Square lattice(MBitmapSquareHK-Light)Font - Traditional Chinese",
     "source_dataset": "chinese"

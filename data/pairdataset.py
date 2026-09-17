@@ -372,7 +372,11 @@ class PairDataset(VisionDataset):
         return self._render_annotation_layers(pair)
 
     def _sample_semantic_block_mask(self, layers: np.ndarray, num_blocks: int) -> Image.Image:
-        """Randomly select labeled semantic mask layers generated from annotations."""
+        """Randomly select labeled semantic mask layers generated from annotations.
+
+        For BF, each layer is one individual start/middle/end annotation. For JT,
+        each layer is one grouped spatial label.
+        """
         n = layers.shape[0]
         k = min(max(0, int(num_blocks)), n)
         if k == 0:
@@ -383,7 +387,7 @@ class PairDataset(VisionDataset):
         return Image.fromarray(combined, mode='L')
 
     def _load_semantic_mask(self, pair: dict, pair_type: str) -> Optional[Image.Image]:
-        """加载 .npy 或 COCO JSON，并生成 JT/BF 对应的语义遮盖。"""
+        """加载 .npy 并生成 JT/BF 对应的语义遮盖。"""
         layers = self._load_semantic_layers(pair)
         if layers is None:
             return None

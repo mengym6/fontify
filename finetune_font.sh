@@ -29,11 +29,11 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --augmentation_policy finetune \
     --adv_warmup_epochs 8 \
     --edge_warmup_epochs 8 \
-    --loss_warmup_duration 6 \
+    --loss_warmup_duration 8 \
     --adv_weight_final 0.4 \
-    --edge_weight_final 0.1 \
+    --edge_weight_final 0.3 \
     --no_gan \
-    --structure_loss_weight 0.05 \
+    --structure_loss_weight 0.1 \
     --structure_warmup_epochs 6 \
     --structure_warmup_duration 4 \
     --save_freq 5 \

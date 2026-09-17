@@ -1,6 +1,9 @@
 """
-将 CVAT 导出的 COCO JSON 标注渲染为 448×448 单通道二值 mask 图。
-每个笔画/结体 polygon 与 text 整字轮廓 RLE 取交集，去除背景溢出。
+将 CVAT 导出的 COCO JSON 标注渲染为 448×448 二值 mask 数组。
+
+BF 字体按每个非 text 标注单独保存一层，因此训练时可以随机抽取若干
+起笔/中笔/收笔标签，而不是抽取若干合并后的笔画种类。JT 字体仍按空间标签
+合并同名标注。
 """
 
 import json
@@ -125,23 +128,47 @@ def extract_stroke_name(category_name):
     return base if base else None
 
 
-def render_single_image_mask(image_info, annotations, text_cat_id, categories):
-    """为单张图按笔画分组渲染 mask，返回 (K, H, W) 数组，每层一个完整笔画"""
+def render_single_image_mask(image_info, annotations, text_cat_id, categories, per_annotation=False):
+    """渲染单张图标注，返回 (K, H, W) 数组。
+
+    ``per_annotation=True`` 时每个非 text 标注一层，用于 BF；否则按空间/笔画
+    标签分组，用于 JT。
+    """
     h = image_info['height']
     w = image_info['width']
     img_id = image_info['id']
-
-    # 构建 category_id → 笔画名 映射
-    cat_id_to_stroke = {}
-    for cat in categories:
-        stroke = extract_stroke_name(cat['name'])
-        if stroke:
-            cat_id_to_stroke[cat['id']] = stroke
 
     # 筛选该图的所有标注
     img_anns = [a for a in annotations if a['image_id'] == img_id]
     if not img_anns:
         return None
+
+    def render_annotation(ann):
+        if ann['category_id'] == text_cat_id:
+            return None
+        seg = ann['segmentation']
+        if isinstance(seg, dict):
+            layer = decode_rle(seg, h, w)
+        else:
+            layer = render_polygon(seg, h, w)
+        return layer if layer.any() else None
+
+    if per_annotation:
+        layers = []
+        for ann in img_anns:
+            layer = render_annotation(ann)
+            if layer is not None:
+                layers.append(layer)
+        if not layers:
+            return None
+        return np.stack(layers, axis=0)  # (K, H, W)
+
+    # 构建 category_id → 笔画/空间名 映射
+    cat_id_to_stroke = {}
+    for cat in categories:
+        stroke = extract_stroke_name(cat['name'])
+        if stroke:
+            cat_id_to_stroke[cat['id']] = stroke
 
     # 按笔画名分组，同名笔画的所有标注（含起中收、重复实例）合并为一层
     from collections import defaultdict
@@ -161,11 +188,9 @@ def render_single_image_mask(image_info, annotations, text_cat_id, categories):
     for stroke_name, anns in stroke_groups.items():
         combined = np.zeros((h, w), dtype=np.uint8)
         for ann in anns:
-            seg = ann['segmentation']
-            if isinstance(seg, dict):
-                combined |= decode_rle(seg, h, w)
-            else:
-                combined |= render_polygon(seg, h, w)
+            layer = render_annotation(ann)
+            if layer is not None:
+                combined |= layer
         if combined.any():
             layers.append(combined)
 
@@ -212,7 +237,10 @@ def process_font_dir(font_dir: Path, verbose=False):
     for img_info in images:
         file_name = img_info['file_name']
         char_name = Path(file_name).stem
-        layers = render_single_image_mask(img_info, annotations, text_cat_id, categories)
+        per_annotation = "BF" in font_dir.name.upper()
+        layers = render_single_image_mask(
+            img_info, annotations, text_cat_id, categories, per_annotation=per_annotation
+        )
 
         if layers is None:
             skip_count += 1
@@ -248,7 +276,10 @@ def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: 
     char_name = Path(img_info['file_name']).stem
     print(f"\n  [{font_dir.name}/{char_name}] 尺寸 {img_info['width']}×{img_info['height']}")
 
-    layers = render_single_image_mask(img_info, annotations, text_cat_id, categories)
+    per_annotation = "BF" in font_dir.name.upper()
+    layers = render_single_image_mask(
+        img_info, annotations, text_cat_id, categories, per_annotation=per_annotation
+    )
     if layers is None:
         print("    无有效标注，跳过")
         return
