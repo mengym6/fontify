@@ -268,21 +268,21 @@ def build_data_transforms(args):
         transform_train = pair_transforms.Compose([
             pair_transforms.PadToSquare(fill=255),
             pair_transforms.RandomResizedCrop(
-                args.input_size[1], scale=(1.0, 1.0), ratio=(1.0, 1.0), interpolation=3),
+                args.input_size[1], scale=(0.9999, 1.0), interpolation=3),
             pair_transforms.ToTensor(),
             normalize,
         ])
         transform_train2 = pair_transforms.Compose([
             pair_transforms.PadToSquare(fill=255),
             pair_transforms.RandomResizedCrop(
-                args.input_size[1], scale=(1.0, 1.0), ratio=(1.0, 1.0), interpolation=3),
+                args.input_size[1], scale=(0.9999, 1.0), interpolation=3),
             pair_transforms.ToTensor(),
             normalize,
         ])
         transform_train3 = pair_transforms.Compose([
             pair_transforms.PadToSquare(fill=255),
             pair_transforms.RandomResizedCrop(
-                args.input_size[1], scale=(1.0, 1.0), ratio=(1.0, 1.0), interpolation=3),
+                args.input_size[1], scale=(0.9999, 1.0), interpolation=3),
             pair_transforms.ToTensor(),
             normalize,
         ])
