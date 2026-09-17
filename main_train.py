@@ -110,6 +110,8 @@ def get_args_parser():
                         help='save checkkpoints frequency')
     parser.add_argument('--val_tb_image_limit', type=int, default=0,
                         help='maximum validation images written to TensorBoard per epoch. 0 keeps the original unlimited behavior')
+    parser.add_argument('--val_tb_images_per_batch', type=int, default=1,
+                        help='validation samples written to TensorBoard per batch')
     parser.add_argument('--val_tb_image_freq', type=int, default=1,
                         help='validation TensorBoard image write frequency in epochs. 1 writes every epoch')
     parser.add_argument('--clip_grad', type=float, default=3.0, metavar='NORM',

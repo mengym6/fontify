@@ -29,7 +29,7 @@ wandb/
 checkpoints/
 outputs/
 results/
-
+models/
 # Generated data / training data
 fontdata_example/font/
 fontdata_example/ttf/

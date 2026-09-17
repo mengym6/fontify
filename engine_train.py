@@ -223,9 +223,13 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
     model.eval()
     # wandb_images = []
     num_batch = 0
+    num_tb_images = 0
     # rank 0 写 TB 比其他 rank 慢一个数量级，间隔写避免拖慢同步导致 NCCL timeout
     tb_save_every = 1
     val_tb_image_limit = getattr(args, "val_tb_image_limit", 0) if args is not None else 0
+    val_tb_images_per_batch = max(
+        1, getattr(args, "val_tb_images_per_batch", 1) if args is not None else 1
+    )
     val_tb_image_freq = max(1, getattr(args, "val_tb_image_freq", 1) if args is not None else 1)
     write_tb_image_this_epoch = True
     if epoch is not None and val_tb_image_freq > 1:
@@ -257,32 +261,52 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         """
             在tensorboard内展示图片nchw->nhwc
         """
-        write_tb_image = log_writer is not None and write_tb_image_this_epoch and num_batch % tb_save_every == 0
-        if val_tb_image_limit > 0:
-            write_tb_image = write_tb_image and num_batch < val_tb_image_limit
+        write_tb_image = (
+            log_writer is not None
+            and write_tb_image_this_epoch
+            and num_batch % tb_save_every == 0
+            and (val_tb_image_limit <= 0 or num_tb_images < val_tb_image_limit)
+        )
         if write_tb_image:
             imagenet_mean = np.array([0.485, 0.456, 0.406])
             imagenet_std = np.array([0.229, 0.224, 0.225])
-            y = y[[0]]
-            y = model.module.unpatchify(y)
-            y = torch.einsum('nchw->nhwc', y).detach().cpu()
-            mask = mask[[0]]
-            mask = mask.detach().float().cpu()
-            mask = mask.unsqueeze(-1).repeat(1, 1, model.module.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
-            mask = model.module.unpatchify(mask)  # 1 is removing, 0 is keeping
-            mask = torch.einsum('nchw->nhwc', mask).detach().cpu()
-            x = samples[[0]]
-            x = x.detach().float().cpu()
-            x = torch.einsum('nchw->nhwc', x)
-            tgt = targets[[0]]
-            tgt = tgt.detach().float().cpu()
-            tgt = torch.einsum('nchw->nhwc', tgt)
-            im_masked = tgt * (1 - mask)
+            batch_show_count = min(
+                val_tb_images_per_batch,
+                samples.shape[0],
+                val_tb_image_limit - num_tb_images if val_tb_image_limit > 0 else samples.shape[0],
+            )
+            batch_show_count = max(0, batch_show_count)
+            for image_idx in range(batch_show_count):
+                y_show = y[[image_idx]]
+                y_show = model.module.unpatchify(y_show)
+                y_show = torch.einsum('nchw->nhwc', y_show).detach().cpu()
+                mask_show = mask[[image_idx]]
+                mask_show = mask_show.detach().float().cpu()
+                mask_show = mask_show.unsqueeze(-1).repeat(
+                    1, 1, model.module.patch_size ** 2 * 3
+                )  # (N, H*W, p*p*3)
+                mask_show = model.module.unpatchify(mask_show)  # 1 is removing, 0 is keeping
+                mask_show = torch.einsum('nchw->nhwc', mask_show).detach().cpu()
+                x_show = samples[[image_idx]]
+                x_show = x_show.detach().float().cpu()
+                x_show = torch.einsum('nchw->nhwc', x_show)
+                tgt_show = targets[[image_idx]]
+                tgt_show = tgt_show.detach().float().cpu()
+                tgt_show = torch.einsum('nchw->nhwc', tgt_show)
+                im_masked_show = tgt_show * (1 - mask_show)
 
-            frame = torch.cat((x, im_masked, y, tgt), dim=2)
-            frame = frame[0]
-            frame = torch.clip((frame * imagenet_std + imagenet_mean) * 255, 0, 255).to(torch.uint8)
-            log_writer.add_image(f'epoch:{epoch} val x; im_masked; y; tgt', frame.numpy(), num_batch, dataformats='HWC')
+                frame = torch.cat((x_show, im_masked_show, y_show, tgt_show), dim=2)
+                frame = frame[0]
+                frame = torch.clip(
+                    (frame * imagenet_std + imagenet_mean) * 255, 0, 255
+                ).to(torch.uint8)
+                log_writer.add_image(
+                    f'epoch:{epoch} val x; im_masked; y; tgt',
+                    frame.numpy(),
+                    num_batch * val_tb_images_per_batch + image_idx,
+                    dataformats='HWC',
+                )
+                num_tb_images += 1
         num_batch += 1
 
         # if global_rank == 0 and args.log_wandb:
