@@ -6,7 +6,7 @@
 export CUDA_VISIBLE_DEVICES=0,1
 
 DATA_PATH=fontdata_example
-name=finetune_stele
+name=finetune_stele_test3
 PRETRAIN_CKPT=models/vit_base_font/checkpoint-14.pth
 
 # 手动切换阶段时修改 --mask_mix_probs：
@@ -31,9 +31,9 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --edge_warmup_epochs 8 \
     --loss_warmup_duration 8 \
     --adv_weight_final 0.4 \
-    --edge_weight_final 0.3 \
+    --edge_weight_final 0.4 \
     --no_gan \
-    --structure_loss_weight 0.1 \
+    --structure_loss_weight 0.15 \
     --structure_warmup_epochs 6 \
     --structure_warmup_duration 4 \
     --save_freq 5 \
@@ -47,10 +47,11 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --freeze_encoder \
     --freeze_blocks 9 \
     --semantic_mask_dir $DATA_PATH/font/train/new \
-    --num_mask_annotations_bf 5 \
+    --num_mask_annotations_bf 11 \
     --num_mask_annotations_jt 1 \
     --mask_coverage_threshold 0.1 \
     --semantic_only_epochs 0 \
-    --val_tb_image_limit 60 \
+    --val_tb_image_limit 76 \
     --val_tb_images_per_batch 2 \
+    --grad_log_interval 5 \
     #--mask_mix_probs 0.8 0.0 0.2

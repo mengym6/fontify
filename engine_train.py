@@ -1,6 +1,8 @@
 import math
 import os
 import sys
+import csv
+from collections import defaultdict
 from typing import Iterable
 
 import torch
@@ -12,6 +14,175 @@ import numpy as np
 #import wandb
 
 import time
+
+
+_GRADIENT_GROUP_PREFIXES = (
+    "patch_embed",
+    "pos_embed",
+    "mask_token",
+    "segment_token_x",
+    "segment_token_y",
+    "norm",
+    "decoder_embed",
+    "decoder_pred",
+    "discriminator",
+    "vgg_loss",
+)
+
+
+def _gradient_group_name(name):
+    if name.startswith("blocks."):
+        parts = name.split(".")
+        if len(parts) >= 2 and parts[1].isdigit():
+            return f"blocks.{parts[1]}"
+    for prefix in _GRADIENT_GROUP_PREFIXES:
+        if name == prefix or name.startswith(prefix + "."):
+            return prefix
+    return "other"
+
+
+def _collect_gradient_stats(model):
+    raw_model = model.module if hasattr(model, "module") else model
+    groups = defaultdict(
+        lambda: {
+            "params": 0,
+            "elements": 0,
+            "trainable": 0,
+            "with_grad": 0,
+            "no_grad": 0,
+            "frozen": 0,
+            "nonfinite": 0,
+            "grad_elements": 0,
+            "sum_sq": 0.0,
+            "max": 0.0,
+        }
+    )
+
+    for name, param in raw_model.named_parameters():
+        group = _gradient_group_name(name)
+        stats = groups[group]
+        stats["params"] += 1
+        stats["elements"] += param.numel()
+        if not param.requires_grad:
+            stats["frozen"] += 1
+            continue
+        stats["trainable"] += 1
+        grad = param.grad
+        if grad is None:
+            stats["no_grad"] += 1
+            continue
+        finite = torch.isfinite(grad)
+        if not bool(finite.all()):
+            stats["nonfinite"] += 1
+        grad = torch.where(finite, grad, torch.zeros_like(grad))
+        stats["with_grad"] += 1
+        stats["grad_elements"] += grad.numel()
+        stats["sum_sq"] += float(grad.square().sum().item())
+        stats["max"] = max(stats["max"], float(grad.abs().max().item()))
+
+    rows = []
+    computed_norm = 0.0
+    for group, stats in groups.items():
+        grad_norm = math.sqrt(stats["sum_sq"])
+        grad_mean = math.sqrt(stats["sum_sq"] / stats["grad_elements"]) if stats["grad_elements"] else 0.0
+        computed_norm += stats["sum_sq"]
+        rows.append((group, grad_norm, grad_mean, stats))
+    computed_norm = math.sqrt(computed_norm)
+    return rows, computed_norm
+
+
+class GradientMonitor:
+    """Export grouped gradient statistics to a CSV in the model output directory."""
+
+    CSV_FIELDS = [
+        "epoch",
+        "data_iter_step",
+        "update_idx",
+        "rank",
+        "reported_grad_norm",
+        "computed_grad_norm",
+        "group",
+        "params",
+        "elements",
+        "trainable",
+        "with_grad",
+        "no_grad",
+        "frozen",
+        "nonfinite",
+        "grad_elements",
+        "grad_norm",
+        "grad_mean",
+        "grad_max",
+        "norm_ratio",
+    ]
+
+    def __init__(self, output_dir, interval, rank=0):
+        self.enabled = bool(output_dir and interval and interval > 0 and rank == 0)
+        self.interval = max(1, int(interval))
+        self.path = os.path.join(output_dir, "gradient_log.csv") if output_dir else None
+        self.file = None
+        self.writer = None
+        if self.enabled:
+            is_new = not os.path.exists(self.path) or os.path.getsize(self.path) == 0
+            self.file = open(self.path, "a", encoding="utf-8", newline="")
+            self.writer = csv.DictWriter(self.file, fieldnames=self.CSV_FIELDS)
+            if is_new:
+                self.writer.writeheader()
+                self.file.flush()
+
+    def log(self, epoch, data_iter_step, update_idx, model, reported_grad_norm=None):
+        if not self.enabled or update_idx % self.interval != 0:
+            return
+
+        rows, computed_norm = _collect_gradient_stats(model)
+        print(
+            f"[grad] epoch={epoch} step={data_iter_step} update={update_idx} "
+            f"reported={reported_grad_norm if reported_grad_norm is not None else float('nan'):.6f} "
+            f"computed={computed_norm:.6f}"
+        )
+        for group, grad_norm, grad_mean, stats in rows:
+            if stats["frozen"] == stats["params"]:
+                state = f"frozen params={stats['params']}"
+            elif stats["with_grad"] == 0:
+                state = f"no-grad trainable={stats['trainable']}"
+            else:
+                state = (
+                    f"norm={grad_norm:.6f} mean={grad_mean:.6f} "
+                    f"max={stats['max']:.6f} nonfinite={stats['nonfinite']}"
+                )
+            print(f"[grad]   {group:16s} {state}")
+            self.writer.writerow(
+                {
+                    "epoch": epoch,
+                    "data_iter_step": data_iter_step,
+                    "update_idx": update_idx,
+                    "rank": 0,
+                    "reported_grad_norm": (
+                        reported_grad_norm if reported_grad_norm is not None else float("nan")
+                    ),
+                    "computed_grad_norm": computed_norm,
+                    "group": group,
+                    "params": stats["params"],
+                    "elements": stats["elements"],
+                    "trainable": stats["trainable"],
+                    "with_grad": stats["with_grad"],
+                    "no_grad": stats["no_grad"],
+                    "frozen": stats["frozen"],
+                    "nonfinite": stats["nonfinite"],
+                    "grad_elements": stats["grad_elements"],
+                    "grad_norm": grad_norm,
+                    "grad_mean": grad_mean,
+                    "grad_max": stats["max"],
+                    "norm_ratio": grad_norm / computed_norm if computed_norm > 0 else 0.0,
+                }
+            )
+        self.file.flush()
+
+    def close(self):
+        if self.file is not None:
+            self.file.close()
+            self.file = None
+
 
 #检索关键词tb调整画图数量
 def get_loss_scale_for_deepspeed(model):
@@ -31,7 +202,8 @@ def train_one_epoch(model: torch.nn.Module,
                     log_writer=None,
                     global_rank=None,
                     args=None,
-                    optimizer_d=None):
+                    optimizer_d=None,
+                    gradient_monitor=None):
     model.train(True)
     metric_logger = misc.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
@@ -39,6 +211,7 @@ def train_one_epoch(model: torch.nn.Module,
     print_freq = 20
 
     accum_iter = args.accum_iter
+    num_updates = 0
 
     optimizer.zero_grad()
 
@@ -111,11 +284,15 @@ def train_one_epoch(model: torch.nn.Module,
             loss_scale_value, grad_norm = get_loss_scale_for_deepspeed(model)
         else:
             loss /= accum_iter
+            update_grad = (data_iter_step + 1) % accum_iter == 0
             grad_norm = loss_scaler(loss, optimizer, clip_grad=args.clip_grad,
                                     parameters=model.parameters(),
-                                    update_grad=(data_iter_step + 1) % accum_iter == 0)
+                                    update_grad=update_grad)
 
-            if (data_iter_step + 1) % accum_iter == 0:
+            if update_grad:
+                num_updates += 1
+                if gradient_monitor is not None:
+                    gradient_monitor.log(epoch, data_iter_step, num_updates, model, grad_norm)
                 optimizer.zero_grad()
             loss_scale_value = loss_scaler.state_dict()["scale"]
 

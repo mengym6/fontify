@@ -19,7 +19,7 @@ from util.pos_embed import interpolate_pos_embed
 
 import models_train
 
-from engine_train import train_one_epoch, evaluate_pt
+from engine_train import train_one_epoch, evaluate_pt, GradientMonitor
 
 from data.pairdataset import PairDataset
 import data.pair_transforms as pair_transforms
@@ -114,6 +114,8 @@ def get_args_parser():
                         help='validation samples written to TensorBoard per batch')
     parser.add_argument('--val_tb_image_freq', type=int, default=1,
                         help='validation TensorBoard image write frequency in epochs. 1 writes every epoch')
+    parser.add_argument('--grad_log_interval', type=int, default=0,
+                        help='log grouped gradients to output_dir/gradient_log.csv every N optimizer updates. 0 disables')
     parser.add_argument('--clip_grad', type=float, default=3.0, metavar='NORM',
                         help='Clip gradient norm (default: None, no clipping)')
     parser.add_argument('--opt_eps', default=1e-8, type=float, metavar='EPSILON',
@@ -336,6 +338,8 @@ def main(args, ds_init):
     model.structure_warmup_duration = args.structure_warmup_duration
     if args.structure_loss_weight < 0:
         raise ValueError('structure_loss_weight must be non-negative')
+    if args.grad_log_interval < 0:
+        raise ValueError('grad_log_interval must be non-negative')
     model.structure_loss_weight = args.structure_loss_weight
 
     if args.finetune:
@@ -530,6 +534,7 @@ def main(args, ds_init):
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
+    gradient_monitor = GradientMonitor(args.output_dir, args.grad_log_interval, global_rank)
     for epoch in range(args.start_epoch, args.epochs):
         dataset_train.set_epoch(epoch)  # 课程学习：让 dataset 知道当前 epoch
         if args.distributed:
@@ -540,7 +545,8 @@ def main(args, ds_init):
             log_writer=log_writer,
             global_rank=global_rank,
             args=args,
-            optimizer_d=optimizer_d
+            optimizer_d=optimizer_d,
+            gradient_monitor=gradient_monitor
         )
         if args.output_dir and (epoch % args.save_freq == 0 or epoch + 1 == args.epochs):
             misc.save_model(
@@ -563,6 +569,7 @@ def main(args, ds_init):
                 }, epoch)
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
+    gradient_monitor.close()
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
