@@ -11,7 +11,6 @@ import util.misc as misc
 import util.lr_sched as lr_sched
 
 import numpy as np
-from models_train import gaussian_blur, highpass, rgb_to_gray, sobel_gradients
 #import wandb
 
 import time
@@ -526,19 +525,6 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         metric_logger.update(loss=loss.item())
         metric_logger.update(loss_l1l2=loss_l1l2)
         metric_logger.update(loss_vgg=loss_vgg)
-        raw_model = model.module if hasattr(model, "module") else model
-        detail_components = raw_model.last_loss_components
-        for component_name in (
-            "detail",
-            "highpass",
-            "gradient",
-            "structure_row",
-            "structure_col",
-            "structure_centroid",
-            "structure_area",
-        ):
-            component = detail_components.get(component_name, torch.tensor(0.0))
-            metric_logger.update(**{f"loss_{component_name}": component.item()})
         """
             在tensorboard内展示图片nchw->nhwc
         """
@@ -560,7 +546,7 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
             for image_idx in range(batch_show_count):
                 y_show = y[[image_idx]]
                 y_show = model.module.unpatchify(y_show)
-                y_show_nchw = y_show.detach()
+                y_show = torch.einsum('nchw->nhwc', y_show).detach().cpu()
                 mask_show = mask[[image_idx]]
                 mask_show = mask_show.detach().float().cpu()
                 mask_show = mask_show.unsqueeze(-1).repeat(
@@ -572,45 +558,9 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                 x_show = x_show.detach().float().cpu()
                 x_show = torch.einsum('nchw->nhwc', x_show)
                 tgt_show = targets[[image_idx]]
-                tgt_show_nchw = tgt_show.detach()
-                tgt_show = tgt_show.float().cpu()
+                tgt_show = tgt_show.detach().float().cpu()
                 tgt_show = torch.einsum('nchw->nhwc', tgt_show)
                 im_masked_show = tgt_show * (1 - mask_show)
-
-                detail_mean = torch.tensor(
-                    imagenet_mean, device=y_show_nchw.device, dtype=y_show_nchw.dtype
-                ).view(1, 3, 1, 1)
-                detail_std = torch.tensor(
-                    imagenet_std, device=y_show_nchw.device, dtype=y_show_nchw.dtype
-                ).view(1, 3, 1, 1)
-                pred_rgb = (y_show_nchw * detail_std + detail_mean).clamp(0, 1).float()
-                tgt_rgb = (tgt_show_nchw * detail_std + detail_mean).clamp(0, 1).float()
-                pred_gray = rgb_to_gray(pred_rgb)
-                tgt_gray = rgb_to_gray(tgt_rgb)
-                pred_high = highpass(
-                    pred_gray,
-                    getattr(args, "detail_kernel_size", 5),
-                    getattr(args, "detail_sigma", 1.0),
-                )
-                tgt_high = highpass(
-                    tgt_gray,
-                    getattr(args, "detail_kernel_size", 5),
-                    getattr(args, "detail_sigma", 1.0),
-                )
-                pred_gx, pred_gy = sobel_gradients(pred_gray)
-                tgt_gx, tgt_gy = sobel_gradients(tgt_gray)
-                highpass_error = (pred_high - tgt_high).abs().detach().cpu()
-                gradient_error = (
-                    (pred_gx - tgt_gx).abs() + (pred_gy - tgt_gy).abs()
-                ).detach().cpu()
-
-                def error_to_rgb(error):
-                    error = error[0, 0].float()
-                    error = error / (error.max() + 1e-6)
-                    error = (error * 255).round().clamp(0, 255).to(torch.uint8)
-                    return error[..., None].repeat(1, 1, 3).numpy()
-
-                y_show = torch.einsum('nchw->nhwc', y_show_nchw).detach().float().cpu()
 
                 frame = torch.cat((x_show, im_masked_show, y_show, tgt_show), dim=2)
                 frame = frame[0]
@@ -620,18 +570,6 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                 log_writer.add_image(
                     f'epoch:{epoch} val x; im_masked; y; tgt',
                     frame.numpy(),
-                    num_batch * val_tb_images_per_batch + image_idx,
-                    dataformats='HWC',
-                )
-                log_writer.add_image(
-                    f'epoch:{epoch} val highpass_error',
-                    error_to_rgb(highpass_error),
-                    num_batch * val_tb_images_per_batch + image_idx,
-                    dataformats='HWC',
-                )
-                log_writer.add_image(
-                    f'epoch:{epoch} val gradient_error',
-                    error_to_rgb(gradient_error),
                     num_batch * val_tb_images_per_batch + image_idx,
                     dataformats='HWC',
                 )
