@@ -21,17 +21,25 @@ Fontify 是一个基于上下文学习（in-context learning）的单/少样本�
 
 训练遮罩可为：`MaskingGenerator` 随机块、下半图强制遮盖（`half_mask_ratio`）、由 `semantic_masks/*.npy` 或 COCO annotation 生成的 JT/BF 语义遮罩。`mask_mix_probs` 按 `random, JT semantic, BF semantic` 归一化抽样；`semantic_only_epochs` 可使早期只采样 JT 随机遮盖。验证集通过 `half_mask_ratio=1.0` 强制遮盖目标区域。训练采样器是带 JSON 文件均衡权重的 `WeightedRandomSampler`，再包装为分布式采样器。
 
+阶段 2 的 `train_json_mix`/`val_json_mix` 是固定 1:1 chinese/CalliPhase 混合清单。chinese 样本的 `image_path` 使用 `ttf/source` 下与 target 同名的字形图；CalliPhase 样本优先使用自身的 `semantic_masks/*.npy`。BF 的 `.npy` 当前按“每个非 text 标注一层”生成，因此 `num_mask_annotations_bf` 表示从全部起笔/中笔/收笔标签中随机抽取的单标签数量，而不是抽取笔画种类。生成固定混合 JSON 使用 `tools/build_stage2_mix_json.py`。
+
 ## 前向与梯度流
 
 `Fontify.forward` 将参考图 `imgs` 与目标图 `tgts` 分别 patch embed；目标流中被 mask 的 token 替换为可学习 `mask_token`，两流分别加 `segment_token_x/y` 和绝对/相对位置编码。两流沿 batch 维拼接，通过 24 层 ViT-L（或 12 层 ViT-B）；第 3 个 block 后两流逐 token 平均融合，并从多个深度抽取特征。四个特征拼接，经线性层恢复 patch 像素，再由卷积解码器输出 `pred`，形状为 `(B,3,896,448)`。
 
 生成器总损失为
 
-$$L=L_{recon}+L_{style}+w_{edge}L_{edge}+w_{adv}L_{adv}.$$
+$$L=L_{recon}+L_{style}+w_{edge}L_{edge}+w_{structure}L_{structure}+w_{detail}L_{detail}+w_{adv}L_{adv}.$$
 
-`L_recon` 默认是仅在 `mask*valid` 区域计算的 Smooth-L1（`loss_func=smoothl1`）；`L_style` 是冻结 VGG19 特征的 Gram style L1（VGG content 不计入总损失）；`L_edge` 是温和 Gaussian+Sobel 边缘图的 L1；`L_adv` 是判别器对生成图判为真的 BCE-with-logits。JT-only 阶段 edge/adv 权重为 0；同步阶段按起始 epoch 和持续时间线性 warmup，默认最终权重 `adv=0.4`、`edge=0.3`。即使 `w_adv=0`，判别器分支仍保留在生成器计算图中以满足 DDP static graph。
+`L_recon` 默认是仅在 `mask*valid` 区域计算的 Smooth-L1（`loss_func=smoothl1`）；`L_style` 是冻结 VGG19 特征的 Gram style L1（VGG content 不计入总损失）；`L_edge` 是温和 Gaussian+Sobel 边缘图的 L1；`L_structure` 是反归一化灰度前景的行/列投影、质心和面积损失；`L_detail` 是固定 Gaussian 高通与 Sobel 梯度损失；`L_adv` 是判别器对生成图判为真的 BCE-with-logits。JT-only 阶段 edge/adv 权重为 0；同步阶段按起始 epoch 和持续时间线性 warmup，默认最终权重 `adv=0.4`、`edge=0.3`。即使 `w_adv=0`，判别器分支仍保留在生成器计算图中以满足 DDP static graph。
+
+当前阶段 2 的 `finetune_font.sh` 使用 `--no_gan`，实际训练总损失不包含有效 `L_adv`。detail loss 的代码默认权重为 `0.03`，使用 `kernel_size=5`、`sigma=1.0` 的高通和 `gradient_ratio=0.5` 的 Sobel 项；当前 `test5` 的显式覆盖值见下节，它与 structure loss 都只在 `mask*valid` 对应的像素区域内计算。若开启 GAN，注意当前非 DeepSpeed 路径中 D 每个 micro-batch 更新一次，而 G 每 `accum_iter=32` 更新一次；这会显著改变 GAN 动态，不能把阶段 2 的 `--no_gan` 配置直接去掉后视为同等实验。
 
 生成器反向传播来自总损失：`NativeScaler` 在 bfloat16 autocast 下缩放、可选范数裁剪（默认 3.0），按 `accum_iter` 累积后更新。每个 batch 随后单独训练判别器：冻结非 discriminator 参数，真实 target 标签为 1，`pred.detach()` 标签为 0，使用独立 AdamW；判别器学习率为生成器的 `0.1`，betas 为 `(0.5,0.999)`。生成器 AdamW 默认 betas `(0.9,0.999)`，基础学习率按有效 batch `batch_size*accum_iter*world_size/256` 缩放（显式 `--lr` 时覆盖），配合 warmup、层衰减和 bias/norm 零 weight decay。
+
+开启 GAN 时，discriminator 参数不得进入生成器 `param_groups_lrd`；当前实现先临时关闭 discriminator 的 `requires_grad`，构造 G optimizer 后再单独构造 D optimizer。D 的 `optimizer_d.step()` 后应立即 `discriminator.zero_grad(set_to_none=True)`，避免残留 D 梯度混入生成器梯度监控或通过 G optimizer 被二次更新。
+
+`--grad_log_interval N` 开启时，rank 0 会把分组梯度写入 `output_dir/gradient_log.csv`。CSV 记录 `reported_grad_norm`、`pre_clip_grad_norm`、`post_clip_grad_norm`、`grad_clip_ratio` 以及各参数组范数；`torch.nn.utils.clip_grad_norm_()` 返回的是裁剪前范数，因此不要把 `reported_grad_norm` 直接当作裁剪后范数。
 
 ## 训练、加载与冻结
 
@@ -83,6 +91,8 @@ $$L_{distill}=\left\|f_{finetune}(x)-f_{pretrain}(x)\right\|_2^2.$$
 
 两组列表中，第一组是数据/损失消融，第二组是后续技术路线。当前首选是第一组中的 **A/C 对照**：A 为原始冻结 encoder 微调基线，C 为相同配置下加入 CalliPhase 与显式结构损失。若历史基线不可复现，先单独重跑 A；若已有可靠历史基线，可直接实施 C，但必须保留 A 的同配置对照。由于已有结果表明单纯提高 JT mask 和解冻更多层会变差，首轮可暂时跳过 B（CalliPhase 但无结构损失）。若 C 有效，再测试第二组 D（冻结 encoder + adapter/LoRA）；若 C 无效，再补做 B 以区分 CalliPhase 数据分布和结构损失的作用；暂不直接做 E 组合实验。
 
+在 detail loss 刚落地时，阶段 2 曾计划做代码级 A/B 对照：固定 `structure_loss_weight=0.05` 和 `--no_gan`，A 使用 `detail_loss_weight=0`，B 使用 `detail_loss_weight=0.03`；只有 B 的验证高频误差稳定下降且不损害结构指标时，才把 detail loss 纳入阶段 2 正式协议。该 A/B 对照没有完成，后续训练脚本已推进到 `test5` 并改成更高的 structure/detail 权重。因此当前不能再把上述权重计划当成正在执行的对照，也不能仅凭参数提交宣称 detail loss 或 structure loss 有效。
+
 ## 当前项目主要行动路线与阶段登记
 
 用户已确认：已有最优续训配置是从百万电脑字体预训练 checkpoint `checkpoint-14.pth` 出发，只使用约 1500 张手写书法数据，随机 mask 主导、BF 参与、冻结 9 层；该路线能够学习笔法但结体不足。当前主路线改为三阶段，且阶段 2、阶段 3 同时关注 CalliPhase 的 Bifa（笔法）和 Jieti（结体），不能把 CalliPhase 仅理解为结体数据。当前不再安排数据消融实验，只实施阶段 2 先验注入和阶段 3 优化微调。
@@ -90,9 +100,40 @@ $$L_{distill}=\left\|f_{finetune}(x)-f_{pretrain}(x)\right\|_2^2.$$
 | 阶段 | 数据与初始化 | 主要目标 | 主要训练约束 | 状态 |
 |---|---|---|---|---|
 | 阶段 1：通用字形预训练 | 数百万张电脑字体；从 MAE 初始化 | 学习通用字形拓扑、参考/目标对应、基础笔画与结构重建能力 | 原始 Fontify 协议 | **已完成**：使用 `models/vit_base_font/checkpoint-14.pth` |
-| 阶段 2：书法 Bifa-Jieti 结构适配 | 从 `checkpoint-14.pth` 初始化；电脑字体数据与 CalliPhase 混合 | 同时注入书法笔法和结体先验，减少小数据直接微调造成的遗忘 | 加入显式结构/区域监督；保留电脑字体 replay；优先冻结 encoder 或使用 adapter；随机 mask 为主，语义 mask 为辅 | 待执行 |
+| 阶段 2：书法 Bifa-Jieti 结构适配 | 从 `checkpoint-14.pth` 初始化；电脑字体数据与 CalliPhase 混合 | 同时注入书法笔法和结体先验，减少小数据直接微调造成的遗忘 | 加入显式结构/区域监督；保留电脑字体 replay；优先冻结 encoder 或使用 adapter；随机 mask 为主，语义 mask 为辅 | 代码与混合数据已实现；训练待执行（当前 `test5` 配置已提交，尚无阶段 2 最终 checkpoint） |
 | 阶段 3：目标书法风格微调 | 只使用 CalliPhase/目标手写书法数据；从阶段 2 checkpoint 初始化 | 学习具体书法家或目标风格的笔法和结体表现 | 沿用已验证较优的冻结 9 层、随机/BF 主导配置；第二组优化（蒸馏、布局损失、adapter/LoRA）在此阶段逐项消融 | 待执行 |
 
 阶段登记规则：每完成一个阶段，必须记录训练命令、数据版本、初始化 checkpoint、最终 checkpoint、验证图、结构/笔法指标和人工结论，并将本表对应状态改为“已完成（日期、checkpoint 路径）”。当前仅阶段 1 可标记为已完成；阶段 2 和阶段 3 不得提前宣称完成。
 
-阶段 2 首版协议已确定为：初始化使用 `checkpoint-14.pth`；电脑字体使用随机 replay 子集；CalliPhase 使用全部可用训练样本；增强采用 `pretrain`；encoder 原参数冻结并通过 adapter/LoRA 注入可训练容量；decoder 训练；开启显式结构损失；首轮关闭 GAN。该协议是待执行方案，不代表阶段 2 已完成。
+截至本记录时，`main`/`origin/main` 的 `HEAD` 为 `32fb453`，当前阶段 2 训练入口为 `finetune_font.sh` 的 `test5` 配置：初始化 `checkpoint-14.pth`，混合 JSON 使用固定 1:1 chinese/CalliPhase 清单，`augmentation_policy=finetune`，`--no_gan`，`--freeze_encoder --freeze_blocks 9`，`--structure_loss_weight 2.0`、structure warmup 从 epoch 6 开始且提交版持续 8 个 epoch，`--detail_loss_weight 0.5`、detail warmup 从 epoch 10 开始且持续 6 个 epoch，edge 最终权重 `0.3`，BF 单标签数 `11`，JT 标签数 `1`，验证 TensorBoard 上限 `76` 张，梯度日志每 5 个 optimizer update 写一次。当前未提交工作区把 structure warmup duration 从 `8` 改为 `6`；该差异尚未提交。`test5` 只是已提交的执行参数，不代表结构损失或 detail loss 已训练验证有效；工作区内没有 `models/finetune_stele_test4`、`models/finetune_stele_test5` 目录、最终 checkpoint、`gradient_log.csv` 或验证结论。
+
+## 最近 Git 与实现进度
+
+截至 2026-09-18，本地 `main` 与 `origin/main` 均指向 `32fb453`。与本项目主路线直接相关的近期提交如下：
+
+- `e99b127`（2026-09-14）：整合 finetune/pretrain 入口，引入 `augmentation_policy`，把损失权重控制移到 shell 脚本，更新原数据 source；同时提交本说明和结构损失原理验证文档。
+- `fcf8320`（2026-09-15）：生成阶段 2 固定比例混合 JSON，并加入 `tools/build_stage2_mix_json.py`。
+- `ba41105`（2026-09-16）：补齐 CalliPhase JT/BF 训练与验证 JSON、结构先验和路径更新逻辑。
+- `51d0cc7`（2026-09-17）：chinese 样本改用原 source；BF mask 改为从 `.npy` 的非 text 单标签中抽取，而不是抽取笔画种类；更新 test2 的 structure/edge 权重。
+- `20c44b4`（2026-09-17）：加入分组梯度 CSV 监控 `gradient_log.csv`，提交 test3 配置。
+- `75e4fff`（2026-09-18）：加入固定 Gaussian 高通 + Sobel detail loss、`--detail_*` 参数、训练端 detail/high-pass/gradient 分量日志，并修复 discriminator 进入生成器 optimizer、D 残留梯度污染和 CSV tensor 字符串问题。该提交最初还加入了验证集 high-pass/gradient error 图像。
+- `c82ad6a`（2026-09-18）：提交 `test4` 配置，输出目录为 `models/finetune_stele_test4`。
+- `cc61ad2`（2026-09-18）：回退 `75e4fff` 加入的验证集组件指标和 high-pass/gradient error 写图路径，恢复原 TensorBoard 图像拼接方式。当前验证阶段不再写这两张误差图；训练阶段仍记录 detail、highpass、gradient 和 detail weight。
+- `039044d`（2026-09-18）：把配置名改为 `test5`，将 structure/detail 权重从 `0.05/0.03` 提高到 `0.5/0.3`，并把 structure/detail warmup 起点及持续时间改为 6/8 和 10/6。
+- `e6d1000`（2026-09-18）：修复梯度裁剪。`model.parameters()` 是生成器，当前代码先物化为列表，确保 unscale、裁剪前范数、裁剪和裁剪后范数使用同一组参数；否则前后两次遍历可能得到空参数集，导致裁剪和日志失真。
+- `32fb453`（2026-09-18）：提交当前 `test5` 参数，进一步把 `structure_loss_weight` 调到 `2.0`、`detail_loss_weight` 调到 `0.5`。
+
+当前工作区未提交状态：
+
+- `.gitignore` 额外加入 `*.md`；`AGENTS.md` 已跟踪，因此该规则不会自动停止 `AGENTS.md` 的跟踪，但会影响其他新 Markdown 文档。
+- `finetune_font.sh` 相对 `HEAD` 将 `structure_warmup_duration` 从 `8` 改为 `6`。
+- `AGENTS.md` 正在补充本次长期记忆，修改尚未提交。
+
+已确认但仍需训练验证的结论：
+
+- 旧 `test3` 的 `gradient_log.csv` 显示实际 discriminator 有梯度，而 git 中 test3 配置带 `--no_gan`；这说明那次实际运行与 git 配置不一致，不能直接作为 test3 的官方对照。
+- GAN 开启时旧代码存在 D 参数同时进入 G/D optimizer 的风险；该问题已修复，但尚未用开启 GAN 的完整训练确认稳定性。
+- 梯度裁剪的生成器物化修复已提交，但尚未在完整 `test5` 运行中核对 `pre_clip_grad_norm`、`post_clip_grad_norm` 与 `grad_clip_ratio` 是否连续、合理。
+- `test5` 已把 structure/detail 权重提高较多，但没有训练输出、验证指标或人工结体比较，不能宣称其优于 `test4`、A/B 对照或阶段 1。
+- 当前阶段 2 首轮仍不应把 GAN、LoRA/adapter、蒸馏或额外 JT 语义标签同时加入。
+- 工作区内 `models/vit_base_font/checkpoint-14.pth` 仍是唯一已完成阶段 checkpoint；未发现阶段 2 最终 checkpoint。

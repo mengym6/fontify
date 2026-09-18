@@ -345,12 +345,61 @@ def train_one_epoch(model: torch.nn.Module,
         #print(f"loss:{loss},grad_norm:{grad_norm}")
         metric_logger.update(loss=loss_value)
         raw_model = model.module if hasattr(model, 'module') else model
+        def scalar(value):
+            if torch.is_tensor(value):
+                return float(value.detach().item())
+            return float(value)
+
         detail_loss = raw_model.last_loss_components.get('detail', torch.tensor(0.0))
         highpass_loss = raw_model.last_loss_components.get('highpass', torch.tensor(0.0))
         gradient_loss = raw_model.last_loss_components.get('gradient', torch.tensor(0.0))
+        structure_row_loss = raw_model.last_loss_components.get(
+            'structure_row', torch.tensor(0.0)
+        )
+        structure_col_loss = raw_model.last_loss_components.get(
+            'structure_col', torch.tensor(0.0)
+        )
+        structure_centroid_loss = raw_model.last_loss_components.get(
+            'structure_centroid', torch.tensor(0.0)
+        )
+        structure_area_loss = raw_model.last_loss_components.get(
+            'structure_area', torch.tensor(0.0)
+        )
+        structure_weighted = raw_model.last_loss_components.get(
+            'structure_weighted', torch.tensor(0.0)
+        )
+        detail_weighted = raw_model.last_loss_components.get(
+            'detail_weighted', torch.tensor(0.0)
+        )
+        gradient_contribution = raw_model.last_loss_components.get(
+            'gradient_contribution', torch.tensor(0.0)
+        )
+        detail_region_ratio = raw_model.last_loss_components.get(
+            'detail_region_ratio', torch.tensor(0.0)
+        )
+        valid_ratio = raw_model.last_loss_components.get(
+            'valid_ratio', torch.tensor(0.0)
+        )
+        target_highpass_mean = raw_model.last_loss_components.get(
+            'target_highpass_mean', torch.tensor(0.0)
+        )
+        target_gradient_mean = raw_model.last_loss_components.get(
+            'target_gradient_mean', torch.tensor(0.0)
+        )
         metric_logger.update(loss_detail=detail_loss.item())
         metric_logger.update(loss_highpass=highpass_loss.item())
         metric_logger.update(loss_gradient=gradient_loss.item())
+        metric_logger.update(loss_structure_row=structure_row_loss.item())
+        metric_logger.update(loss_structure_col=structure_col_loss.item())
+        metric_logger.update(loss_structure_centroid=structure_centroid_loss.item())
+        metric_logger.update(loss_structure_area=structure_area_loss.item())
+        metric_logger.update(structure_weighted=structure_weighted.item())
+        metric_logger.update(detail_weighted=detail_weighted.item())
+        metric_logger.update(gradient_contribution=gradient_contribution.item())
+        metric_logger.update(detail_region_ratio=detail_region_ratio.item())
+        metric_logger.update(valid_ratio=valid_ratio.item())
+        metric_logger.update(target_highpass_mean=target_highpass_mean.item())
+        metric_logger.update(target_gradient_mean=target_gradient_mean.item())
 
         lr = optimizer.param_groups[0]["lr"]
         metric_logger.update(lr=lr)
@@ -374,6 +423,17 @@ def train_one_epoch(model: torch.nn.Module,
         detail_reduce = misc.all_reduce_mean(detail_loss)
         highpass_reduce = misc.all_reduce_mean(highpass_loss)
         gradient_reduce = misc.all_reduce_mean(gradient_loss)
+        structure_row_reduce = misc.all_reduce_mean(structure_row_loss)
+        structure_col_reduce = misc.all_reduce_mean(structure_col_loss)
+        structure_centroid_reduce = misc.all_reduce_mean(structure_centroid_loss)
+        structure_area_reduce = misc.all_reduce_mean(structure_area_loss)
+        structure_weighted_reduce = misc.all_reduce_mean(structure_weighted)
+        detail_weighted_reduce = misc.all_reduce_mean(detail_weighted)
+        gradient_contribution_reduce = misc.all_reduce_mean(gradient_contribution)
+        detail_region_ratio_reduce = misc.all_reduce_mean(detail_region_ratio)
+        valid_ratio_reduce = misc.all_reduce_mean(valid_ratio)
+        target_highpass_mean_reduce = misc.all_reduce_mean(target_highpass_mean)
+        target_gradient_mean_reduce = misc.all_reduce_mean(target_gradient_mean)
         detail_weight = raw_model.last_loss_components.get('detail_weight', 0.0)
 
         if log_writer is not None and grad_norm is not None:
@@ -381,8 +441,26 @@ def train_one_epoch(model: torch.nn.Module,
                 f.write(
                     f"[{time.time()}] Epoch: [{epoch}]  [{data_iter_step}/{len(data_loader)}]  lr: {lr}  loss: {loss}   "
                     f"loss_scale_value: {loss_scale_value}  grad_norm: {grad_norm} "
-                    f"detail: {detail_reduce:.6f} highpass: {highpass_reduce:.6f} "
-                    f"gradient: {gradient_reduce:.6f} detail_weight: {detail_weight:.6f} "
+                    f"detail: {scalar(detail_reduce):.6f} highpass: {scalar(highpass_reduce):.6f} "
+                    f"gradient: {scalar(gradient_reduce):.6f} detail_weight: {scalar(detail_weight):.6f} "
+                    f"structure: {scalar(structure_reduce):.6f} "
+                    f"row: {scalar(structure_row_reduce):.6f} col: {scalar(structure_col_reduce):.6f} "
+                    f"centroid: {scalar(structure_centroid_reduce):.6f} "
+                    f"area: {scalar(structure_area_reduce):.6f} "
+                    f"structure_weighted: {scalar(structure_weighted_reduce):.6f} "
+                    f"detail_weighted: {scalar(detail_weighted_reduce):.6f} "
+                    f"gradient_contribution: {scalar(gradient_contribution_reduce):.6f} "
+                    f"detail_region_ratio: {scalar(detail_region_ratio_reduce):.6f} "
+                    f"valid_ratio: {scalar(valid_ratio_reduce):.6f} "
+                    f"target_highpass_mean: {scalar(target_highpass_mean_reduce):.6f} "
+                    f"target_gradient_mean: {scalar(target_gradient_mean_reduce):.6f} "
+                    f"grad_ok: "
+                    f"{scalar(raw_model.last_loss_components.get('structure_row_grad_ok', 0)):.0f}"
+                    f"{scalar(raw_model.last_loss_components.get('structure_col_grad_ok', 0)):.0f}"
+                    f"{scalar(raw_model.last_loss_components.get('structure_centroid_grad_ok', 0)):.0f}"
+                    f"{scalar(raw_model.last_loss_components.get('structure_area_grad_ok', 0)):.0f}"
+                    f"{scalar(raw_model.last_loss_components.get('highpass_grad_ok', 0)):.0f}"
+                    f"{scalar(raw_model.last_loss_components.get('gradient_grad_ok', 0)):.0f} "
                     f"grad_pre_clip: "
                     f"{pre_clip_grad_norm if pre_clip_grad_norm is not None else float('nan'):.6f} "
                     f"grad_post_clip: "
@@ -417,7 +495,36 @@ def train_one_epoch(model: torch.nn.Module,
                 'loss_detail': detail_reduce,
                 'loss_highpass': highpass_reduce,
                 'loss_gradient': gradient_reduce,
+                'loss_structure_row': structure_row_reduce,
+                'loss_structure_col': structure_col_reduce,
+                'loss_structure_centroid': structure_centroid_reduce,
+                'loss_structure_area': structure_area_reduce,
                 'detail_weight': detail_weight,
+                'structure_weighted': structure_weighted_reduce,
+                'detail_weighted': detail_weighted_reduce,
+                'gradient_contribution': gradient_contribution_reduce,
+                'detail_region_ratio': detail_region_ratio_reduce,
+                'valid_ratio': valid_ratio_reduce,
+                'target_highpass_mean': target_highpass_mean_reduce,
+                'target_gradient_mean': target_gradient_mean_reduce,
+                'structure_row_grad_ok': scalar(
+                    raw_model.last_loss_components.get('structure_row_grad_ok', 0)
+                ),
+                'structure_col_grad_ok': scalar(
+                    raw_model.last_loss_components.get('structure_col_grad_ok', 0)
+                ),
+                'structure_centroid_grad_ok': scalar(
+                    raw_model.last_loss_components.get('structure_centroid_grad_ok', 0)
+                ),
+                'structure_area_grad_ok': scalar(
+                    raw_model.last_loss_components.get('structure_area_grad_ok', 0)
+                ),
+                'highpass_grad_ok': scalar(
+                    raw_model.last_loss_components.get('highpass_grad_ok', 0)
+                ),
+                'gradient_grad_ok': scalar(
+                    raw_model.last_loss_components.get('gradient_grad_ok', 0)
+                ),
             }, epoch_1000x)
 
 

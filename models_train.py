@@ -635,7 +635,17 @@ class Fontify(nn.Module):
         x = self.decoder_pred(x) # Bx3xHxW
         return x
 
-    def forward_loss(self, imgs, pred, tgts, mask, valid, epoch=0, no_gan=False):
+    def forward_loss(
+        self,
+        imgs,
+        pred,
+        tgts,
+        mask,
+        valid,
+        epoch=0,
+        no_gan=False,
+        keep_loss_graph=False,
+    ):
         """
         tgts: [N, 3, H, W]
         pred: [N, 3, H, W]
@@ -653,6 +663,7 @@ class Fontify(nn.Module):
         if inds_ign.sum() > 0:
             valid[inds_ign] = 0.
 
+        valid_ratio = valid.mean().detach()
         mask = mask * valid
 
         target = tgts
@@ -742,22 +753,65 @@ class Fontify(nn.Module):
 
         # mask has already been expanded to pixel space and multiplied by valid.
         detail_region = mask[:, :1].float()
+        detail_region_ratio = detail_region.mean().detach()
+        detail_region_counts = detail_region.flatten(1).sum(1)
         target_response = target_high.abs().detach()
         target_response = target_response / (
             target_response.mean(dim=(-2, -1), keepdim=True) + 1e-6
         )
         detail_weight = torch.clamp(1.0 + 2.0 * target_response, max=3.0)
-        loss_highpass = (
+        weighted_highpass_error = (
             detail_weight * detail_region * (pred_high - target_high).abs()
-        ).sum() / (detail_region.sum() + 1e-6)
-        loss_gradient = (
+        )
+        gradient_error = (
             detail_region
             * (
                 (pred_gx - target_gx).abs()
                 + (pred_gy - target_gy).abs()
             )
-        ).sum() / (detail_region.sum() + 1e-6)
+        )
+        target_gradient_response = target_gx.abs() + target_gy.abs()
+
+        if getattr(self, "detail_per_sample_normalize", False):
+            detail_denom = detail_region_counts.clamp_min(1.0)
+            loss_highpass = (
+                weighted_highpass_error.flatten(1).sum(1) / detail_denom
+            ).mean()
+            loss_gradient = (
+                gradient_error.flatten(1).sum(1) / detail_denom
+            ).mean()
+            target_highpass_mean = (
+                (detail_region * target_high.abs()).flatten(1).sum(1)
+                / detail_denom
+            ).mean()
+            target_gradient_mean = (
+                (detail_region * target_gradient_response).flatten(1).sum(1)
+                / detail_denom
+            ).mean()
+        else:
+            detail_denom = detail_region.sum() + 1e-6
+            loss_highpass = weighted_highpass_error.sum() / detail_denom
+            loss_gradient = gradient_error.sum() / detail_denom
+            target_highpass_mean = (
+                (detail_region * target_high.abs()).sum() / detail_denom
+            )
+            target_gradient_mean = (
+                (detail_region * target_gradient_response).sum() / detail_denom
+            )
+
         loss_detail = loss_highpass + detail_gradient_ratio * loss_gradient
+
+        if keep_loss_graph:
+            self.last_loss_graph = {
+                'structure': loss_structure,
+                'structure_row': loss_row,
+                'structure_col': loss_col,
+                'structure_centroid': loss_centroid,
+                'structure_area': loss_area,
+                'detail': loss_detail,
+                'highpass': loss_highpass,
+                'gradient': loss_gradient,
+            }
 
         detail_weight_target = getattr(self, "detail_loss_weight", 0.03)
         detail_warmup_epochs = getattr(self, "detail_warmup_epochs", 4)
@@ -775,6 +829,26 @@ class Fontify(nn.Module):
         else:
             detail_weight_current = detail_weight_target
 
+        structure_weighted_contribution = loss_structure.detach() * (
+            structure_weight_current
+            if torch.is_tensor(structure_weight_current)
+            else loss_structure.new_tensor(structure_weight_current)
+        )
+        detail_weighted_contribution = loss_detail.detach() * (
+            detail_weight_current
+            if torch.is_tensor(detail_weight_current)
+            else loss_detail.new_tensor(detail_weight_current)
+        )
+        gradient_contribution = loss_gradient.detach() * (
+            detail_weight_current
+            if torch.is_tensor(detail_weight_current)
+            else loss_gradient.new_tensor(detail_weight_current)
+        ) * (
+            detail_gradient_ratio
+            if torch.is_tensor(detail_gradient_ratio)
+            else loss_gradient.new_tensor(detail_gradient_ratio)
+        )
+
         loss = (
             loss_l1l2
             + loss_vgg
@@ -787,10 +861,35 @@ class Fontify(nn.Module):
             'structure_row': loss_row.detach(), 'structure_col': loss_col.detach(),
             'structure_centroid': loss_centroid.detach(), 'structure_area': loss_area.detach(),
             'structure_weight': structure_weight_current,
+            'structure_weighted': structure_weighted_contribution,
             'detail': loss_detail.detach(),
             'highpass': loss_highpass.detach(),
             'gradient': loss_gradient.detach(),
             'detail_weight': detail_weight_current,
+            'detail_weighted': detail_weighted_contribution,
+            'gradient_contribution': gradient_contribution,
+            'detail_region_ratio': detail_region_ratio,
+            'valid_ratio': valid_ratio,
+            'target_highpass_mean': target_highpass_mean.detach(),
+            'target_gradient_mean': target_gradient_mean.detach(),
+            'structure_row_grad_ok': float(
+                loss_row.requires_grad and loss_row.grad_fn is not None
+            ),
+            'structure_col_grad_ok': float(
+                loss_col.requires_grad and loss_col.grad_fn is not None
+            ),
+            'structure_centroid_grad_ok': float(
+                loss_centroid.requires_grad and loss_centroid.grad_fn is not None
+            ),
+            'structure_area_grad_ok': float(
+                loss_area.requires_grad and loss_area.grad_fn is not None
+            ),
+            'highpass_grad_ok': float(
+                loss_highpass.requires_grad and loss_highpass.grad_fn is not None
+            ),
+            'gradient_grad_ok': float(
+                loss_gradient.requires_grad and loss_gradient.grad_fn is not None
+            ),
         }
 
         adv_loss = pred.new_tensor(0.0)

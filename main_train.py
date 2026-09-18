@@ -154,6 +154,8 @@ def get_args_parser():
                         help='Gaussian high-pass sigma for detail loss')
     parser.add_argument('--detail_gradient_ratio', default=0.5, type=float,
                         help='weight of Sobel gradient loss relative to high-pass loss')
+    parser.add_argument('--detail_per_sample_normalize', action='store_true',
+                        help='normalize detail loss per sample before averaging over the batch')
 
     # Dataset parameters
     parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
@@ -356,6 +358,7 @@ def main(args, ds_init):
     model.detail_kernel_size = args.detail_kernel_size
     model.detail_sigma = args.detail_sigma
     model.detail_gradient_ratio = args.detail_gradient_ratio
+    model.detail_per_sample_normalize = args.detail_per_sample_normalize
     if args.structure_loss_weight < 0:
         raise ValueError('structure_loss_weight must be non-negative')
     if args.grad_log_interval < 0:
@@ -409,7 +412,8 @@ def main(args, ds_init):
           f"duration={args.structure_warmup_duration}), "
           f"detail(start={args.detail_warmup_epochs}, final={args.detail_loss_weight}, "
           f"duration={args.detail_warmup_duration}, kernel={args.detail_kernel_size}, "
-          f"sigma={args.detail_sigma}, gradient_ratio={args.detail_gradient_ratio}), "
+          f"sigma={args.detail_sigma}, gradient_ratio={args.detail_gradient_ratio}, "
+          f"per_sample={args.detail_per_sample_normalize}), "
           f"duration={args.loss_warmup_duration}")
 
     masked_position_generator = MaskingGenerator(

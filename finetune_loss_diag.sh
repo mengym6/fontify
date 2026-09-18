@@ -1,28 +1,45 @@
 #!/bin/bash
 
-# Finetune 脚本：用于小数据集（~1200对）微调预训练模型
-# 核心改动：降lr、短训练、弱化判别器、关闭数据增强中的颜色抖动
+set -euo pipefail
+
+EXP_ID=${1:-1}
+
+case "$EXP_ID" in
+    1)
+        DETAIL_GRADIENT_RATIO=0.0
+        DETAIL_NORMALIZE_FLAG=()
+        ;;
+    2)
+        DETAIL_GRADIENT_RATIO=0.1
+        DETAIL_NORMALIZE_FLAG=()
+        ;;
+    3)
+        DETAIL_GRADIENT_RATIO=0.1
+        DETAIL_NORMALIZE_FLAG=(--detail_per_sample_normalize)
+        ;;
+    *)
+        echo "Usage: $0 {1|2|3}" >&2
+        exit 1
+        ;;
+esac
 
 export CUDA_VISIBLE_DEVICES=0,1
 
 DATA_PATH=fontdata_example
-# A 对照：NAME=finetune_stele_baseline_a DETAIL_LOSS_WEIGHT=0 ./finetune_font.sh
-# B 实验：直接运行本脚本（默认 detail=0.03）。
-name=finetune_stele_test5
-
+name="finetune_stele_loss_diag_exp${EXP_ID}"
 PRETRAIN_CKPT=models/vit_base_font/checkpoint-14.pth
 
-# 手动切换阶段时修改 --mask_mix_probs：
-# stage1: 0.7 0.2 0.1; stage2: 0.4 0.3 0.3; stage3: 0.3 0.3 0.4
+DETAIL_LOSS_WEIGHT=0.05
+STRUCTURE_LOSS_WEIGHT=0.05
 
 python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
-	--use_env main_train.py  \
+    --use_env main_train.py \
     --batch_size 2 \
-    --accum_iter 32  \
+    --accum_iter 32 \
     --model vit_base_patch16_input896x448_win_dec64_8glb_sl1 \
     --num_mask_patches 784 \
     --max_mask_patches_per_block 392 \
-    --epochs 51 \
+    --epochs 35 \
     --warmup_epochs 5 \
     --lr 1e-3 \
     --clip_grad 3.0 \
@@ -36,26 +53,28 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --adv_weight_final 0.4 \
     --edge_weight_final 0.3 \
     --no_gan \
-    --structure_loss_weight 2.0 \
+    --structure_loss_weight "${STRUCTURE_LOSS_WEIGHT}" \
     --structure_warmup_epochs 6 \
     --structure_warmup_duration 6 \
-    --detail_loss_weight 0.5 \
-    --detail_warmup_epochs 10 \
-    --detail_warmup_duration 6 \
+    --detail_loss_weight "${DETAIL_LOSS_WEIGHT}" \
+    --detail_warmup_epochs 4 \
+    --detail_warmup_duration 4 \
     --detail_kernel_size 5 \
     --detail_sigma 1.0 \
-    --detail_gradient_ratio 0.5 \
+    --detail_gradient_ratio "${DETAIL_GRADIENT_RATIO}" \
+    "${DETAIL_NORMALIZE_FLAG[@]}" \
     --save_freq 5 \
-    --data_path $DATA_PATH/ \
-    --json_path $DATA_PATH/train_json_mix/*.json \
-    --val_json_path $DATA_PATH/val_json_mix/*.json \
-    --output_dir models/$name \
-    --log_dir models/$name/logs \
-    --finetune $PRETRAIN_CKPT \
+    --seed 0 \
+    --data_path "$DATA_PATH/" \
+    --json_path "$DATA_PATH"/train_json_mix/*.json \
+    --val_json_path "$DATA_PATH"/val_json_mix/*.json \
+    --output_dir "models/$name" \
+    --log_dir "models/$name/logs" \
+    --finetune "$PRETRAIN_CKPT" \
     --auto_resume \
     --freeze_encoder \
     --freeze_blocks 9 \
-    --semantic_mask_dir $DATA_PATH/font/train/new \
+    --semantic_mask_dir "$DATA_PATH"/font/train/new \
     --num_mask_annotations_bf 11 \
     --num_mask_annotations_jt 1 \
     --mask_coverage_threshold 0.1 \

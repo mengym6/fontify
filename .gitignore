@@ -1,6 +1,6 @@
 # macOS
 .DS_Store
-
+*.md
 # VSCode local settings
 .vscode/
 
