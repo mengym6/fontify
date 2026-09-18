@@ -142,6 +142,18 @@ def get_args_parser():
                         help='epoch when structure loss warmup starts')
     parser.add_argument('--structure_warmup_duration', default=4, type=int,
                         help='linear warmup duration for structure loss weight')
+    parser.add_argument('--detail_loss_weight', default=0.03, type=float,
+                        help='high-frequency detail loss weight')
+    parser.add_argument('--detail_warmup_epochs', default=4, type=int,
+                        help='epoch when detail loss warmup starts')
+    parser.add_argument('--detail_warmup_duration', default=4, type=int,
+                        help='linear warmup duration for detail loss weight')
+    parser.add_argument('--detail_kernel_size', default=5, type=int,
+                        help='Gaussian high-pass kernel size for detail loss')
+    parser.add_argument('--detail_sigma', default=1.0, type=float,
+                        help='Gaussian high-pass sigma for detail loss')
+    parser.add_argument('--detail_gradient_ratio', default=0.5, type=float,
+                        help='weight of Sobel gradient loss relative to high-pass loss')
 
     # Dataset parameters
     parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
@@ -325,9 +337,11 @@ def main(args, ds_init):
     # curriculum 切换点：数据端从 JT-only 切到 JT/BF 同步训练，loss 端从禁用 edge/adv 切到 warmup
     model.semantic_only_epochs = args.semantic_only_epochs
     if min(args.adv_warmup_epochs, args.edge_warmup_epochs, args.loss_warmup_duration,
-           args.structure_warmup_epochs, args.structure_warmup_duration) < 0:
+           args.structure_warmup_epochs, args.structure_warmup_duration,
+           args.detail_warmup_epochs, args.detail_warmup_duration) < 0:
         raise ValueError('loss warmup epochs and duration must be non-negative')
-    if min(args.adv_weight_final, args.edge_weight_final) < 0:
+    if min(args.adv_weight_final, args.edge_weight_final, args.detail_loss_weight,
+           args.detail_gradient_ratio) < 0:
         raise ValueError('final loss weights must be non-negative')
     model.adv_warmup_epochs = args.adv_warmup_epochs
     model.edge_warmup_epochs = args.edge_warmup_epochs
@@ -336,10 +350,20 @@ def main(args, ds_init):
     model.edge_weight_final = args.edge_weight_final
     model.structure_warmup_epochs = args.structure_warmup_epochs
     model.structure_warmup_duration = args.structure_warmup_duration
+    model.detail_loss_weight = args.detail_loss_weight
+    model.detail_warmup_epochs = args.detail_warmup_epochs
+    model.detail_warmup_duration = args.detail_warmup_duration
+    model.detail_kernel_size = args.detail_kernel_size
+    model.detail_sigma = args.detail_sigma
+    model.detail_gradient_ratio = args.detail_gradient_ratio
     if args.structure_loss_weight < 0:
         raise ValueError('structure_loss_weight must be non-negative')
     if args.grad_log_interval < 0:
         raise ValueError('grad_log_interval must be non-negative')
+    if args.detail_kernel_size <= 0 or args.detail_kernel_size % 2 == 0:
+        raise ValueError('detail_kernel_size must be a positive odd integer')
+    if args.detail_sigma <= 0:
+        raise ValueError('detail_sigma must be positive')
     model.structure_loss_weight = args.structure_loss_weight
 
     if args.finetune:
@@ -383,6 +407,9 @@ def main(args, ds_init):
           f"edge(start={args.edge_warmup_epochs}, final={args.edge_weight_final}), "
           f"structure(start={args.structure_warmup_epochs}, final={args.structure_loss_weight}, "
           f"duration={args.structure_warmup_duration}), "
+          f"detail(start={args.detail_warmup_epochs}, final={args.detail_loss_weight}, "
+          f"duration={args.detail_warmup_duration}, kernel={args.detail_kernel_size}, "
+          f"sigma={args.detail_sigma}, gradient_ratio={args.detail_gradient_ratio}), "
           f"duration={args.loss_warmup_duration}")
 
     masked_position_generator = MaskingGenerator(
@@ -513,21 +540,29 @@ def main(args, ds_init):
         if args.distributed:
             model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
             model_without_ddp = model.module
-            model._set_static_graph()
 
+        train_discriminator = not args.no_gan
+        if train_discriminator:
+            # Discriminator has its own optimizer below. It must not be included
+            # in the generator optimizer or its stale D gradients will update D
+            # a second time through NativeScaler.
+            model_without_ddp.discriminator.requires_grad_(False)
         # following timm: set wd as 0 for bias and norm layers
         param_groups = lrd.param_groups_lrd(model_without_ddp, args.weight_decay,
                                             no_weight_decay_list=model_without_ddp.no_weight_decay(),
                                             layer_decay=args.layer_decay
                                             )
         optimizer = torch.optim.AdamW(param_groups, lr=args.lr, betas=args.opt_betas)
-        if not args.no_gan:
+        if train_discriminator:
+            model_without_ddp.discriminator.requires_grad_(True)
             optimizer_d = torch.optim.AdamW(
                 model_without_ddp.discriminator.parameters(),
                 lr=args.lr * 0.1,
                 betas=(0.5, 0.999))
         print(optimizer)
         loss_scaler = NativeScaler()
+        if args.distributed:
+            model._set_static_graph()
 
     misc.auto_load_model(
         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, optimizer_d=optimizer_d, loss_scaler=loss_scaler)

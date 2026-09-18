@@ -6,7 +6,10 @@
 export CUDA_VISIBLE_DEVICES=0,1
 
 DATA_PATH=fontdata_example
-name=finetune_stele_test3
+# A 对照：NAME=finetune_stele_baseline_a DETAIL_LOSS_WEIGHT=0 ./finetune_font.sh
+# B 实验：直接运行本脚本（默认 detail=0.03）。
+name=${NAME:-finetune_stele_detail_b}
+DETAIL_LOSS_WEIGHT=${DETAIL_LOSS_WEIGHT:-0.03}
 PRETRAIN_CKPT=models/vit_base_font/checkpoint-14.pth
 
 # 手动切换阶段时修改 --mask_mix_probs：
@@ -33,9 +36,15 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --adv_weight_final 0.4 \
     --edge_weight_final 0.4 \
     --no_gan \
-    --structure_loss_weight 0.15 \
+    --structure_loss_weight 0.05 \
     --structure_warmup_epochs 6 \
     --structure_warmup_duration 4 \
+    --detail_loss_weight $DETAIL_LOSS_WEIGHT \
+    --detail_warmup_epochs 4 \
+    --detail_warmup_duration 4 \
+    --detail_kernel_size 5 \
+    --detail_sigma 1.0 \
+    --detail_gradient_ratio 0.5 \
     --save_freq 5 \
     --data_path $DATA_PATH/ \
     --json_path $DATA_PATH/train_json_mix/*.json \

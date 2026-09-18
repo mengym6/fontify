@@ -11,6 +11,7 @@ import util.misc as misc
 import util.lr_sched as lr_sched
 
 import numpy as np
+from models_train import gaussian_blur, highpass, rgb_to_gray, sobel_gradients
 #import wandb
 
 import time
@@ -100,6 +101,9 @@ class GradientMonitor:
         "update_idx",
         "rank",
         "reported_grad_norm",
+        "pre_clip_grad_norm",
+        "post_clip_grad_norm",
+        "grad_clip_ratio",
         "computed_grad_norm",
         "group",
         "params",
@@ -130,14 +134,39 @@ class GradientMonitor:
                 self.writer.writeheader()
                 self.file.flush()
 
-    def log(self, epoch, data_iter_step, update_idx, model, reported_grad_norm=None):
+    def log(
+        self,
+        epoch,
+        data_iter_step,
+        update_idx,
+        model,
+        reported_grad_norm=None,
+        pre_clip_grad_norm=None,
+        post_clip_grad_norm=None,
+    ):
         if not self.enabled or update_idx % self.interval != 0:
             return
 
+        def as_float(value):
+            if value is None:
+                return float("nan")
+            if torch.is_tensor(value):
+                return float(value.detach().item())
+            return float(value)
+
+        reported_grad_norm = as_float(reported_grad_norm)
+        pre_clip_grad_norm = as_float(pre_clip_grad_norm)
+        post_clip_grad_norm = as_float(post_clip_grad_norm)
+        grad_clip_ratio = (
+            post_clip_grad_norm / pre_clip_grad_norm
+            if pre_clip_grad_norm > 0
+            else 0.0
+        )
         rows, computed_norm = _collect_gradient_stats(model)
         print(
             f"[grad] epoch={epoch} step={data_iter_step} update={update_idx} "
-            f"reported={reported_grad_norm if reported_grad_norm is not None else float('nan'):.6f} "
+            f"pre_clip={pre_clip_grad_norm:.6f} post_clip={post_clip_grad_norm:.6f} "
+            f"clip_ratio={grad_clip_ratio:.6f} "
             f"computed={computed_norm:.6f}"
         )
         for group, grad_norm, grad_mean, stats in rows:
@@ -157,9 +186,10 @@ class GradientMonitor:
                     "data_iter_step": data_iter_step,
                     "update_idx": update_idx,
                     "rank": 0,
-                    "reported_grad_norm": (
-                        reported_grad_norm if reported_grad_norm is not None else float("nan")
-                    ),
+                    "reported_grad_norm": reported_grad_norm,
+                    "pre_clip_grad_norm": pre_clip_grad_norm,
+                    "post_clip_grad_norm": post_clip_grad_norm,
+                    "grad_clip_ratio": grad_clip_ratio,
                     "computed_grad_norm": computed_norm,
                     "group": group,
                     "params": stats["params"],
@@ -261,6 +291,10 @@ def train_one_epoch(model: torch.nn.Module,
 
             d_loss.backward()
             optimizer_d.step()
+            # D gradients are for optimizer_d only. Clear them before the
+            # generator backward/update so G gradient logs do not include stale
+            # discriminator gradients.
+            raw_model.discriminator.zero_grad(set_to_none=True)
 
             raw_model.discriminator.requires_grad_(False)
             for name, param in raw_model.named_parameters():
@@ -272,6 +306,8 @@ def train_one_epoch(model: torch.nn.Module,
             print("Loss is {}, stopping training".format(loss_value))
             sys.exit(1)
 
+        pre_clip_grad_norm = None
+        post_clip_grad_norm = None
         if loss_scaler is None:
             loss /= accum_iter
             model.backward(loss)
@@ -288,35 +324,70 @@ def train_one_epoch(model: torch.nn.Module,
             grad_norm = loss_scaler(loss, optimizer, clip_grad=args.clip_grad,
                                     parameters=model.parameters(),
                                     update_grad=update_grad)
+            pre_clip_grad_norm = getattr(loss_scaler, "last_unclipped_norm", None)
+            post_clip_grad_norm = getattr(loss_scaler, "last_clipped_norm", None)
 
             if update_grad:
                 num_updates += 1
                 if gradient_monitor is not None:
-                    gradient_monitor.log(epoch, data_iter_step, num_updates, model, grad_norm)
+                    gradient_monitor.log(
+                        epoch,
+                        data_iter_step,
+                        num_updates,
+                        model,
+                        grad_norm,
+                        pre_clip_grad_norm,
+                        post_clip_grad_norm,
+                    )
                 optimizer.zero_grad()
             loss_scale_value = loss_scaler.state_dict()["scale"]
 
         torch.cuda.synchronize()
         #print(f"loss:{loss},grad_norm:{grad_norm}")
         metric_logger.update(loss=loss_value)
+        raw_model = model.module if hasattr(model, 'module') else model
+        detail_loss = raw_model.last_loss_components.get('detail', torch.tensor(0.0))
+        highpass_loss = raw_model.last_loss_components.get('highpass', torch.tensor(0.0))
+        gradient_loss = raw_model.last_loss_components.get('gradient', torch.tensor(0.0))
+        metric_logger.update(loss_detail=detail_loss.item())
+        metric_logger.update(loss_highpass=highpass_loss.item())
+        metric_logger.update(loss_gradient=gradient_loss.item())
 
         lr = optimizer.param_groups[0]["lr"]
         metric_logger.update(lr=lr)
 
         metric_logger.update(loss_scale=loss_scale_value)
         metric_logger.update(grad_norm=grad_norm)
+        if pre_clip_grad_norm is not None:
+            metric_logger.update(grad_norm_pre_clip=pre_clip_grad_norm)
+            if post_clip_grad_norm is not None:
+                metric_logger.update(grad_norm_post_clip=post_clip_grad_norm)
+                metric_logger.update(grad_clip_ratio=(
+                    post_clip_grad_norm / pre_clip_grad_norm
+                    if pre_clip_grad_norm > 0
+                    else 0.0
+                ))
 
         loss_value_reduce = misc.all_reduce_mean(loss_value)
         loss_l1l2_reduce = misc.all_reduce_mean(loss_l1l2)
         loss_vgg_reduce = misc.all_reduce_mean(loss_vgg)
-        raw_model = model.module if hasattr(model, 'module') else model
         structure_reduce = misc.all_reduce_mean(raw_model.last_loss_components['structure'])
+        detail_reduce = misc.all_reduce_mean(detail_loss)
+        highpass_reduce = misc.all_reduce_mean(highpass_loss)
+        gradient_reduce = misc.all_reduce_mean(gradient_loss)
+        detail_weight = raw_model.last_loss_components.get('detail_weight', 0.0)
 
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
                 f.write(
                     f"[{time.time()}] Epoch: [{epoch}]  [{data_iter_step}/{len(data_loader)}]  lr: {lr}  loss: {loss}   "
-                    f"loss_scale_value: {loss_scale_value}  grad_norm: {grad_norm} \n")
+                    f"loss_scale_value: {loss_scale_value}  grad_norm: {grad_norm} "
+                    f"detail: {detail_reduce:.6f} highpass: {highpass_reduce:.6f} "
+                    f"gradient: {gradient_reduce:.6f} detail_weight: {detail_weight:.6f} "
+                    f"grad_pre_clip: "
+                    f"{pre_clip_grad_norm if pre_clip_grad_norm is not None else float('nan'):.6f} "
+                    f"grad_post_clip: "
+                    f"{post_clip_grad_norm if post_clip_grad_norm is not None else float('nan'):.6f}\n")
         if log_writer is not None and (data_iter_step + 1) % accum_iter == 0:
             """ We use epoch_1000x as the x-axis in tensorboard.
             This calibrates different curves when batch size changes.
@@ -324,10 +395,30 @@ def train_one_epoch(model: torch.nn.Module,
             epoch_1000x = int((data_iter_step / len(data_loader) + epoch) * 1000)
             log_writer.add_scalar('train_loss', loss_value_reduce, epoch_1000x)
             log_writer.add_scalar('lr', lr, epoch_1000x)
+            if pre_clip_grad_norm is not None:
+                log_writer.add_scalar('grad_pre_clip', pre_clip_grad_norm, epoch_1000x)
+                log_writer.add_scalar(
+                    'grad_post_clip',
+                    post_clip_grad_norm if post_clip_grad_norm is not None else grad_norm,
+                    epoch_1000x,
+                )
+                log_writer.add_scalar(
+                    'grad_clip_ratio',
+                    (
+                        post_clip_grad_norm / pre_clip_grad_norm
+                        if post_clip_grad_norm is not None and pre_clip_grad_norm > 0
+                        else 0.0
+                    ),
+                    epoch_1000x,
+                )
             log_writer.add_scalars('train_loss_detail', {
                 'loss_l1l2': loss_l1l2_reduce,
                 'loss_vgg': loss_vgg_reduce,
                 'loss_structure': structure_reduce,
+                'loss_detail': detail_reduce,
+                'loss_highpass': highpass_reduce,
+                'loss_gradient': gradient_reduce,
+                'detail_weight': detail_weight,
             }, epoch_1000x)
 
 
@@ -435,6 +526,19 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         metric_logger.update(loss=loss.item())
         metric_logger.update(loss_l1l2=loss_l1l2)
         metric_logger.update(loss_vgg=loss_vgg)
+        raw_model = model.module if hasattr(model, "module") else model
+        detail_components = raw_model.last_loss_components
+        for component_name in (
+            "detail",
+            "highpass",
+            "gradient",
+            "structure_row",
+            "structure_col",
+            "structure_centroid",
+            "structure_area",
+        ):
+            component = detail_components.get(component_name, torch.tensor(0.0))
+            metric_logger.update(**{f"loss_{component_name}": component.item()})
         """
             在tensorboard内展示图片nchw->nhwc
         """
@@ -456,7 +560,7 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
             for image_idx in range(batch_show_count):
                 y_show = y[[image_idx]]
                 y_show = model.module.unpatchify(y_show)
-                y_show = torch.einsum('nchw->nhwc', y_show).detach().cpu()
+                y_show_nchw = y_show.detach()
                 mask_show = mask[[image_idx]]
                 mask_show = mask_show.detach().float().cpu()
                 mask_show = mask_show.unsqueeze(-1).repeat(
@@ -468,9 +572,45 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                 x_show = x_show.detach().float().cpu()
                 x_show = torch.einsum('nchw->nhwc', x_show)
                 tgt_show = targets[[image_idx]]
-                tgt_show = tgt_show.detach().float().cpu()
+                tgt_show_nchw = tgt_show.detach()
+                tgt_show = tgt_show.float().cpu()
                 tgt_show = torch.einsum('nchw->nhwc', tgt_show)
                 im_masked_show = tgt_show * (1 - mask_show)
+
+                detail_mean = torch.tensor(
+                    imagenet_mean, device=y_show_nchw.device, dtype=y_show_nchw.dtype
+                ).view(1, 3, 1, 1)
+                detail_std = torch.tensor(
+                    imagenet_std, device=y_show_nchw.device, dtype=y_show_nchw.dtype
+                ).view(1, 3, 1, 1)
+                pred_rgb = (y_show_nchw * detail_std + detail_mean).clamp(0, 1).float()
+                tgt_rgb = (tgt_show_nchw * detail_std + detail_mean).clamp(0, 1).float()
+                pred_gray = rgb_to_gray(pred_rgb)
+                tgt_gray = rgb_to_gray(tgt_rgb)
+                pred_high = highpass(
+                    pred_gray,
+                    getattr(args, "detail_kernel_size", 5),
+                    getattr(args, "detail_sigma", 1.0),
+                )
+                tgt_high = highpass(
+                    tgt_gray,
+                    getattr(args, "detail_kernel_size", 5),
+                    getattr(args, "detail_sigma", 1.0),
+                )
+                pred_gx, pred_gy = sobel_gradients(pred_gray)
+                tgt_gx, tgt_gy = sobel_gradients(tgt_gray)
+                highpass_error = (pred_high - tgt_high).abs().detach().cpu()
+                gradient_error = (
+                    (pred_gx - tgt_gx).abs() + (pred_gy - tgt_gy).abs()
+                ).detach().cpu()
+
+                def error_to_rgb(error):
+                    error = error[0, 0].float()
+                    error = error / (error.max() + 1e-6)
+                    error = (error * 255).round().clamp(0, 255).to(torch.uint8)
+                    return error[..., None].repeat(1, 1, 3).numpy()
+
+                y_show = torch.einsum('nchw->nhwc', y_show_nchw).detach().float().cpu()
 
                 frame = torch.cat((x_show, im_masked_show, y_show, tgt_show), dim=2)
                 frame = frame[0]
@@ -480,6 +620,18 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                 log_writer.add_image(
                     f'epoch:{epoch} val x; im_masked; y; tgt',
                     frame.numpy(),
+                    num_batch * val_tb_images_per_batch + image_idx,
+                    dataformats='HWC',
+                )
+                log_writer.add_image(
+                    f'epoch:{epoch} val highpass_error',
+                    error_to_rgb(highpass_error),
+                    num_batch * val_tb_images_per_batch + image_idx,
+                    dataformats='HWC',
+                )
+                log_writer.add_image(
+                    f'epoch:{epoch} val gradient_error',
+                    error_to_rgb(gradient_error),
                     num_batch * val_tb_images_per_batch + image_idx,
                     dataformats='HWC',
                 )
