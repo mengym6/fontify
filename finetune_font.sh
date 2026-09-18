@@ -36,10 +36,10 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --adv_weight_final 0.4 \
     --edge_weight_final 0.3 \
     --no_gan \
-    --structure_loss_weight 0.5 \
+    --structure_loss_weight 2.0 \
     --structure_warmup_epochs 6 \
     --structure_warmup_duration 8 \
-    --detail_loss_weight 0.3 \
+    --detail_loss_weight 0.5 \
     --detail_warmup_epochs 10 \
     --detail_warmup_duration 6 \
     --detail_kernel_size 5 \
