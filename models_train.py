@@ -801,18 +801,6 @@ class Fontify(nn.Module):
 
         loss_detail = loss_highpass + detail_gradient_ratio * loss_gradient
 
-        if keep_loss_graph:
-            self.last_loss_graph = {
-                'structure': loss_structure,
-                'structure_row': loss_row,
-                'structure_col': loss_col,
-                'structure_centroid': loss_centroid,
-                'structure_area': loss_area,
-                'detail': loss_detail,
-                'highpass': loss_highpass,
-                'gradient': loss_gradient,
-            }
-
         detail_weight_target = getattr(self, "detail_loss_weight", 0.03)
         detail_warmup_epochs = getattr(self, "detail_warmup_epochs", 4)
         detail_warmup_duration = getattr(self, "detail_warmup_duration", 4)
@@ -856,6 +844,28 @@ class Fontify(nn.Module):
             + structure_weight_current * loss_structure
             + detail_weight_current * loss_detail
         )
+        if keep_loss_graph:
+            self.last_loss_graph = {
+                'total_weighted': loss,
+                'recon_weighted': loss_l1l2,
+                'style_weighted': loss_vgg,
+                'edge_weighted': edge_weight * loss_edge,
+                'structure_weighted': structure_weight_current * loss_structure,
+                'detail_weighted': detail_weight_current * loss_detail,
+                'structure': loss_structure,
+                'structure_row': loss_row,
+                'structure_col': loss_col,
+                'structure_centroid': loss_centroid,
+                'structure_area': loss_area,
+                'detail': loss_detail,
+                'highpass': loss_highpass,
+                'gradient': loss_gradient,
+                'highpass_weighted': detail_weight_current * loss_highpass,
+                'gradient_weighted': (
+                    detail_weight_current * detail_gradient_ratio * loss_gradient
+                ),
+            }
+
         self.last_loss_components = {
             'structure': loss_structure.detach(),
             'structure_row': loss_row.detach(), 'structure_col': loss_col.detach(),
