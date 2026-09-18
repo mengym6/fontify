@@ -277,6 +277,9 @@ class NativeScalerWithGradNormCount:
         if update_grad:
             if clip_grad is not None:
                 assert parameters is not None
+            # model.parameters() is a generator. Materialize it once so
+            # unscale/clip/post-clip calculations all see the same tensors.
+            parameters = list(parameters) if parameters is not None else None
             self._scaler.unscale_(optimizer)  # unscale the gradients of optimizer's assigned params in-place
             unclipped_norm = get_grad_norm_(parameters)
             self.last_unclipped_norm = float(unclipped_norm.item())
