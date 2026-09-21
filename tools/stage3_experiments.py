@@ -11,12 +11,12 @@ def experiments(phase, structure, detail, coefficients):
         if not coefficients:
             raise ValueError("internal comparison requires --coefficients")
         candidates = [
-            ("equal", 0.05, 0.05, "off", None),
-            ("calibrated", 0.05, 0.05, "off", coefficients),
+            ("equal", 0.2, 0.2, "off", None),
+            ("calibrated", 0.2, 0.2, "off", coefficients),
         ]
     elif phase == "structure":
         candidates = [
-            (f"structure-{w}", w, 0.05, "off", coefficients)
+            (f"structure-{w}", w, detail, "off", coefficients)
             for w in (0, 0.2, 0.5)
         ]
     elif phase == "detail":
@@ -66,8 +66,8 @@ def main():
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--semantic-mask-dir", required=True)
     parser.add_argument("--coefficients")
-    parser.add_argument("--structure-weight", type=float, default=0.05)
-    parser.add_argument("--detail-weight", type=float, default=0.05)
+    parser.add_argument("--structure-weight", type=float, default=0.2)
+    parser.add_argument("--detail-weight", type=float, default=0.2)
     parser.add_argument("--seeds", type=int, nargs="+", default=[0])
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--output-json", required=True)
@@ -86,6 +86,8 @@ def main():
                 "--nproc_per_node=2",
                 "tools/stage3.py",
                 "train",
+                "--vgg-input-mode",
+                "legacy",
                 "--manifest",
                 args.manifest,
                 "--data-root",

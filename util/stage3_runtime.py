@@ -35,8 +35,8 @@ def configure(model, config):
     if config.get("detail_per_sample_normalize", False):
         raise ValueError("Stage 3 forbids per-sample detail normalization")
     for key, default in (
-        ("structure_loss_weight", 0.05),
-        ("detail_loss_weight", 0.05),
+        ("structure_loss_weight", 0.2),
+        ("detail_loss_weight", 0.2),
         ("structure_common_scale", 1.0),
     ):
         value = float(config.get(key, default))

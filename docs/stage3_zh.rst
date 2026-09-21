@@ -173,9 +173,9 @@ layer decay 0.8，新条件化模块（conditioner）学习率 3e-4，梯度裁�
 而 manifest 生成器已把这类记录丢弃。训练保留现有的弱 finetune 变换。对于阶段 3 的 checkpoint，评估和两个现有推理入口
 均使用方形白色填充与 bicubic 缩放，不再使用旧的 64 像素参考图下采样。
 
-新的阶段 3 训练默认 --vgg-input-mode rgb：在 VGG 模块自身归一化之前，先撤销数据集
-归一化。--vgg-input-mode legacy 仅用于受控的兼容性对比；在同一轮扫描内保持一致。
-现有训练入口保留 legacy 默认值。
+阶段 3 训练默认 --vgg-input-mode legacy，沿用原作者公开实现，包括重复归一化行为。
+生成的扫描命令显式指定 legacy。rgb 修正保留为可选开关，当前实验不启用；同一轮
+对照不能混用两种模式。已有 checkpoint 中保存的模式不改写。
 
 风格条件化使用可见的上半部分参考图 RGB 加可见性共四个通道；被遮盖的参考图像素为
 白色，下半部分 GT 永远不会被读取。三个 Conv/GroupNorm/GELU 阶段（32/64/128）、

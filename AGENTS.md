@@ -174,7 +174,7 @@ structure 子项 raw 梯度范数中，row/col 约为 `4.8e-4`，centroid 约 `0
 
 ## 阶段 3 实现与执行登记（2026-09-20，优先于前文历史方案）
 
-- 2026-09-21 权重扫描更新：structure/detail 总权重候选均仅保留 `0、0.2、0.5`，移除扫描中的 `0.025、0.05、0.1`。此调整仅影响两组总权重扫描；internal 系数对照、structure 扫描时固定的 detail=0.05 以及入口默认值保持不变，不代表 0.05 已验证有效。
+- 2026-09-21 权重配置更新：structure/detail 总权重候选均仅保留 `0、0.2、0.5`。internal 系数对照的两项总权重、两个阶段 3 入口及运行时缺省权重均改为 `0.2`，仅作为共同对照，不认定为最优。先校准子项并比较内部比例，再扫描 structure（detail 默认固定 0.2），最后扫描 detail；若 detail 选定值不是 0.2，可通过 `--detail-weight` 固定该值并使用新输出目录复核 structure 扫描。历史实验 2 记录及 checkpoint 中显式保存的权重不改写。
 
 - 当前入口：`tools/stage3.py`，支持 audit、smoke、calibrate、train、evaluate、summarize。完整命令与数据契约在 `docs/stage3.rst`；`tools/stage3_experiments.py` 按 internal/structure/detail/style/local 分阶段生成 argv，不自动挑选赢家或执行整组训练。
 - 数据由用户更换为 CalliPhase。额外要求显式 `style_id`、`character`、原始字形 `glyph_id`；manifest 划分 train/val_seen（2026-09-21 起移除 val_unseen，manifest 出现其他键会报错）。检查跨划分路径/hash/原始字形重复；严格同风格、异字符配对。无法由程序证明用户填写的风格身份或 glyph_id 正确，不声称穷尽任意近重复裁剪。
@@ -184,7 +184,7 @@ structure 子项 raw 梯度范数中，row/col 约为 `4.8e-4`，centroid 约 `0
 - structure 增加 row/col/centroid/area 四系数（默认全 1）与独立公共倍率；保留原子项定义。代码实查：当前 structure 是拼接图的全局软前景统计，并未像 detail 一样直接乘 `mask*valid`；前文将二者都描述为 masked loss 不准确。本次不悄然修改其定义。校准测量下半 query 像素梯度及可训练参数梯度。
 - 32 个风格均衡 batch 校准：预测像素梯度中位数逆比例、系数范围 [0.1,100]，以参数合成梯度中位数匹配公共倍率；零/非有限梯度、超限或退化则停止。范数比例不是独立的优化贡献占比，需同时看梯度夹角和合成梯度。
 - 风格模块：上半可见参考 RGB + visibility，三层 Conv/GroupNorm/GELU（32/64/128）和池化，零初始化头调制最后三个 ViT block；off/reference/constant 三组对照。不读取下半 GT，不绕过参考 mask，不使用书家 ID embedding。
-- VGG 输入重复归一化已由调用路径确认。旧入口仍默认 legacy；阶段 3 默认 rgb，在 VGG 内部归一化前还原输入。所有新对照必须采用相同模式，不把修正收益混算成风格模块收益。
+- VGG 输入重复归一化已由调用路径确认，原作者公开仓库亦如此。2026-09-21 用户决定沿用原作者设置：阶段 3 默认 legacy，实验命令显式指定 legacy，保留重复归一化行为。rgb 修正仅保留为可选开关，当前对照不启用；已有 checkpoint 中保存的模式不改写。同一轮对照必须保持模式一致，之前以 rgb 跑出的结果不能直接复用为 legacy 基线。
 - 默认训练：400 optimizer updates、40 updates LR/loss warmup、每 50 updates 评价保存；有效 batch=128，旧参数 LR=1e-4、新模块=3e-4、layer_decay=0.8、clip=3、no_gan、冻结前 9 层；入口参数 mask=0.8/0/0.2、random 内 half_mask_ratio=0.5，但实际生效的是上一条所述的全语义遮盖。fit32 使用固定 32 样本与全 query mask，最多 300 updates。所有组独立输出，不 auto-resume。train 默认在 `<output>/tensorboard` 镜像 train.jsonl 标量、参数组范数、eval 指标均值和条带图，`--no-tensorboard` 关闭；jsonl/eval 目录仍是正式记录。
 - 新 checkpoint 保存 stage3_config；训练与既有推理入口重建风格模块，加载缺失检查只允许旧 checkpoint 迁移时新增模块参数缺失。阶段 3 推理使用统一补白/缩放，移除旧参考字 64px 中间降采样的影响。
 - 本地验证：独立 CPU 测试覆盖条件模块、真实 encoder/loss 方法的小张量合约、结构系数、实验 2 公式、梯度、序列化、校准停止条件与数据泄漏检查。loss 测试替代 VGG 特征提取器，不等于完整预训练模型运行。另执行新增代码 lint/语法与 CLI 检查。

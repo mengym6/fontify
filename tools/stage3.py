@@ -627,10 +627,10 @@ def main():
     parser.add_argument(
         "--style-mode", choices=["off", "reference", "constant"], default="off"
     )
-    parser.add_argument("--structure-weight", type=float, default=0.05)
-    parser.add_argument("--detail-weight", type=float, default=0.05)
+    parser.add_argument("--structure-weight", type=float, default=0.2)
+    parser.add_argument("--detail-weight", type=float, default=0.2)
     parser.add_argument("--coefficients")
-    parser.add_argument("--vgg-input-mode", choices=["rgb", "legacy"], default="rgb")
+    parser.add_argument("--vgg-input-mode", choices=["rgb", "legacy"], default="legacy")
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument("--accum-iter", type=int, default=32)
     parser.add_argument("--updates", type=int, default=400)

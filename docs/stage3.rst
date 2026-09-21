@@ -154,14 +154,19 @@ Each entry contains an argv list suitable for subprocess.run(argv, check=True).
 It is not executed automatically. After visual/metric review, generate the next
 phase with the selected weights and optional --coefficients:
 
-* internal: equal coefficients vs calibrated, both weights 0.05.
-* structure: total weight 0/0.2/0.5, detail fixed at 0.05.
+* internal: equal coefficients vs calibrated, both weights 0.2.
+* structure: total weight 0/0.2/0.5, detail fixed at --detail-weight (default 0.2).
 * detail: total weight 0/0.2/0.5, selected structure unchanged.
 * style: off/reference/constant, both selected losses unchanged.
 * local: reference model, one selected loss at 0.5x or 2x at a time. A zero
   selected loss remains zero. Include original A/C when comparing final results.
 
-Use --structure-weight and --detail-weight to carry explicit decisions. Omit
+Use --structure-weight and --detail-weight to carry explicit decisions.
+Both entrypoints default these weights to 0.2; this is a comparison setting,
+not an established optimum. If the chosen detail weight differs from 0.2,
+repeat the structure sweep with --detail-weight set to that selected value.
+Use a new output root for this repeat to avoid collisions with the first sweep.
+Omit
 --coefficients if equal coefficients won. Use --seeds 1 2 to replicate finalists
 and their baselines. Reuse a baseline only when checkpoint, data fingerprint,
 all settings, seed and update budget match; command output directories never
@@ -189,10 +194,10 @@ Training retains the existing weak finetune transform. Evaluation and both
 existing inference entrypoints use square white padding and bicubic resize for
 stage-3 checkpoints, without the old 64-pixel reference downsampling.
 
-New stage-3 training defaults to --vgg-input-mode rgb: undo dataset normalization
-before the VGG module's own normalization. --vgg-input-mode legacy is available
-only for a controlled compatibility comparison; keep it identical across a
-sweep. Existing training entrypoints retain their legacy default.
+Stage-3 training defaults to --vgg-input-mode legacy, matching the author's
+published implementation, including its repeated normalization. Generated sweep
+commands explicitly select legacy. The rgb correction remains an opt-in mode;
+do not mix modes within a sweep. Saved checkpoint modes are not rewritten.
 
 Style conditioning uses visible upper reference RGB plus visibility as four
 channels; masked reference pixels are white and lower GT is never read. Three
