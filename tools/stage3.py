@@ -269,7 +269,7 @@ def calibrate(model, rows, args):
 
 
 def tensorboard_writer(args, rank):
-    """Optional mirror of train.jsonl and eval strips; jsonl stays the record."""
+    """Rank-0 mirror of train.jsonl and eval strips; jsonl stays the record."""
     if rank != 0 or not args.tensorboard:
         return None
     from torch.utils.tensorboard import SummaryWriter
@@ -638,7 +638,7 @@ def main():
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--semantic-mask-dir")
     parser.add_argument("--fit32", action="store_true")
-    parser.add_argument("--tensorboard", action="store_true")
+    parser.add_argument("--no-tensorboard", dest="tensorboard", action="store_false")
     args = parser.parse_args()
     if args.updates < 1 or args.batch_size < 1 or args.accum_iter < 1:
         parser.error("updates, batch-size and accum-iter must be positive")

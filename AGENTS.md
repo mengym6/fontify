@@ -183,7 +183,7 @@ structure 子项 raw 梯度范数中，row/col 约为 `4.8e-4`，centroid 约 `0
 - 32 个风格均衡 batch 校准：预测像素梯度中位数逆比例、系数范围 [0.1,100]，以参数合成梯度中位数匹配公共倍率；零/非有限梯度、超限或退化则停止。范数比例不是独立的优化贡献占比，需同时看梯度夹角和合成梯度。
 - 风格模块：上半可见参考 RGB + visibility，三层 Conv/GroupNorm/GELU（32/64/128）和池化，零初始化头调制最后三个 ViT block；off/reference/constant 三组对照。不读取下半 GT，不绕过参考 mask，不使用书家 ID embedding。
 - VGG 输入重复归一化已由调用路径确认。旧入口仍默认 legacy；阶段 3 默认 rgb，在 VGG 内部归一化前还原输入。所有新对照必须采用相同模式，不把修正收益混算成风格模块收益。
-- 默认训练：400 optimizer updates、40 updates LR/loss warmup、每 50 updates 评价保存；有效 batch=128，旧参数 LR=1e-4、新模块=3e-4、layer_decay=0.8、clip=3、no_gan、冻结前 9 层；入口参数 mask=0.8/0/0.2、random 内 half_mask_ratio=0.5，但实际生效的是上一条所述的全语义遮盖。fit32 使用固定 32 样本与全 query mask，最多 300 updates。所有组独立输出，不 auto-resume。train 加 `--tensorboard` 会在 `<output>/tensorboard` 镜像 train.jsonl 标量、参数组范数、eval 指标均值和条带图（`stage3_experiments.py --tensorboard` 透传）；jsonl/eval 目录仍是正式记录。
+- 默认训练：400 optimizer updates、40 updates LR/loss warmup、每 50 updates 评价保存；有效 batch=128，旧参数 LR=1e-4、新模块=3e-4、layer_decay=0.8、clip=3、no_gan、冻结前 9 层；入口参数 mask=0.8/0/0.2、random 内 half_mask_ratio=0.5，但实际生效的是上一条所述的全语义遮盖。fit32 使用固定 32 样本与全 query mask，最多 300 updates。所有组独立输出，不 auto-resume。train 默认在 `<output>/tensorboard` 镜像 train.jsonl 标量、参数组范数、eval 指标均值和条带图，`--no-tensorboard` 关闭；jsonl/eval 目录仍是正式记录。
 - 新 checkpoint 保存 stage3_config；训练与既有推理入口重建风格模块，加载缺失检查只允许旧 checkpoint 迁移时新增模块参数缺失。阶段 3 推理使用统一补白/缩放，移除旧参考字 64px 中间降采样的影响。
 - 本地验证：独立 CPU 测试覆盖条件模块、真实 encoder/loss 方法的小张量合约、结构系数、实验 2 公式、梯度、序列化、校准停止条件与数据泄漏检查。loss 测试替代 VGG 特征提取器，不等于完整预训练模型运行。另执行新增代码 lint/语法与 CLI 检查。
 - 未完成：用户选定阶段 2 checkpoint；完整 ViT GPU smoke/反向/DDP、校准数值、400-update 对照、三随机种子复核、视觉验收。数据身份与划分及真实数据 audit 已于 2026-09-21 完成（见上）。当前没有阶段 3 最终 checkpoint，不能标记训练或效果验证已完成。

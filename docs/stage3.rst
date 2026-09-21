@@ -114,12 +114,11 @@ actual learning rates, post-clip gradient norms and update norms every 5 updates
 Loss components in train.jsonl are labelled last_microbatch_losses, not epoch
 averages; loss_rank0 is the rank-0 accumulated mean, not a global DDP mean.
 
-Add --tensorboard to any train command to mirror the same numbers into
-``<output>/tensorboard`` (scalars per update, per-group gradient/update norms
-every 5 updates, correct-reference metric means and the first eight strips per
-split at every evaluation). train.jsonl and the eval directories remain the
-record; TensorBoard is a view only. ``tools/stage3_experiments.py
---tensorboard`` appends the flag to every generated command.
+Every train run also mirrors the same numbers into ``<output>/tensorboard``
+(scalars per update, per-group gradient/update norms every 5 updates,
+correct-reference metric means and the first eight strips per split at every
+evaluation); pass --no-tensorboard to disable. train.jsonl and the eval
+directories remain the record; TensorBoard is a view only.
 
 Structure calibration and controlled sweeps
 ------------------------------------------
