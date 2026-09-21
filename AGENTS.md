@@ -174,6 +174,8 @@ structure 子项 raw 梯度范数中，row/col 约为 `4.8e-4`，centroid 约 `0
 
 ## 阶段 3 实现与执行登记（2026-09-20，优先于前文历史方案）
 
+- 2026-09-21 权重扫描更新：structure/detail 总权重候选均仅保留 `0、0.2、0.5`，移除扫描中的 `0.025、0.05、0.1`。此调整仅影响两组总权重扫描；internal 系数对照、structure 扫描时固定的 detail=0.05 以及入口默认值保持不变，不代表 0.05 已验证有效。
+
 - 当前入口：`tools/stage3.py`，支持 audit、smoke、calibrate、train、evaluate、summarize。完整命令与数据契约在 `docs/stage3.rst`；`tools/stage3_experiments.py` 按 internal/structure/detail/style/local 分阶段生成 argv，不自动挑选赢家或执行整组训练。
 - 数据由用户更换为 CalliPhase。额外要求显式 `style_id`、`character`、原始字形 `glyph_id`；manifest 划分 train/val_seen（2026-09-21 起移除 val_unseen，manifest 出现其他键会报错）。检查跨划分路径/hash/原始字形重复；严格同风格、异字符配对。无法由程序证明用户填写的风格身份或 glyph_id 正确，不声称穷尽任意近重复裁剪。
 - 2026-09-21 用户决定：9 位书家全部同时进入 train 和 val_seen，不设 val_unseen；val 随机选、不区分 BF/JT；比例沿用 `generate_new_json.py` 的 `VAL_RATIO=0.15`；target 统一用 `images_text_denoised`；暂不设最终测试集。`tools/build_stage3_manifest.py` 以 (书家, 字) 为划分单元、val 字全局留出，生成 `fontdata_example/stage3_json/{manifest,train,val_seen,split_summary}.json`：train 1594 条、val_seen 286 条（15.2%），丢弃 10 个无 source 字形的生僻字；`tools/stage3.py audit` 通过，`image_and_metadata_sha256=5af150dd…1105bc`。`type` 写为 `BF`/`JT`，target 缩放插值因此从阶段 2 `font_*` 的 nearest 变为 bicubic；实测该差别可忽略：CalliPhase 全部 1890 张 target 与 source 都是 448×448，finetune 的 `RandomResizedCrop(448, scale=(0.9999,1))` 在 2000 次采样中 99.6% 为逐像素恒等，其余 0.4% 为 447→448 的一像素拉伸，两种插值互差均值 0.49/255；阶段 3 评估的 `image_tensor` 对 448×448 输入同样恒等（max|Δ|≈6e-8）。

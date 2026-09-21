@@ -155,8 +155,8 @@ It is not executed automatically. After visual/metric review, generate the next
 phase with the selected weights and optional --coefficients:
 
 * internal: equal coefficients vs calibrated, both weights 0.05.
-* structure: total weight 0/0.025/0.05/0.1, detail fixed at 0.05.
-* detail: total weight 0/0.025/0.05/0.1, selected structure unchanged.
+* structure: total weight 0/0.2/0.5, detail fixed at 0.05.
+* detail: total weight 0/0.2/0.5, selected structure unchanged.
 * style: off/reference/constant, both selected losses unchanged.
 * local: reference model, one selected loss at 0.5x or 2x at a time. A zero
   selected loss remains zero. Include original A/C when comparing final results.

@@ -17,12 +17,12 @@ def experiments(phase, structure, detail, coefficients):
     elif phase == "structure":
         candidates = [
             (f"structure-{w}", w, 0.05, "off", coefficients)
-            for w in (0, 0.025, 0.05, 0.1)
+            for w in (0, 0.2, 0.5)
         ]
     elif phase == "detail":
         candidates = [
             (f"detail-{w}", structure, w, "off", coefficients)
-            for w in (0, 0.025, 0.05, 0.1)
+            for w in (0, 0.2, 0.5)
         ]
     elif phase == "style":
         candidates = [
