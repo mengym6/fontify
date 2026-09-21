@@ -56,6 +56,10 @@ def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_
     device = torch.device("cuda:{}".format(rank))
     model = getattr(models_eval, arch)()
     checkpoint = torch.load(chkpt_dir, map_location=device)
+    if "stage3_config" in checkpoint:
+        from util.stage3_runtime import load_inference_checkpoint
+
+        return load_inference_checkpoint(model, checkpoint).to(device)
     msg = model.load_state_dict(checkpoint['model'], strict=False)
     print(f"Rank {rank} checkpoint load: {msg}", flush=True)
 
@@ -206,6 +210,12 @@ def main(rank, world_size):
         img2 = img2 - imagenet_mean
         img2 = img2 / imagenet_std
 
+        if getattr(model_fontify, "stage3_inference", False):
+            from util.stage3_data import image_tensor
+
+            tgt2 = image_tensor(prompt_path).permute(1, 2, 0).numpy()
+            img2 = image_tensor(img2_path).permute(1, 2, 0).numpy()
+
         tgt = np.concatenate((tgt2, tgt2), axis=0)
 
         tgt_img_names = [os.path.basename(path) for path in glob.glob(os.path.join(font_folder, "*.*"))]
@@ -237,6 +247,8 @@ def main(rank, world_size):
                     img = np.array(img) / 255.
                     img = img - imagenet_mean
                     img = img / imagenet_std
+                    if getattr(model_fontify, "stage3_inference", False):
+                        img = image_tensor(img_path).permute(1, 2, 0).numpy()
                     img = np.concatenate((img2, img), axis=0)
 
                     imgs.append(img)

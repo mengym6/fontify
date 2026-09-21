@@ -496,6 +496,12 @@ class Fontify(nn.Module):
         return imgs
 
     def forward_encoder(self, imgs, tgts, bool_masked_pos):
+        if hasattr(self, "style_conditioner"):
+            from models_train import Fontify as TrainingFontify
+
+            return TrainingFontify.forward_encoder(
+                self, imgs, tgts, bool_masked_pos
+            )
         x = self.patch_embed(imgs)
         y = self.patch_embed(tgts)
         batch_size, Hp, Wp, _ = x.size()
@@ -661,4 +667,3 @@ def get_vit_lr_decay_rate(name, lr_decay_rate=1.0, num_layers=12):
             layer_id = int(name[name.find(".blocks.") :].split(".")[2]) + 1
 
     return lr_decay_rate ** (num_layers + 1 - layer_id)
-

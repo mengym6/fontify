@@ -39,12 +39,12 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --structure_loss_weight 2.0 \
     --structure_warmup_epochs 6 \
     --structure_warmup_duration 6 \
-    --detail_loss_weight 0.5 \
+    --detail_loss_weight 0.05 \
     --detail_warmup_epochs 10 \
     --detail_warmup_duration 6 \
     --detail_kernel_size 5 \
     --detail_sigma 1.0 \
-    --detail_gradient_ratio 0.5 \
+    --detail_gradient_ratio 0.1 \
     --save_freq 5 \
     --data_path $DATA_PATH/ \
     --json_path $DATA_PATH/train_json_mix/*.json \

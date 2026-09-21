@@ -1,0 +1,2576 @@
+[
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/别.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/别.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "别",
+    "glyph_id": "Caoqb-别",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/别.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/别.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "别",
+    "glyph_id": "Caoqb-别",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/心.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/心.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "心",
+    "glyph_id": "Caoqb-心",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/性.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/性.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "性",
+    "glyph_id": "Caoqb-性",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/性.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/性.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "性",
+    "glyph_id": "Caoqb-性",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/戊.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/戊.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "戊",
+    "glyph_id": "Caoqb-戊",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/所.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/所.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "所",
+    "glyph_id": "Caoqb-所",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/所.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/所.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "所",
+    "glyph_id": "Caoqb-所",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/易.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/易.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "易",
+    "glyph_id": "Caoqb-易",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/根.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/根.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "根",
+    "glyph_id": "Caoqb-根",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/根.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/根.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "根",
+    "glyph_id": "Caoqb-根",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/甄.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/甄.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "甄",
+    "glyph_id": "Caoqb-甄",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/甄.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/甄.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "甄",
+    "glyph_id": "Caoqb-甄",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/討.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/討.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "討",
+    "glyph_id": "Caoqb-討",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/討.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/討.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "討",
+    "glyph_id": "Caoqb-討",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/諺.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/諺.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "諺",
+    "glyph_id": "Caoqb-諺",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/諺.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/諺.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "諺",
+    "glyph_id": "Caoqb-諺",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/遷.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/遷.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "遷",
+    "glyph_id": "Caoqb-遷",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/遷.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/遷.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "遷",
+    "glyph_id": "Caoqb-遷",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/部.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/部.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "部",
+    "glyph_id": "Caoqb-部",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/部.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/部.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "部",
+    "glyph_id": "Caoqb-部",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/里.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/里.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "里",
+    "glyph_id": "Caoqb-里",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/雍.png",
+    "target_path": "font/train/new/CaoqbBF/images_text_denoised/雍.png",
+    "type": "BF",
+    "style_id": "Caoqb",
+    "character": "雍",
+    "glyph_id": "Caoqb-雍",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/雍.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/雍.png",
+    "type": "JT",
+    "style_id": "Caoqb",
+    "character": "雍",
+    "glyph_id": "Caoqb-雍",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/五.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/五.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "五",
+    "glyph_id": "Dongqc-五",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/偏.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/偏.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "偏",
+    "glyph_id": "Dongqc-偏",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/偏.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/偏.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "偏",
+    "glyph_id": "Dongqc-偏",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/吟.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/吟.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "吟",
+    "glyph_id": "Dongqc-吟",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/吟.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/吟.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "吟",
+    "glyph_id": "Dongqc-吟",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/慕.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/慕.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "慕",
+    "glyph_id": "Dongqc-慕",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/慕.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/慕.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "慕",
+    "glyph_id": "Dongqc-慕",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/撫.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/撫.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "撫",
+    "glyph_id": "Dongqc-撫",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/撫.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/撫.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "撫",
+    "glyph_id": "Dongqc-撫",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/旬.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/旬.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "旬",
+    "glyph_id": "Dongqc-旬",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/旬.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/旬.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "旬",
+    "glyph_id": "Dongqc-旬",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/淹.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/淹.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "淹",
+    "glyph_id": "Dongqc-淹",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/淹.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/淹.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "淹",
+    "glyph_id": "Dongqc-淹",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/畔.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/畔.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "畔",
+    "glyph_id": "Dongqc-畔",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/畔.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/畔.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "畔",
+    "glyph_id": "Dongqc-畔",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/盱.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/盱.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "盱",
+    "glyph_id": "Dongqc-盱",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/盱.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/盱.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "盱",
+    "glyph_id": "Dongqc-盱",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/窈.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/窈.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "窈",
+    "glyph_id": "Dongqc-窈",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/窈.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/窈.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "窈",
+    "glyph_id": "Dongqc-窈",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/窕.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/窕.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "窕",
+    "glyph_id": "Dongqc-窕",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/窕.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/窕.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "窕",
+    "glyph_id": "Dongqc-窕",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/能.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/能.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "能",
+    "glyph_id": "Dongqc-能",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/能.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/能.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "能",
+    "glyph_id": "Dongqc-能",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/蒼.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/蒼.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "蒼",
+    "glyph_id": "Dongqc-蒼",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/迄.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/迄.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "迄",
+    "glyph_id": "Dongqc-迄",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/迄.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/迄.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "迄",
+    "glyph_id": "Dongqc-迄",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/返.png",
+    "target_path": "font/train/new/DongqcBF/images_text_denoised/返.png",
+    "type": "BF",
+    "style_id": "Dongqc",
+    "character": "返",
+    "glyph_id": "Dongqc-返",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/返.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/返.png",
+    "type": "JT",
+    "style_id": "Dongqc",
+    "character": "返",
+    "glyph_id": "Dongqc-返",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/休.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/休.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "休",
+    "glyph_id": "Liugq-休",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/休.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/休.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "休",
+    "glyph_id": "Liugq-休",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/休.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/休1.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "休",
+    "glyph_id": "Liugq-休1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佐.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/佐.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "佐",
+    "glyph_id": "Liugq-佐",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佐.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/佐.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "佐",
+    "glyph_id": "Liugq-佐",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/備.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/備.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "備",
+    "glyph_id": "Liugq-備",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/士.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/士.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "士",
+    "glyph_id": "Liugq-士",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/御.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/御.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "御",
+    "glyph_id": "Liugq-御",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/御.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/御.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "御",
+    "glyph_id": "Liugq-御",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/愧.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/愧.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "愧",
+    "glyph_id": "Liugq-愧",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/撗.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/撗.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "撗",
+    "glyph_id": "Liugq-撗",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/柱.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/柱.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "柱",
+    "glyph_id": "Liugq-柱",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/柱.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/柱1.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "柱",
+    "glyph_id": "Liugq-柱1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/柱.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/柱.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "柱",
+    "glyph_id": "Liugq-柱",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/柱.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/柱1.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "柱",
+    "glyph_id": "Liugq-柱1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/柳.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/柳.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "柳",
+    "glyph_id": "Liugq-柳",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/柳.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/柳.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "柳",
+    "glyph_id": "Liugq-柳",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/盖.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/盖.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "盖",
+    "glyph_id": "Liugq-盖",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/練.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/練.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "練",
+    "glyph_id": "Liugq-練",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/練.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/練.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "練",
+    "glyph_id": "Liugq-練",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/裴.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/裴.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "裴",
+    "glyph_id": "Liugq-裴",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/裴.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/裴.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "裴",
+    "glyph_id": "Liugq-裴",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/談.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/談.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "談",
+    "glyph_id": "Liugq-談",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/談.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/談.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "談",
+    "glyph_id": "Liugq-談",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/論.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/論.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "論",
+    "glyph_id": "Liugq-論",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/論.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/論.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "論",
+    "glyph_id": "Liugq-論",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/讃.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/讃.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "讃",
+    "glyph_id": "Liugq-讃",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/趙.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/趙.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "趙",
+    "glyph_id": "Liugq-趙",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/趙.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/趙.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "趙",
+    "glyph_id": "Liugq-趙",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/迷.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/迷.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "迷",
+    "glyph_id": "Liugq-迷",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/闡.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/闡.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "闡",
+    "glyph_id": "Liugq-闡",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/闡.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/闡.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "闡",
+    "glyph_id": "Liugq-闡",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/院.png",
+    "target_path": "font/train/new/LiugqBF/images_text_denoised/院.png",
+    "type": "BF",
+    "style_id": "Liugq",
+    "character": "院",
+    "glyph_id": "Liugq-院",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/院.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/院.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "院",
+    "glyph_id": "Liugq-院",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/騎.png",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/騎.png",
+    "type": "JT",
+    "style_id": "Liugq",
+    "character": "騎",
+    "glyph_id": "Liugq-騎",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/一.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/一.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "一",
+    "glyph_id": "Longmen-一",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/乖.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/乖.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "乖",
+    "glyph_id": "Longmen-乖",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/亦.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/亦.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "亦",
+    "glyph_id": "Longmen-亦",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/亦.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/亦.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "亦",
+    "glyph_id": "Longmen-亦",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/亮.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/亮.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "亮",
+    "glyph_id": "Longmen-亮",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/亮.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/亮.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "亮",
+    "glyph_id": "Longmen-亮",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/及.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/及.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "及",
+    "glyph_id": "Longmen-及",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/峰.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/峰.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "峰",
+    "glyph_id": "Longmen-峰",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/峰.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/峰.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "峰",
+    "glyph_id": "Longmen-峰",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/工.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/工.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "工",
+    "glyph_id": "Longmen-工",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/悼.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/悼.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "悼",
+    "glyph_id": "Longmen-悼",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/悼.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/悼.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "悼",
+    "glyph_id": "Longmen-悼",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/暎.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/暎.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "暎",
+    "glyph_id": "Longmen-暎",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/暎.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/暎.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "暎",
+    "glyph_id": "Longmen-暎",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/秨.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/秨.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "秨",
+    "glyph_id": "Longmen-秨",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/秨.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/秨.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "秨",
+    "glyph_id": "Longmen-秨",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/終.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/終.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "終",
+    "glyph_id": "Longmen-終",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/終.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/終.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "終",
+    "glyph_id": "Longmen-終",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/芳.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/芳.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "芳",
+    "glyph_id": "Longmen-芳",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/芳.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/芳.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "芳",
+    "glyph_id": "Longmen-芳",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/茂.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/茂.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "茂",
+    "glyph_id": "Longmen-茂",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/茂.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/茂.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "茂",
+    "glyph_id": "Longmen-茂",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/葩.png",
+    "target_path": "font/train/new/LongmenBF/images_text_denoised/葩.png",
+    "type": "BF",
+    "style_id": "Longmen",
+    "character": "葩",
+    "glyph_id": "Longmen-葩",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/葩.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/葩.png",
+    "type": "JT",
+    "style_id": "Longmen",
+    "character": "葩",
+    "glyph_id": "Longmen-葩",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/乃.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/乃.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "乃",
+    "glyph_id": "Ouyx-乃",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/冬.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/冬.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "冬",
+    "glyph_id": "Ouyx-冬",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/冬.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/冬.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "冬",
+    "glyph_id": "Ouyx-冬",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/制.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/制.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "制",
+    "glyph_id": "Ouyx-制",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/制.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/制.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "制",
+    "glyph_id": "Ouyx-制",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/字.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/字.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "字",
+    "glyph_id": "Ouyx-字",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/字.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/字.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "字",
+    "glyph_id": "Ouyx-字",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/洪.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/洪.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "洪",
+    "glyph_id": "Ouyx-洪",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/珎.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/珎.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "珎",
+    "glyph_id": "Ouyx-珎",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/珎.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/珎.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "珎",
+    "glyph_id": "Ouyx-珎",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/罪.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/罪.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "罪",
+    "glyph_id": "Ouyx-罪",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/罪.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/罪.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "罪",
+    "glyph_id": "Ouyx-罪",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/芥.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/芥.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "芥",
+    "glyph_id": "Ouyx-芥",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/芥.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/芥.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "芥",
+    "glyph_id": "Ouyx-芥",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/菓.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/菓.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "菓",
+    "glyph_id": "Ouyx-菓",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/菓.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/菓.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "菓",
+    "glyph_id": "Ouyx-菓",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/辰.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/辰.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "辰",
+    "glyph_id": "Ouyx-辰",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/醎.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/醎.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "醎",
+    "glyph_id": "Ouyx-醎",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/醎.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/醎.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "醎",
+    "glyph_id": "Ouyx-醎",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/釼.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/釼.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "釼",
+    "glyph_id": "Ouyx-釼",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/阙.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/阙.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "阙",
+    "glyph_id": "Ouyx-阙",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/阙.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/阙.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "阙",
+    "glyph_id": "Ouyx-阙",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/霜.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/霜.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "霜",
+    "glyph_id": "Ouyx-霜",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/霜.png",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/霜.png",
+    "type": "JT",
+    "style_id": "Ouyx",
+    "character": "霜",
+    "glyph_id": "Ouyx-霜",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/鳥.png",
+    "target_path": "font/train/new/OuyxBF/images_text_denoised/鳥.png",
+    "type": "BF",
+    "style_id": "Ouyx",
+    "character": "鳥",
+    "glyph_id": "Ouyx-鳥",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/今.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/今.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "今",
+    "glyph_id": "Sushi-今",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/今.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/今.png",
+    "type": "JT",
+    "style_id": "Sushi",
+    "character": "今",
+    "glyph_id": "Sushi-今",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/势.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/势.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "势",
+    "glyph_id": "Sushi-势",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/势.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/势.png",
+    "type": "JT",
+    "style_id": "Sushi",
+    "character": "势",
+    "glyph_id": "Sushi-势",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/又.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/又.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "又",
+    "glyph_id": "Sushi-又",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/濛.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/濛.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "濛",
+    "glyph_id": "Sushi-濛",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/濛.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/濛.png",
+    "type": "JT",
+    "style_id": "Sushi",
+    "character": "濛",
+    "glyph_id": "Sushi-濛",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/灰.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/灰.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "灰",
+    "glyph_id": "Sushi-灰",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/灰.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/灰.png",
+    "type": "JT",
+    "style_id": "Sushi",
+    "character": "灰",
+    "glyph_id": "Sushi-灰",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/花.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/花.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "花",
+    "glyph_id": "Sushi-花",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/花.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/花.png",
+    "type": "JT",
+    "style_id": "Sushi",
+    "character": "花",
+    "glyph_id": "Sushi-花",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/苦.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/苦.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "苦",
+    "glyph_id": "Sushi-苦",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/苦.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/苦.png",
+    "type": "JT",
+    "style_id": "Sushi",
+    "character": "苦",
+    "glyph_id": "Sushi-苦",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/过.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/过.png",
+    "type": "JT",
+    "style_id": "Sushi",
+    "character": "过",
+    "glyph_id": "Sushi-过",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/食.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/食.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "食",
+    "glyph_id": "Sushi-食",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/食.png",
+    "target_path": "font/train/new/SushiBF/images_text_denoised/食1.png",
+    "type": "BF",
+    "style_id": "Sushi",
+    "character": "食",
+    "glyph_id": "Sushi-食1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/食.png",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/食.png",
+    "type": "JT",
+    "style_id": "Sushi",
+    "character": "食",
+    "glyph_id": "Sushi-食",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/伏.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/伏.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "伏",
+    "glyph_id": "Yanzq-伏",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/佛.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "佛",
+    "glyph_id": "Yanzq-佛",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/佛1.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "佛",
+    "glyph_id": "Yanzq-佛1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/佛2.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "佛",
+    "glyph_id": "Yanzq-佛2",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/佛.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "佛",
+    "glyph_id": "Yanzq-佛",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/佛1.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "佛",
+    "glyph_id": "Yanzq-佛1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/佛2.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "佛",
+    "glyph_id": "Yanzq-佛2",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/佛.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/佛3.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "佛",
+    "glyph_id": "Yanzq-佛3",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/即.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/即.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "即",
+    "glyph_id": "Yanzq-即",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/同.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/同.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "同",
+    "glyph_id": "Yanzq-同",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/因.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/因.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "因",
+    "glyph_id": "Yanzq-因",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/多.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/多.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "多",
+    "glyph_id": "Yanzq-多",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/多.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/多.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "多",
+    "glyph_id": "Yanzq-多",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/夢.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/夢.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "夢",
+    "glyph_id": "Yanzq-夢",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/姙.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/姙.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "姙",
+    "glyph_id": "Yanzq-姙",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/岳.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/岳.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "岳",
+    "glyph_id": "Yanzq-岳",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/幹.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/幹.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "幹",
+    "glyph_id": "Yanzq-幹",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/徐.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/徐.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "徐",
+    "glyph_id": "Yanzq-徐",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/徐.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/徐.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "徐",
+    "glyph_id": "Yanzq-徐",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/悟.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/悟.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "悟",
+    "glyph_id": "Yanzq-悟",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/悟.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/悟.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "悟",
+    "glyph_id": "Yanzq-悟",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/悟.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/悟1.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "悟",
+    "glyph_id": "Yanzq-悟1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/慶.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/慶.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "慶",
+    "glyph_id": "Yanzq-慶",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/慶.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/慶1.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "慶",
+    "glyph_id": "Yanzq-慶1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/手.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/手.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "手",
+    "glyph_id": "Yanzq-手",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/撿.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/撿.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "撿",
+    "glyph_id": "Yanzq-撿",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/撿.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/撿.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "撿",
+    "glyph_id": "Yanzq-撿",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/明.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/明.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "明",
+    "glyph_id": "Yanzq-明",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/明.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/明.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "明",
+    "glyph_id": "Yanzq-明",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/樹.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/樹.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "樹",
+    "glyph_id": "Yanzq-樹",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/注.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/注.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "注",
+    "glyph_id": "Yanzq-注",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/注.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/注.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "注",
+    "glyph_id": "Yanzq-注",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/猶.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/猶.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "猶",
+    "glyph_id": "Yanzq-猶",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/現.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/現.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "現",
+    "glyph_id": "Yanzq-現",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/現.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/現.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "現",
+    "glyph_id": "Yanzq-現",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/瓶.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/瓶.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "瓶",
+    "glyph_id": "Yanzq-瓶",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/瓶.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/瓶.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "瓶",
+    "glyph_id": "Yanzq-瓶",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/界.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/界.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "界",
+    "glyph_id": "Yanzq-界",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/皃.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/皃.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "皃",
+    "glyph_id": "Yanzq-皃",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/禪.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/禪.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "禪",
+    "glyph_id": "Yanzq-禪",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/禪.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/禪1.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "禪",
+    "glyph_id": "Yanzq-禪1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/禪.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/禪2.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "禪",
+    "glyph_id": "Yanzq-禪2",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/禪.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/禪3.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "禪",
+    "glyph_id": "Yanzq-禪3",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/程.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/程.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "程",
+    "glyph_id": "Yanzq-程",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/程.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/程.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "程",
+    "glyph_id": "Yanzq-程",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/章.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/章.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "章",
+    "glyph_id": "Yanzq-章",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/绢.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/绢.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "绢",
+    "glyph_id": "Yanzq-绢",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/聖.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/聖.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "聖",
+    "glyph_id": "Yanzq-聖",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/蟻.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/蟻.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "蟻",
+    "glyph_id": "Yanzq-蟻",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/覺.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/覺.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "覺",
+    "glyph_id": "Yanzq-覺",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/覺.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/覺.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "覺",
+    "glyph_id": "Yanzq-覺",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/諸.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/諸.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "諸",
+    "glyph_id": "Yanzq-諸",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/諸.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/諸.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "諸",
+    "glyph_id": "Yanzq-諸",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/諸.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/諸1.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "諸",
+    "glyph_id": "Yanzq-諸1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/踴.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/踴.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "踴",
+    "glyph_id": "Yanzq-踴",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/輝.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/輝.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "輝",
+    "glyph_id": "Yanzq-輝",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/輝.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/輝1.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "輝",
+    "glyph_id": "Yanzq-輝1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/遣.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/遣.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "遣",
+    "glyph_id": "Yanzq-遣",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/降.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/降.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "降",
+    "glyph_id": "Yanzq-降",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/降.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/降1.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "降",
+    "glyph_id": "Yanzq-降1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/題.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/題.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "題",
+    "glyph_id": "Yanzq-題",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/髙.png",
+    "target_path": "font/train/new/YanzqBF/images_text_denoised/髙.png",
+    "type": "BF",
+    "style_id": "Yanzq",
+    "character": "髙",
+    "glyph_id": "Yanzq-髙",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/髙.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/髙.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "髙",
+    "glyph_id": "Yanzq-髙",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/龀.png",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/龀.png",
+    "type": "JT",
+    "style_id": "Yanzq",
+    "character": "龀",
+    "glyph_id": "Yanzq-龀",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/且.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/且.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "且",
+    "glyph_id": "Zhangqb-且",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/仲.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/仲.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "仲",
+    "glyph_id": "Zhangqb-仲",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/仲.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/仲.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "仲",
+    "glyph_id": "Zhangqb-仲",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/伯.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/伯.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "伯",
+    "glyph_id": "Zhangqb-伯",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/伯.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/伯.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "伯",
+    "glyph_id": "Zhangqb-伯",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/八.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/八.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "八",
+    "glyph_id": "Zhangqb-八",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/問.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/問.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "問",
+    "glyph_id": "Zhangqb-問",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/問.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/問.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "問",
+    "glyph_id": "Zhangqb-問",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/後.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/後.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "後",
+    "glyph_id": "Zhangqb-後",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/後.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/後.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "後",
+    "glyph_id": "Zhangqb-後",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/忠.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/忠.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "忠",
+    "glyph_id": "Zhangqb-忠",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/忠.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/忠.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "忠",
+    "glyph_id": "Zhangqb-忠",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/提.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/提.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "提",
+    "glyph_id": "Zhangqb-提",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/提.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/提.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "提",
+    "glyph_id": "Zhangqb-提",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/既.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/既.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "既",
+    "glyph_id": "Zhangqb-既",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/既.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/既.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "既",
+    "glyph_id": "Zhangqb-既",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/昆.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/昆.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "昆",
+    "glyph_id": "Zhangqb-昆",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/昆.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/昆.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "昆",
+    "glyph_id": "Zhangqb-昆",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/更.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/更.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "更",
+    "glyph_id": "Zhangqb-更",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/用.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/用.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "用",
+    "glyph_id": "Zhangqb-用",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/鄉.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/鄉.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "鄉",
+    "glyph_id": "Zhangqb-鄉",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/鄉.png",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/鄉.png",
+    "type": "JT",
+    "style_id": "Zhangqb",
+    "character": "鄉",
+    "glyph_id": "Zhangqb-鄉",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/高.png",
+    "target_path": "font/train/new/ZhangqbBF/images_text_denoised/高.png",
+    "type": "BF",
+    "style_id": "Zhangqb",
+    "character": "高",
+    "glyph_id": "Zhangqb-高",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/余.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/余.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "余",
+    "glyph_id": "Zhaomf-余",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/余.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/余1.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "余",
+    "glyph_id": "Zhaomf-余1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/匏.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/匏.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "匏",
+    "glyph_id": "Zhaomf-匏",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/匏.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/匏.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "匏",
+    "glyph_id": "Zhaomf-匏",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/后.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/后.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "后",
+    "glyph_id": "Zhaomf-后",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/域.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/域.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "域",
+    "glyph_id": "Zhaomf-域",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/域.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/域.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "域",
+    "glyph_id": "Zhaomf-域",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/夹.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/夹.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "夹",
+    "glyph_id": "Zhaomf-夹",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/妃.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/妃.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "妃",
+    "glyph_id": "Zhaomf-妃",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/妃.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/妃1.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "妃",
+    "glyph_id": "Zhaomf-妃1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/妃.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/妃.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "妃",
+    "glyph_id": "Zhaomf-妃",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/婀.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/婀.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "婀",
+    "glyph_id": "Zhaomf-婀",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/婀.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/婀.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "婀",
+    "glyph_id": "Zhaomf-婀",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/宋.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/宋.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "宋",
+    "glyph_id": "Zhaomf-宋",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/宋.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/宋.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "宋",
+    "glyph_id": "Zhaomf-宋",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/接.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/接.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "接",
+    "glyph_id": "Zhaomf-接",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/接.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/接.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "接",
+    "glyph_id": "Zhaomf-接",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/掩.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/掩.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "掩",
+    "glyph_id": "Zhaomf-掩",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/掩.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/掩.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "掩",
+    "glyph_id": "Zhaomf-掩",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/期.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/期.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "期",
+    "glyph_id": "Zhaomf-期",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/期.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/期.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "期",
+    "glyph_id": "Zhaomf-期",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/泛.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/泛.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "泛",
+    "glyph_id": "Zhaomf-泛",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/泛.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/泛.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "泛",
+    "glyph_id": "Zhaomf-泛",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/泛.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/泛1.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "泛",
+    "glyph_id": "Zhaomf-泛1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/洛.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/洛.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "洛",
+    "glyph_id": "Zhaomf-洛",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/洛.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/洛1.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "洛",
+    "glyph_id": "Zhaomf-洛1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/洛.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/洛.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "洛",
+    "glyph_id": "Zhaomf-洛",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/爪.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/爪.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "爪",
+    "glyph_id": "Zhaomf-爪",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/爲.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/爲.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "爲",
+    "glyph_id": "Zhaomf-爲",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/猗.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/猗.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "猗",
+    "glyph_id": "Zhaomf-猗",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/猗.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/猗.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "猗",
+    "glyph_id": "Zhaomf-猗",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/禽.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/禽.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "禽",
+    "glyph_id": "Zhaomf-禽",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/禽.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/禽.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "禽",
+    "glyph_id": "Zhaomf-禽",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/秷.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/秷.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "秷",
+    "glyph_id": "Zhaomf-秷",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/秷.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/秷.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "秷",
+    "glyph_id": "Zhaomf-秷",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/袂.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/袂.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "袂",
+    "glyph_id": "Zhaomf-袂",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/袂.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/袂.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "袂",
+    "glyph_id": "Zhaomf-袂",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/袖.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/袖.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "袖",
+    "glyph_id": "Zhaomf-袖",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/袖.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/袖.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "袖",
+    "glyph_id": "Zhaomf-袖",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/越.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/越.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "越",
+    "glyph_id": "Zhaomf-越",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/越.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/越1.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "越",
+    "glyph_id": "Zhaomf-越1",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/越.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/越.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "越",
+    "glyph_id": "Zhaomf-越",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/迅.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/迅.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "迅",
+    "glyph_id": "Zhaomf-迅",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/迅.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/迅.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "迅",
+    "glyph_id": "Zhaomf-迅",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/飡.png",
+    "target_path": "font/train/new/ZhaomfBF/images_text_denoised/飡.png",
+    "type": "BF",
+    "style_id": "Zhaomf",
+    "character": "飡",
+    "glyph_id": "Zhaomf-飡",
+    "source_dataset": "calliphase"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/飡.png",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/飡.png",
+    "type": "JT",
+    "style_id": "Zhaomf",
+    "character": "飡",
+    "glyph_id": "Zhaomf-飡",
+    "source_dataset": "calliphase"
+  }
+]

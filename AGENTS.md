@@ -1,5 +1,11 @@
 # Fontify 项目说明与开发约束
 
+## 代码规范
+
+- 后续新增和修改的代码必须遵循 PEP 8 规范。
+- Python 代码应保持统一的 4 空格缩进、清晰的命名、合理的行长度、规范的导入顺序，并在适当位置补充必要的文档字符串和注释。
+- 修改代码后，应根据改动范围执行适当的格式检查、语法检查或项目测试；不得仅以代码能够打开或静态配置存在作为验证结论。
+
 ## 项目目标
 
 Fontify 是一个基于上下文学习（in-context learning）的单/少样本字体生成模型。输入为参考字形图像与需要生成的目标字形图像（训练时目标图像用于监督），输出为目标字体的重建图像。主模型是带 MAE 式遮盖输入的双流 Vision Transformer；仓库同时包含字体数据预处理、训练、批量推理和少样本推理代码。
@@ -33,7 +39,7 @@ $$L=L_{recon}+L_{style}+w_{edge}L_{edge}+w_{structure}L_{structure}+w_{detail}L_
 
 `L_recon` 默认是仅在 `mask*valid` 区域计算的 Smooth-L1（`loss_func=smoothl1`）；`L_style` 是冻结 VGG19 特征的 Gram style L1（VGG content 不计入总损失）；`L_edge` 是温和 Gaussian+Sobel 边缘图的 L1；`L_structure` 是反归一化灰度前景的行/列投影、质心和面积损失；`L_detail` 是固定 Gaussian 高通与 Sobel 梯度损失；`L_adv` 是判别器对生成图判为真的 BCE-with-logits。JT-only 阶段 edge/adv 权重为 0；同步阶段按起始 epoch 和持续时间线性 warmup，默认最终权重 `adv=0.4`、`edge=0.3`。即使 `w_adv=0`，判别器分支仍保留在生成器计算图中以满足 DDP static graph。
 
-当前阶段 2 的 `finetune_font.sh` 使用 `--no_gan`，实际训练总损失不包含有效 `L_adv`。detail loss 的代码默认权重为 `0.03`，使用 `kernel_size=5`、`sigma=1.0` 的高通和 `gradient_ratio=0.5` 的 Sobel 项；当前 `test5` 的显式覆盖值见下节，它与 structure loss 都只在 `mask*valid` 对应的像素区域内计算。若开启 GAN，注意当前非 DeepSpeed 路径中 D 每个 micro-batch 更新一次，而 G 每 `accum_iter=32` 更新一次；这会显著改变 GAN 动态，不能把阶段 2 的 `--no_gan` 配置直接去掉后视为同等实验。
+当前阶段 2 的 `finetune_loss_diag.sh` 使用 `--no_gan`，实际训练总损失不包含有效 `L_adv`。detail loss 的代码默认权重为 `0.03`，使用 `kernel_size=5`、`sigma=1.0` 的高通和默认 `gradient_ratio=0.5` 的 Sobel 项；诊断脚本的显式覆盖值见下节，它与 structure loss 都只在 `mask*valid` 对应的像素区域内计算。若开启 GAN，注意当前非 DeepSpeed 路径中 D 每个 micro-batch 更新一次，而 G 每 `accum_iter=32` 更新一次；这会显著改变 GAN 动态，不能把阶段 2 的 `--no_gan` 配置直接去掉后视为同等实验。
 
 生成器反向传播来自总损失：`NativeScaler` 在 bfloat16 autocast 下缩放、可选范数裁剪（默认 3.0），按 `accum_iter` 累积后更新。每个 batch 随后单独训练判别器：冻结非 discriminator 参数，真实 target 标签为 1，`pred.detach()` 标签为 0，使用独立 AdamW；判别器学习率为生成器的 `0.1`，betas 为 `(0.5,0.999)`。生成器 AdamW 默认 betas `(0.9,0.999)`，基础学习率按有效 batch `batch_size*accum_iter*world_size/256` 缩放（显式 `--lr` 时覆盖），配合 warmup、层衰减和 bias/norm 零 weight decay。
 
@@ -100,16 +106,16 @@ $$L_{distill}=\left\|f_{finetune}(x)-f_{pretrain}(x)\right\|_2^2.$$
 | 阶段 | 数据与初始化 | 主要目标 | 主要训练约束 | 状态 |
 |---|---|---|---|---|
 | 阶段 1：通用字形预训练 | 数百万张电脑字体；从 MAE 初始化 | 学习通用字形拓扑、参考/目标对应、基础笔画与结构重建能力 | 原始 Fontify 协议 | **已完成**：使用 `models/vit_base_font/checkpoint-14.pth` |
-| 阶段 2：书法 Bifa-Jieti 结构适配 | 从 `checkpoint-14.pth` 初始化；电脑字体数据与 CalliPhase 混合 | 同时注入书法笔法和结体先验，减少小数据直接微调造成的遗忘 | 加入显式结构/区域监督；保留电脑字体 replay；优先冻结 encoder 或使用 adapter；随机 mask 为主，语义 mask 为辅 | 代码与混合数据已实现；训练待执行（当前 `test5` 配置已提交，尚无阶段 2 最终 checkpoint） |
-| 阶段 3：目标书法风格微调 | 只使用 CalliPhase/目标手写书法数据；从阶段 2 checkpoint 初始化 | 学习具体书法家或目标风格的笔法和结体表现 | 沿用已验证较优的冻结 9 层、随机/BF 主导配置；第二组优化（蒸馏、布局损失、adapter/LoRA）在此阶段逐项消融 | 待执行 |
+| 阶段 2：书法 Bifa-Jieti 结构适配 | 从 `checkpoint-14.pth` 初始化；电脑字体数据与 CalliPhase 混合 | 同时注入书法笔法和结体先验，减少小数据直接微调造成的遗忘 | 加入显式结构/区域监督；保留电脑字体 replay；随机 mask 为主 | 损失诊断试验 1/2/3 已完成；用户反馈笔锋弱、结构混乱仍存在且有过拟合；进入阶段 3 前仍需选定初始化 checkpoint |
+| 阶段 3：目标书法风格微调 | 仅 CalliPhase，多风格参考驱动；从选定阶段 2 checkpoint 初始化 | 验证参考风格注入，并解决 structure 子项/总权重与 detail 总权重 | 冻结前 9 层；实验 2 detail 定义；先损失控制变量对照，再轻量参考条件调制 | 2026-09-20：代码及独立 CPU 合约测试已落地；完整模型 GPU smoke、校准和训练未执行，未验证效果 |
 
 阶段登记规则：每完成一个阶段，必须记录训练命令、数据版本、初始化 checkpoint、最终 checkpoint、验证图、结构/笔法指标和人工结论，并将本表对应状态改为“已完成（日期、checkpoint 路径）”。当前仅阶段 1 可标记为已完成；阶段 2 和阶段 3 不得提前宣称完成。
 
-截至本记录时，`main`/`origin/main` 的 `HEAD` 为 `32fb453`，当前阶段 2 训练入口为 `finetune_font.sh` 的 `test5` 配置：初始化 `checkpoint-14.pth`，混合 JSON 使用固定 1:1 chinese/CalliPhase 清单，`augmentation_policy=finetune`，`--no_gan`，`--freeze_encoder --freeze_blocks 9`，`--structure_loss_weight 2.0`、structure warmup 从 epoch 6 开始且提交版持续 8 个 epoch，`--detail_loss_weight 0.5`、detail warmup 从 epoch 10 开始且持续 6 个 epoch，edge 最终权重 `0.3`，BF 单标签数 `11`，JT 标签数 `1`，验证 TensorBoard 上限 `76` 张，梯度日志每 5 个 optimizer update 写一次。当前未提交工作区把 structure warmup duration 从 `8` 改为 `6`；该差异尚未提交。`test5` 只是已提交的执行参数，不代表结构损失或 detail loss 已训练验证有效；工作区内没有 `models/finetune_stele_test4`、`models/finetune_stele_test5` 目录、最终 checkpoint、`gradient_log.csv` 或验证结论。
+截至本记录时，`main`/`origin/main` 的 `HEAD` 为 `1e49c80`。阶段 2 诊断入口为 `finetune_loss_diag.sh`，试验 1/2/3 均已完成 35 个 epoch。三组公共配置为：初始化 `checkpoint-14.pth`，固定 1:1 chinese/CalliPhase 混合清单，`augmentation_policy=finetune`，`--no_gan`，`--freeze_encoder --freeze_blocks 9`，`--structure_loss_weight 0.05`，`--detail_loss_weight 0.05`，`--detail_kernel_size 5`，`--detail_sigma 1.0`。试验 1 的 `detail_gradient_ratio=0.0`；试验 2/3 为 `0.1`；仅试验 3 使用每样本归一化。阶段 3 明确不采用该方案。
 
 ## 最近 Git 与实现进度
 
-截至 2026-09-18，本地 `main` 与 `origin/main` 均指向 `32fb453`。与本项目主路线直接相关的近期提交如下：
+截至 2026-09-19，本地 `main` 与 `origin/main` 均指向 `1e49c80`。与本项目主路线直接相关的近期提交如下：
 
 - `e99b127`（2026-09-14）：整合 finetune/pretrain 入口，引入 `augmentation_policy`，把损失权重控制移到 shell 脚本，更新原数据 source；同时提交本说明和结构损失原理验证文档。
 - `fcf8320`（2026-09-15）：生成阶段 2 固定比例混合 JSON，并加入 `tools/build_stage2_mix_json.py`。
@@ -122,12 +128,38 @@ $$L_{distill}=\left\|f_{finetune}(x)-f_{pretrain}(x)\right\|_2^2.$$
 - `039044d`（2026-09-18）：把配置名改为 `test5`，将 structure/detail 权重从 `0.05/0.03` 提高到 `0.5/0.3`，并把 structure/detail warmup 起点及持续时间改为 6/8 和 10/6。
 - `e6d1000`（2026-09-18）：修复梯度裁剪。`model.parameters()` 是生成器，当前代码先物化为列表，确保 unscale、裁剪前范数、裁剪和裁剪后范数使用同一组参数；否则前后两次遍历可能得到空参数集，导致裁剪和日志失真。
 - `32fb453`（2026-09-18）：提交当前 `test5` 参数，进一步把 `structure_loss_weight` 调到 `2.0`、`detail_loss_weight` 调到 `0.5`。
+- `ef32818`（2026-09-19）：实现阶段 2 损失诊断试验 1/2/3，加入 detail 每样本归一化开关、region/valid/target 日志和 35-epoch 运行脚本。
+- `1e49c80`（2026-09-19）：提交试验 3 前置工具，加入 weighted gradient balance 检查和脚本导入路径修复。
 
 当前工作区未提交状态：
 
-- `.gitignore` 额外加入 `*.md`；`AGENTS.md` 已跟踪，因此该规则不会自动停止 `AGENTS.md` 的跟踪，但会影响其他新 Markdown 文档。
-- `finetune_font.sh` 相对 `HEAD` 将 `structure_warmup_duration` 从 `8` 改为 `6`。
-- `AGENTS.md` 正在补充本次长期记忆，修改尚未提交。
+- `AGENTS.md` 及阶段 3 实现尚未提交；进入本次实施前已有 `.gitignore`、`AGENTS.md`、`finetune_font.sh` 未提交修改，保留其原有改动。
+- 三组日志已由用户提供至 Downloads，验证图主要在服务器；本次实现未执行服务器训练。
+
+## 试验 1/2/3 实际执行与结论
+
+试验 1/2/3 已分别完成 35 个 epoch，提供的 detail 日志各含 385 条更新记录。试验 1/2 的日志显示：
+
+- 试验 1 全程 `gradient_contribution=0`，`loss_detail=loss_highpass`。
+- 试验 2 全程满足 `loss_detail=loss_highpass+0.1*loss_gradient`，最大公式误差约 `9e-7`。
+- 两组最后 5 个 epoch 的 `loss_highpass` 均值和变异系数几乎相同；弱 Sobel 没有明显破坏高通损失。
+- 试验 2 的训练梯度 pre-clip 变异系数高于试验 1，说明 Sobel 仍带来额外的优化波动。
+- 两组 `grad_ok` 均全程为 `111111`，没有发现结构或高频损失断链。
+- 默认归一化与每样本归一化的 `tools/check_loss_gradients.py` 都曾显示 `gradient check passed`。但该脚本单样本时不能区分两种归一化。
+
+使用 `tools/check_loss_gradient_balance.py`、两个样本、`checkpoint-14.pth`、冻结 9 层、`structure_weight=0.05`、`detail_weight=0.05`、`gradient_ratio=0.1` 得到的加权梯度占比为：
+
+| 加权损失 | 梯度范数 | 占比 |
+|---|---:|---:|
+| `recon_weighted` | `1.36076` | `54.18%` |
+| `style_weighted` | `0.98977` | `39.41%` |
+| `edge_weighted` | `0.08345` | `3.32%` |
+| `structure_weighted` | `0.06885` | `2.74%` |
+| `detail_weighted` | `0.00862` | `0.34%` |
+
+structure 子项 raw 梯度范数中，row/col 约为 `4.8e-4`，centroid 约 `0.210`，area 约 `1.563`。因此 structure 的主要梯度来自 area/centroid，row/col 几乎无效；area 的梯度还可能与 centroid 发生抵消。
+
+当前结论：structure 存在梯度，但行列子项量级偏小的诊断仍需在更多 batch 上复核。用户确认各配置没有明显解决笔锋弱、结构混乱，且出现一定过拟合；tools 中梯度检查输出符合预期。试验 3 改变了归一化，不能仅凭其 loss 数值较高认定效果更差。当前转入阶段 3，采用实验 2 的 detail 定义，分别验证 structure 子项比例、structure/detail 总权重与风格条件注入。0.05 只是起始对照，不是已验证的最优权重；过拟合也不能证明参数不足。
 
 已确认但仍需训练验证的结论：
 
@@ -137,3 +169,22 @@ $$L_{distill}=\left\|f_{finetune}(x)-f_{pretrain}(x)\right\|_2^2.$$
 - `test5` 已把 structure/detail 权重提高较多，但没有训练输出、验证指标或人工结体比较，不能宣称其优于 `test4`、A/B 对照或阶段 1。
 - 当前阶段 2 首轮仍不应把 GAN、LoRA/adapter、蒸馏或额外 JT 语义标签同时加入。
 - 工作区内 `models/vit_base_font/checkpoint-14.pth` 仍是唯一已完成阶段 checkpoint；未发现阶段 2 最终 checkpoint。
+- 用户已给出总体视觉反馈：笔锋与结体难题未明显改善；尚未给出阶段 2 最优 checkpoint 的具体路径。
+- `tools/check_loss_gradient_balance.py` 的加权梯度结果只来自两个样本和一个初始化 checkpoint，属于问题定位证据，不能单独证明最终结构损失有效性。
+
+## 阶段 3 实现与执行登记（2026-09-20，优先于前文历史方案）
+
+- 当前入口：`tools/stage3.py`，支持 audit、smoke、calibrate、train、evaluate、summarize。完整命令与数据契约在 `docs/stage3.rst`；`tools/stage3_experiments.py` 按 internal/structure/detail/style/local 分阶段生成 argv，不自动挑选赢家或执行整组训练。
+- 数据由用户更换为 CalliPhase。额外要求显式 `style_id`、`character`、原始字形 `glyph_id`；manifest 划分 train/val_seen（2026-09-21 起移除 val_unseen，manifest 出现其他键会报错）。检查跨划分路径/hash/原始字形重复；严格同风格、异字符配对。无法由程序证明用户填写的风格身份或 glyph_id 正确，不声称穷尽任意近重复裁剪。
+- 2026-09-21 用户决定：9 位书家全部同时进入 train 和 val_seen，不设 val_unseen；val 随机选、不区分 BF/JT；比例沿用 `generate_new_json.py` 的 `VAL_RATIO=0.15`；target 统一用 `images_text_denoised`；暂不设最终测试集。`tools/build_stage3_manifest.py` 以 (书家, 字) 为划分单元、val 字全局留出，生成 `fontdata_example/stage3_json/{manifest,train,val_seen,split_summary}.json`：train 1594 条、val_seen 286 条（15.2%），丢弃 10 个无 source 字形的生僻字；`tools/stage3.py audit` 通过，`image_and_metadata_sha256=5af150dd…1105bc`。`type` 写为 `BF`/`JT`，target 缩放插值因此从阶段 2 `font_*` 的 nearest 变为 bicubic；实测该差别可忽略：CalliPhase 全部 1890 张 target 与 source 都是 448×448，finetune 的 `RandomResizedCrop(448, scale=(0.9999,1))` 在 2000 次采样中 99.6% 为逐像素恒等，其余 0.4% 为 447→448 的一像素拉伸，两种插值互差均值 0.49/255；阶段 3 评估的 `image_tensor` 对 448×448 输入同样恒等（max|Δ|≈6e-8）。
+- `data/pairdataset.py` `__getitem__` 对 `source_dataset=='calliphase'` 且带 `.npy` 的样本会无条件把 mask 模式改成 jt/bf semantic，`tools/stage3.py` 传入的 `mask_mix_probs=[0.8,0,0.2]` 与 `half_mask_ratio=0.5` 被绕过，阶段 3 训练实际 100% 使用语义遮盖（JT 抽 1 层、BF 抽 11 层，无随机块、无半遮盖）。用户 2026-09-21 决定保持该行为不改代码；登记实验时按此描述遮盖设置，不得写成 0.8/0/0.2。
+- 固定实验 2 detail：`highpass + 0.1 * gradient`，kernel=5、sigma=1，batch-region 归一化；阶段 3 入口不提供每样本归一化选项，配置中若请求该模式则报错。旧阶段 2 的试验 3 接口仅为历史兼容保留，不在阶段 3 使用。
+- structure 增加 row/col/centroid/area 四系数（默认全 1）与独立公共倍率；保留原子项定义。代码实查：当前 structure 是拼接图的全局软前景统计，并未像 detail 一样直接乘 `mask*valid`；前文将二者都描述为 masked loss 不准确。本次不悄然修改其定义。校准测量下半 query 像素梯度及可训练参数梯度。
+- 32 个风格均衡 batch 校准：预测像素梯度中位数逆比例、系数范围 [0.1,100]，以参数合成梯度中位数匹配公共倍率；零/非有限梯度、超限或退化则停止。范数比例不是独立的优化贡献占比，需同时看梯度夹角和合成梯度。
+- 风格模块：上半可见参考 RGB + visibility，三层 Conv/GroupNorm/GELU（32/64/128）和池化，零初始化头调制最后三个 ViT block；off/reference/constant 三组对照。不读取下半 GT，不绕过参考 mask，不使用书家 ID embedding。
+- VGG 输入重复归一化已由调用路径确认。旧入口仍默认 legacy；阶段 3 默认 rgb，在 VGG 内部归一化前还原输入。所有新对照必须采用相同模式，不把修正收益混算成风格模块收益。
+- 默认训练：400 optimizer updates、40 updates LR/loss warmup、每 50 updates 评价保存；有效 batch=128，旧参数 LR=1e-4、新模块=3e-4、layer_decay=0.8、clip=3、no_gan、冻结前 9 层；入口参数 mask=0.8/0/0.2、random 内 half_mask_ratio=0.5，但实际生效的是上一条所述的全语义遮盖。fit32 使用固定 32 样本与全 query mask，最多 300 updates。所有组独立输出，不 auto-resume。
+- 新 checkpoint 保存 stage3_config；训练与既有推理入口重建风格模块，加载缺失检查只允许旧 checkpoint 迁移时新增模块参数缺失。阶段 3 推理使用统一补白/缩放，移除旧参考字 64px 中间降采样的影响。
+- 本地验证：独立 CPU 测试覆盖条件模块、真实 encoder/loss 方法的小张量合约、结构系数、实验 2 公式、梯度、序列化、校准停止条件与数据泄漏检查。loss 测试替代 VGG 特征提取器，不等于完整预训练模型运行。另执行新增代码 lint/语法与 CLI 检查。
+- 未完成：用户选定阶段 2 checkpoint；完整 ViT GPU smoke/反向/DDP、校准数值、400-update 对照、三随机种子复核、视觉验收。数据身份与划分及真实数据 audit 已于 2026-09-21 完成（见上）。当前没有阶段 3 最终 checkpoint，不能标记训练或效果验证已完成。
+- 实验登记模板：命令/seed、数据 hash、初始化 checkpoint、候选/最终 checkpoint、固定验证图、结构/细节指标、训练验证差距、人工结论。仅记录真实运行；不根据参数提交推断效果。

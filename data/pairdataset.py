@@ -50,6 +50,7 @@ class PairDataset(VisionDataset):
         annotation_filename: str = "instances_default.json",
         use_annotation_masks: Optional[bool] = None,
         annotation_mask_size: int = 448,
+        strict_style_pairing: bool = False,
     ) -> None:
         super().__init__(root, transforms, transform, target_transform)
 
@@ -64,6 +65,7 @@ class PairDataset(VisionDataset):
             self.weights.extend([type_weight_list[idx] * 1./cur_num]*cur_num)
             #print(json_path, type_weight_list[idx])
         self.use_two_pairs = use_two_pairs
+        self.strict_style_pairing = strict_style_pairing
         if self.use_two_pairs:
             self.pair_type_dict = {}
             for idx, pair in enumerate(self.pairs):
@@ -473,6 +475,21 @@ class PairDataset(VisionDataset):
                 pair2_pool = self._semantic_indices_by_type.get(pair_type, [])
                 if pair2_pool:
                     pair2_index = random.choice(pair2_pool)
+            if self.strict_style_pairing:
+                pool = self.pair_type_dict[pair_type]
+                if mask_mode in ("jt_semantic", "bf_semantic"):
+                    pool = self._semantic_indices_by_type.get(pair_type, [])
+                pool = [
+                    i for i in pool
+                    if self.pairs[i]["style_id"] == pair["style_id"]
+                    and self.pairs[i]["character"] != pair["character"]
+                ]
+                if not pool:
+                    raise ValueError(
+                        "No distinct-character reference for style/type: "
+                        f"{pair['style_id']}/{pair_type}"
+                    )
+                pair2_index = random.choice(pool)
             pair2 = self.pairs[pair2_index]
             image2 = self._load_image(pair2['image_path'])
             target2 = self._load_image(pair2['target_path'])

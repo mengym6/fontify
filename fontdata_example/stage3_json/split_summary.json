@@ -1,0 +1,349 @@
+{
+  "args": {
+    "data_root": "fontdata_example",
+    "calli_dir": "font/train/new",
+    "target_subdir": "images_text_denoised",
+    "source_dir": "ttf/SourceHanSansSC-Regular",
+    "val_ratio": 0.15,
+    "min_val_characters": 3,
+    "seed": 42,
+    "output": "fontdata_example/stage3_json"
+  },
+  "train_records": 1594,
+  "val_seen_records": 286,
+  "val_fraction": 0.15212765957446808,
+  "val_characters": [
+    "一",
+    "且",
+    "乃",
+    "乖",
+    "五",
+    "亦",
+    "亮",
+    "今",
+    "仲",
+    "伏",
+    "休",
+    "伯",
+    "佐",
+    "余",
+    "佛",
+    "偏",
+    "備",
+    "八",
+    "冬",
+    "别",
+    "制",
+    "势",
+    "匏",
+    "即",
+    "又",
+    "及",
+    "同",
+    "后",
+    "吟",
+    "問",
+    "因",
+    "域",
+    "士",
+    "多",
+    "夢",
+    "夹",
+    "妃",
+    "姙",
+    "婀",
+    "字",
+    "宋",
+    "岳",
+    "峰",
+    "工",
+    "幹",
+    "後",
+    "徐",
+    "御",
+    "心",
+    "忠",
+    "性",
+    "悟",
+    "悼",
+    "愧",
+    "慕",
+    "慶",
+    "戊",
+    "所",
+    "手",
+    "接",
+    "掩",
+    "提",
+    "撗",
+    "撫",
+    "撿",
+    "既",
+    "旬",
+    "昆",
+    "明",
+    "易",
+    "暎",
+    "更",
+    "期",
+    "柱",
+    "柳",
+    "根",
+    "樹",
+    "泛",
+    "注",
+    "洛",
+    "洪",
+    "淹",
+    "濛",
+    "灰",
+    "爪",
+    "爲",
+    "猗",
+    "猶",
+    "珎",
+    "現",
+    "瓶",
+    "甄",
+    "用",
+    "界",
+    "畔",
+    "皃",
+    "盖",
+    "盱",
+    "禪",
+    "禽",
+    "秨",
+    "秷",
+    "程",
+    "窈",
+    "窕",
+    "章",
+    "終",
+    "練",
+    "绢",
+    "罪",
+    "聖",
+    "能",
+    "芥",
+    "花",
+    "芳",
+    "苦",
+    "茂",
+    "菓",
+    "葩",
+    "蒼",
+    "蟻",
+    "袂",
+    "袖",
+    "裴",
+    "覺",
+    "討",
+    "談",
+    "論",
+    "諸",
+    "諺",
+    "讃",
+    "越",
+    "趙",
+    "踴",
+    "輝",
+    "辰",
+    "迄",
+    "迅",
+    "过",
+    "返",
+    "迷",
+    "遣",
+    "遷",
+    "部",
+    "鄉",
+    "醎",
+    "里",
+    "釼",
+    "闡",
+    "阙",
+    "降",
+    "院",
+    "雍",
+    "霜",
+    "題",
+    "食",
+    "飡",
+    "騎",
+    "高",
+    "髙",
+    "鳥",
+    "龀"
+  ],
+  "writers": {
+    "Caoqb": {
+      "train": {
+        "records": 138,
+        "characters": 84,
+        "BF": 85,
+        "JT": 53
+      },
+      "val_seen": {
+        "records": 24,
+        "characters": 14,
+        "BF": 14,
+        "JT": 10
+      }
+    },
+    "Dongqc": {
+      "train": {
+        "records": 151,
+        "characters": 90,
+        "BF": 83,
+        "JT": 68
+      },
+      "val_seen": {
+        "records": 28,
+        "characters": 15,
+        "BF": 14,
+        "JT": 14
+      }
+    },
+    "Liugq": {
+      "train": {
+        "records": 210,
+        "characters": 117,
+        "BF": 111,
+        "JT": 99
+      },
+      "val_seen": {
+        "records": 35,
+        "characters": 20,
+        "BF": 16,
+        "JT": 19
+      }
+    },
+    "Longmen": {
+      "train": {
+        "records": 131,
+        "characters": 80,
+        "BF": 80,
+        "JT": 51
+      },
+      "val_seen": {
+        "records": 24,
+        "characters": 14,
+        "BF": 14,
+        "JT": 10
+      }
+    },
+    "Ouyx": {
+      "train": {
+        "records": 152,
+        "characters": 88,
+        "BF": 86,
+        "JT": 66
+      },
+      "val_seen": {
+        "records": 25,
+        "characters": 15,
+        "BF": 14,
+        "JT": 11
+      }
+    },
+    "Sushi": {
+      "train": {
+        "records": 89,
+        "characters": 52,
+        "BF": 57,
+        "JT": 32
+      },
+      "val_seen": {
+        "records": 17,
+        "characters": 9,
+        "BF": 9,
+        "JT": 8
+      }
+    },
+    "Yanzq": {
+      "train": {
+        "records": 334,
+        "characters": 217,
+        "BF": 102,
+        "JT": 232
+      },
+      "val_seen": {
+        "records": 64,
+        "characters": 38,
+        "BF": 16,
+        "JT": 48
+      }
+    },
+    "Zhangqb": {
+      "train": {
+        "records": 132,
+        "characters": 82,
+        "BF": 82,
+        "JT": 50
+      },
+      "val_seen": {
+        "records": 23,
+        "characters": 14,
+        "BF": 14,
+        "JT": 9
+      }
+    },
+    "Zhaomf": {
+      "train": {
+        "records": 257,
+        "characters": 131,
+        "BF": 157,
+        "JT": 100
+      },
+      "val_seen": {
+        "records": 46,
+        "characters": 23,
+        "BF": 26,
+        "JT": 20
+      }
+    }
+  },
+  "dropped": [
+    [
+      "font/train/new/DongqcBF/images_text_denoised/𥛜.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/DongqcJT/images_text_denoised/𥛜.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/LiugqBF/images_text_denoised/𥘿.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/LiugqJT/images_text_denoised/𥘿.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/LongmenBF/images_text_denoised/𠕀.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/LongmenBF/images_text_denoised/𭅓.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/LongmenBF/images_text_denoised/𭤔.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/LongmenJT/images_text_denoised/𠕀.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/LongmenJT/images_text_denoised/𭅓.png",
+      "no source glyph"
+    ],
+    [
+      "font/train/new/LongmenJT/images_text_denoised/𭤔.png",
+      "no source glyph"
+    ]
+  ]
+}

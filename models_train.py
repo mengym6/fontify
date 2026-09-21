@@ -583,6 +583,11 @@ class Fontify(nn.Module):
         return imgs
 
     def forward_encoder(self, imgs, tgts, bool_masked_pos):
+        conditioning = None
+        if hasattr(self, "style_conditioner"):
+            conditioning = self.style_conditioner(
+                tgts, bool_masked_pos, self.patch_size
+            )
         x = self.patch_embed(imgs)
         y = self.patch_embed(tgts)
         batch_size, Hp, Wp, _ = x.size()
@@ -612,6 +617,11 @@ class Fontify(nn.Module):
             x = blk(x) # (B*2,Hp,Wp,E)
             if idx == merge_idx:
                 x = (x[:x.shape[0]//2] + x[x.shape[0]//2:]) * 0.5
+
+            if conditioning is not None and idx >= self.depth - 3:
+                scale, shift = conditioning[idx - (self.depth - 3)]
+                x = x * (1 + scale[:, None, None, :])
+                x = x + shift[:, None, None, :]
 
             if self.depth == 24:
                 if idx in [5, 11, 17, 23]:
@@ -685,6 +695,9 @@ class Fontify(nn.Module):
         with torch.cuda.amp.autocast(enabled=False):
             pred_img = transform_vgg(pred).float()
             target_img = transform_vgg(target).float()
+            if getattr(self, "vgg_input_mode", "legacy") == "rgb":
+                pred_img = pred_img * imagenet_std + imagenet_mean
+                target_img = target_img * imagenet_std + imagenet_mean
             # 原作者设置：VGG loss 使用 Gram style；content 不进入总 loss。
             loss_style = self.vgg_loss(pred_img, target_img)
             loss_vgg = loss_style
@@ -722,7 +735,14 @@ class Fontify(nn.Module):
         loss_col = F.l1_loss(pred_col, tgt_col)
         loss_centroid = F.l1_loss(pred_cx, tgt_cx) + F.l1_loss(pred_cy, tgt_cy)
         loss_area = F.l1_loss(pred_fg.mean((1, 2)), tgt_fg.mean((1, 2)))
-        loss_structure = loss_row + loss_col + loss_centroid + loss_area
+        structure_terms = (loss_row, loss_col, loss_centroid, loss_area)
+        structure_coefficients = getattr(
+            self, "structure_coefficients", (1.0, 1.0, 1.0, 1.0)
+        )
+        loss_structure = sum(
+            coefficient * term
+            for coefficient, term in zip(structure_coefficients, structure_terms)
+        ) * getattr(self, "structure_common_scale", 1.0)
 
         phase, adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
         structure_weight = getattr(self, 'structure_loss_weight', 0.0)
@@ -816,6 +836,12 @@ class Fontify(nn.Module):
             detail_weight_current = detail_weight_target * progress
         else:
             detail_weight_current = detail_weight_target
+
+        if hasattr(self, "stage3_update"):
+            progress = min(1.0, self.stage3_update / 40.0)
+            structure_weight_current = structure_weight * progress
+            detail_weight_current = detail_weight_target * progress
+            edge_weight = 0.3 * progress
 
         structure_weighted_contribution = loss_structure.detach() * (
             structure_weight_current
