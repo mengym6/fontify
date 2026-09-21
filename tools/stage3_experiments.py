@@ -69,6 +69,7 @@ def main():
     parser.add_argument("--structure-weight", type=float, default=0.05)
     parser.add_argument("--detail-weight", type=float, default=0.05)
     parser.add_argument("--seeds", type=int, nargs="+", default=[0])
+    parser.add_argument("--tensorboard", action="store_true")
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--output-json", required=True)
     args = parser.parse_args()
@@ -107,6 +108,8 @@ def main():
             ]
             if coefficients:
                 command.extend(["--coefficients", coefficients])
+            if args.tensorboard:
+                command.append("--tensorboard")
             commands.append(
                 {
                     "name": name,

@@ -296,6 +296,69 @@ def test_manifest_splits(tmp_path):
         read_manifest(manifest_path)
 
 
+def test_tensorboard_mirrors_jsonl_and_eval(tmp_path):
+    from tools.stage3 import log_eval, log_train, tensorboard_writer
+
+    class Writer:
+        def __init__(self):
+            self.scalars = {}
+            self.images = {}
+
+        def add_scalar(self, tag, value, step):
+            self.scalars[tag] = (value, step)
+
+        def add_image(self, tag, array, step, dataformats):
+            self.images[tag] = (array.shape, step, dataformats)
+
+    writer = Writer()
+    entry = {
+        "loss_rank0": 1.0,
+        "grad_pre_clip": 2.0,
+        "grad_post_clip": 1.5,
+        "last_microbatch_losses": {"loss_recon": 0.5},
+        "parameters": {"blocks.9": {"gradient_norm": 0.1, "update_norm": 0.01}},
+    }
+    optimizer = types.SimpleNamespace(param_groups=[{"lr": 1e-4}, {"lr": 3e-4}])
+    log_train(writer, entry, optimizer, 7)
+    assert writer.scalars["train/loss_rank0"] == (1.0, 7)
+    assert writer.scalars["lr/max"] == (3e-4, 7)
+    assert writer.scalars["last_microbatch_losses/loss_recon"] == (0.5, 7)
+    assert writer.scalars["gradient_norm/blocks.9"] == (0.1, 7)
+    assert writer.scalars["update_norm/blocks.9"] == (0.01, 7)
+    Image.new("RGB", (12, 4)).save(tmp_path / "strip.png")
+    results = [
+        {
+            "split": "val_seen",
+            "case": "correct",
+            "metrics": {"highpass": 0.2},
+            "image": "strip.png",
+        },
+        {
+            "split": "val_seen",
+            "case": "correct",
+            "metrics": {"highpass": 0.4},
+            "image": "strip.png",
+        },
+        {
+            "split": "val_seen",
+            "case": "blank",
+            "metrics": {"highpass": 9.0},
+            "image": "strip.png",
+        },
+    ]
+    log_eval(writer, results, tmp_path, 50, images=1)
+    assert writer.scalars["eval_val_seen/highpass"] == (pytest.approx(0.3), 50)
+    assert writer.images == {"eval_val_seen/00": ((4, 12, 3), 50, "HWC")}
+    args = types.SimpleNamespace(tensorboard=False, output=str(tmp_path / "run"))
+    assert tensorboard_writer(args, 0) is None
+    args.tensorboard = True
+    assert tensorboard_writer(args, 1) is None
+    pytest.importorskip("torch.utils.tensorboard")
+    real = tensorboard_writer(args, 0)
+    real.close()
+    assert (tmp_path / "run/tensorboard").is_dir()
+
+
 def test_build_stage3_manifest_passes_audit(tmp_path):
     import numpy as np
 

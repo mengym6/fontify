@@ -105,6 +105,12 @@ fit32 使用 32 个固定且互不相同的目标、确定性的预处理和完�
 梯度范数和更新范数。train.jsonl 中的损失分量标注为 last_microbatch_losses，
 而非 epoch 平均值；loss_rank0 是 rank-0 上累积的均值，而非全局 DDP 均值。
 
+任何 train 命令加上 --tensorboard，即可把同样的数据镜像到 ``<output>/tensorboard``
+（每个 update 的标量、每 5 个 update 的各参数组梯度/更新范数、每次评估时各划分
+correct-reference 指标均值和前 8 张条带图）。train.jsonl 和 eval 目录仍是正式记录，
+TensorBoard 只是查看视图。``tools/stage3_experiments.py --tensorboard`` 会给生成的
+每条命令追加该开关。
+
 结构损失标定与受控扫描
 ----------------------
 

@@ -268,6 +268,48 @@ def calibrate(model, rows, args):
     print(report["status"], report.get("reason", ""))
 
 
+def tensorboard_writer(args, rank):
+    """Optional mirror of train.jsonl and eval strips; jsonl stays the record."""
+    if rank != 0 or not args.tensorboard:
+        return None
+    from torch.utils.tensorboard import SummaryWriter
+
+    return SummaryWriter(log_dir=str(Path(args.output) / "tensorboard"))
+
+
+def log_train(writer, entry, optimizer, step):
+    writer.add_scalar("train/loss_rank0", entry["loss_rank0"], step)
+    writer.add_scalar("train/grad_pre_clip", entry["grad_pre_clip"], step)
+    writer.add_scalar("train/grad_post_clip", entry["grad_post_clip"], step)
+    writer.add_scalar("lr/max", max(g["lr"] for g in optimizer.param_groups), step)
+    for key, value in entry["last_microbatch_losses"].items():
+        writer.add_scalar(f"last_microbatch_losses/{key}", value, step)
+    for group, row in entry.get("parameters", {}).items():
+        writer.add_scalar(f"gradient_norm/{group}", row["gradient_norm"], step)
+        writer.add_scalar(f"update_norm/{group}", row["update_norm"], step)
+
+
+def log_eval(writer, results, directory, step, images=8):
+    """Correct-reference metric means per split plus the first fixed strips."""
+    import numpy as np
+    from PIL import Image
+
+    per_split = {}
+    for row in results:
+        if row["case"] == "correct":
+            per_split.setdefault(row["split"], []).append(row)
+    for split, rows in per_split.items():
+        for key in rows[0]["metrics"]:
+            mean = statistics.mean(r["metrics"][key] for r in rows)
+            writer.add_scalar(f"eval_{split}/{key}", mean, step)
+        for index, row in enumerate(rows[:images]):
+            with Image.open(Path(directory) / row["image"]) as image:
+                pixels = np.array(image.convert("RGB"))
+            writer.add_image(
+                f"eval_{split}/{index:02d}", pixels, step, dataformats="HWC"
+            )
+
+
 def train(model, config, rows, paths, args):
     import torch
     import torch.distributed as dist
@@ -285,6 +327,7 @@ def train(model, config, rows, paths, args):
         raise ValueError("batch_size * accum_iter * world_size must be 128")
     freeze(model)
     optimizer = torch.optim.AdamW(optimizer_groups(model), betas=(0.9, 0.999))
+    writer = tensorboard_writer(args, rank)
     raw = model
     if world > 1:
         model = DistributedDataParallel(model, device_ids=[args.local_rank])
@@ -420,6 +463,8 @@ def train(model, config, rows, paths, args):
                 entry["parameters"] = parameter_report(raw, optimizer, before)
             with (Path(args.output) / "train.jsonl").open("a") as handle:
                 handle.write(json.dumps(entry, allow_nan=False) + "\n")
+            if writer is not None:
+                log_train(writer, entry, optimizer, update + 1)
         if (update + 1) % 50 == 0 or update + 1 == updates:
             if world > 1:
                 dist.barrier()
@@ -434,16 +479,16 @@ def train(model, config, rows, paths, args):
                     },
                     Path(args.output) / f"checkpoint-update-{update + 1}.pth",
                 )
-                evaluate(
-                    raw,
-                    rows,
-                    args.data_root,
-                    Path(args.output) / f"eval-{update + 1}",
-                    args.device,
-                    all_cases=False,
+                eval_dir = Path(args.output) / f"eval-{update + 1}"
+                results = evaluate(
+                    raw, rows, args.data_root, eval_dir, args.device, all_cases=False
                 )
+                if writer is not None:
+                    log_eval(writer, results, eval_dir, update + 1)
             if world > 1:
                 dist.barrier()
+    if writer is not None:
+        writer.close()
     # Avoid accidental reuse of epoch-based continuation for these checkpoints.
 
 
@@ -593,6 +638,7 @@ def main():
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--semantic-mask-dir")
     parser.add_argument("--fit32", action="store_true")
+    parser.add_argument("--tensorboard", action="store_true")
     args = parser.parse_args()
     if args.updates < 1 or args.batch_size < 1 or args.accum_iter < 1:
         parser.error("updates, batch-size and accum-iter must be positive")
