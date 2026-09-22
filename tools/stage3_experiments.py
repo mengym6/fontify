@@ -66,6 +66,9 @@ def main():
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--semantic-mask-dir", required=True)
     parser.add_argument("--coefficients")
+    parser.add_argument(
+        "--structure-projection-mode", choices=["legacy", "sum"], default="sum"
+    )
     parser.add_argument("--structure-weight", type=float, default=0.2)
     parser.add_argument("--detail-weight", type=float, default=0.2)
     parser.add_argument("--seeds", type=int, nargs="+", default=[0])
@@ -86,6 +89,9 @@ def main():
                 "--nproc_per_node=2",
                 "tools/stage3.py",
                 "train",
+                "--structure-projection-mode",
+                "legacy" if args.phase == "internal" and name == "equal"
+                else args.structure_projection_mode,
                 "--vgg-input-mode",
                 "legacy",
                 "--manifest",

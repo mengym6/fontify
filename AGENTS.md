@@ -174,6 +174,15 @@ structure 子项 raw 梯度范数中，row/col 约为 `4.8e-4`，centroid 约 `0
 
 ## 阶段 3 实现与执行登记（2026-09-20，优先于前文历史方案）
 
+### 2026-09-22 更新（优先于以下旧登记）
+
+- 用户服务器 fit32 已完成 300 updates，初始化为实验 1 checkpoint-30.pth，style=off、structure/detail=0.2、VGG=legacy。固定 32 个 train 的指标改善，32 个 val_seen 的高通和梯度误差从 update 50 到 300 全部恶化；确认该小样本实验有过拟合趋势，不等于完整训练集实验已失败，不据此扩大参数量。尚无完整图像验收或初始化评价。
+- 用户提供旧定义 calibration.json：32 batch 完成，row/col/centroid/area 建议系数约 25.009/13.733/0.0360/0.0808，因后两项低于旧下限 blocked。该文件不可用于训练。
+- 本轮代码新增 structure_projection_mode：阶段 3 新命令默认 sum，row/col 的投影距离沿轴求和、对 batch 求均值；legacy 保持原定义，未保存字段的旧 checkpoint 默认 legacy。仍是全拼接软前景统计，不改变监督区域、centroid、area、detail 或 VGG。
+- 新校准通过 Gram 矩阵及 [1/H,1/W,1,1] 恢复旧等权参数梯度基准，匹配其跨 batch 中位数；限幅改为检查公共倍率之后的有效系数 [0.1,100]，同时记录原始系数、公共倍率和最终有效系数。零/非有限或退化仍停止。必须从阶段 2 checkpoint 重新校准，配置模式不匹配会报错。
+- internal 的 equal 为 legacy 等权，calibrated 为 sum 加校准；属于尺度与比例联合对照。若旧基线胜出，后续扫描显式使用 --structure-projection-mode legacy 并省略系数。不能归因于单独的系数变化。
+- 本轮仅代码实现和 CPU 合约检查；新版实际 GPU 校准、训练与效果验证未完成，未提交 Git。
+
 - 2026-09-21 权重配置更新：structure/detail 总权重候选均仅保留 `0、0.2、0.5`。internal 系数对照的两项总权重、两个阶段 3 入口及运行时缺省权重均改为 `0.2`，仅作为共同对照，不认定为最优。先校准子项并比较内部比例，再扫描 structure（detail 默认固定 0.2），最后扫描 detail；若 detail 选定值不是 0.2，可通过 `--detail-weight` 固定该值并使用新输出目录复核 structure 扫描。历史实验 2 记录及 checkpoint 中显式保存的权重不改写。
 
 - 当前入口：`tools/stage3.py`，支持 audit、smoke、calibrate、train、evaluate、summarize。完整命令与数据契约在 `docs/stage3.rst`；`tools/stage3_experiments.py` 按 internal/structure/detail/style/local 分阶段生成 argv，不自动挑选赢家或执行整组训练。

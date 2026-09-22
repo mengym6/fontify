@@ -733,6 +733,10 @@ class Fontify(nn.Module):
         tgt_cy = (tgt_fg * yy).sum((1, 2), keepdim=True) / tgt_mass
         loss_row = F.l1_loss(pred_row, tgt_row)
         loss_col = F.l1_loss(pred_col, tgt_col)
+        if getattr(self, "structure_projection_mode", "legacy") == "sum":
+            # Sum distribution distance along its axis; retain batch averaging.
+            loss_row = loss_row * h
+            loss_col = loss_col * w
         loss_centroid = F.l1_loss(pred_cx, tgt_cx) + F.l1_loss(pred_cy, tgt_cy)
         loss_area = F.l1_loss(pred_fg.mean((1, 2)), tgt_fg.mean((1, 2)))
         structure_terms = (loss_row, loss_col, loss_centroid, loss_area)

@@ -142,6 +142,11 @@ def test_checkpoint_migration_rejects_unrelated_missing_keys(tmp_path, monkeypat
     torch.save({"model": model.state_dict(), "stage3_config": config}, migrated)
     restored, _ = load_model(migrated)
     assert restored.style_conditioner.mode == "reference"
+    assert restored.structure_projection_mode == "legacy"
+    config["structure_projection_mode"] = "sum"
+    torch.save({"model": model.state_dict(), "stage3_config": config}, migrated)
+    restored, _ = load_model(migrated)
+    assert restored.structure_projection_mode == "sum"
     del state["segment_token_y"]
     torch.save({"model": state}, path)
     with pytest.raises(ValueError, match="Incompatible checkpoint"):
@@ -161,6 +166,23 @@ def test_calibration_and_stop_conditions():
     )
     norm = sum(c * c for c in coefficients) ** 0.5
     assert norm * result["structure_common_scale"] == pytest.approx(2)
+    assert result["effective_structure_coefficients"] == pytest.approx(
+        [c * result["structure_common_scale"] for c in coefficients]
+    )
+    # Projection sum mode must match the legacy baseline, not the larger
+    # unweighted sum-mode gradient. Bounds apply after the common scale.
+    scaled = {
+        "pixel_norms": [896, 896, 896, 896],
+        "parameter_gram": [[896.0 ** 2 * (i == j) for j in range(4)]
+                           for i in range(4)],
+        "baseline_coefficients": [1 / 896] * 4,
+    }
+    blocked = calibrate_measurements([scaled])
+    assert blocked["status"] == "blocked"
+    assert blocked["original_parameter_gradient_median"] == pytest.approx(2)
+    assert blocked["effective_structure_coefficients"] == pytest.approx(
+        [1 / 896] * 4
+    )
     for invalid in (0, float("nan"), 1e-12):
         row["pixel_norms"][0] = invalid
         assert calibrate_measurements([row])["status"] == "blocked"
@@ -173,6 +195,10 @@ def test_config_and_optimizer_invariants():
     assert model.detail_gradient_ratio == 0.1
     assert model.detail_per_sample_normalize is False
     assert model.structure_coefficients == [1.0] * 4
+    assert model.structure_projection_mode == "legacy"
+    with pytest.raises(ValueError, match="projection mode"):
+        configure(model, {"structure_projection_mode": "invalid"})
+    configure(model, {})
     with pytest.raises(ValueError):
         configure(model, {"detail_per_sample_normalize": True})
     groups = optimizer_groups(model)
@@ -540,3 +566,20 @@ def test_real_loss_coefficients_and_experiment2_formula():
     torch.testing.assert_close(model.last_loss_graph["structure"], 2 * original)
     model.last_loss_graph["total_weighted"].backward()
     assert torch.isfinite(pred.grad).all()
+    legacy_terms = {
+        name: graph[f"structure_{name}"].detach()
+        for name in ("row", "col", "centroid", "area")
+    }
+    configure(model, {"structure_projection_mode": "sum"})
+    forward(
+        pred, pred, target, mask, torch.ones_like(pred),
+        epoch=35, no_gan=True, keep_loss_graph=True,
+    )
+    for name, factor in zip(
+        ("row", "col", "centroid", "area"),
+        (pred.shape[-2], pred.shape[-1], 1, 1),
+    ):
+        torch.testing.assert_close(
+            model.last_loss_graph[f"structure_{name}"],
+            legacy_terms[name] * factor,
+        )

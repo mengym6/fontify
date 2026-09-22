@@ -29,6 +29,7 @@ def config_from_args(args):
         "detail_loss_weight": args.detail_weight,
         "structure_coefficients": [1.0] * 4,
         "structure_common_scale": 1.0,
+        "structure_projection_mode": args.structure_projection_mode,
         "vgg_input_mode": args.vgg_input_mode,
         "detail_per_sample_normalize": False,
         "detail_gradient_ratio": 0.1,
@@ -39,6 +40,10 @@ def config_from_args(args):
         calibration = json.loads(Path(args.coefficients).read_text())
         if calibration.get("status") != "ok":
             raise ValueError("Calibration is not approved for use")
+        if calibration.get("structure_projection_mode", "legacy") != (
+            args.structure_projection_mode
+        ):
+            raise ValueError("Calibration projection mode does not match run")
         config.update(
             {
                 key: calibration[key]
@@ -245,6 +250,11 @@ def calibrate(model, rows, args):
         ]
         measurements.append(
             {
+                "baseline_coefficients": (
+                    [1.0 / pred.shape[-2], 1.0 / pred.shape[-1], 1.0, 1.0]
+                    if model.structure_projection_mode == "sum"
+                    else [1.0] * 4
+                ),
                 "batch": batch,
                 "targets": [
                     r["target_path"] for r in records[2 * batch : 2 * batch + 2]
@@ -262,6 +272,7 @@ def calibrate(model, rows, args):
     from util.stage3_calibration import calibrate_measurements
 
     report = calibrate_measurements(measurements)
+    report["structure_projection_mode"] = model.structure_projection_mode
     report["measurements"] = measurements
     report["checkpoint"] = args.checkpoint
     write_json(Path(args.output) / "calibration.json", report)
@@ -630,6 +641,9 @@ def main():
     parser.add_argument("--structure-weight", type=float, default=0.2)
     parser.add_argument("--detail-weight", type=float, default=0.2)
     parser.add_argument("--coefficients")
+    parser.add_argument(
+        "--structure-projection-mode", choices=["legacy", "sum"], default="sum"
+    )
     parser.add_argument("--vgg-input-mode", choices=["rgb", "legacy"], default="legacy")
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument("--accum-iter", type=int, default=32)

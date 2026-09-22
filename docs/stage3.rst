@@ -133,7 +133,8 @@ Uses 32 style-balanced batches of 2, fixed query masks and full precision.
 Reports raw values, lower-query pixel gradients, trainable-parameter gradients,
 pairwise cosine similarities and Gram matrices. Internal coefficients balance
 median pixel gradients; a separate common scale preserves median combined
-parameter-gradient norm. Coefficients outside [0.1, 100], zero gradients and
+legacy equal-weight parameter-gradient norm. Effective coefficients (including
+the common scale) outside [0.1, 100], zero gradients and
 degenerate combined gradients block calibration. Do not increase limits to force
 acceptance. Gradient-norm ratios are not independent update contribution shares.
 
@@ -154,7 +155,12 @@ Each entry contains an argv list suitable for subprocess.run(argv, check=True).
 It is not executed automatically. After visual/metric review, generate the next
 phase with the selected weights and optional --coefficients:
 
-* internal: equal coefficients vs calibrated, both weights 0.2.
+* internal: legacy equal coefficients vs sum-mode calibrated, both weights 0.2.
+  This jointly changes projection scaling and internal proportions.
+  New commands default to ``--structure-projection-mode sum``; missing checkpoint
+  fields retain legacy behavior. Recalibrate into a fresh directory after this
+  change. If the legacy baseline wins, omit coefficients and explicitly pass
+  ``--structure-projection-mode legacy`` to subsequent sweep generation.
 * structure: total weight 0/0.2/0.5, detail fixed at --detail-weight (default 0.2).
 * detail: total weight 0/0.2/0.5, selected structure unchanged.
 * style: off/reference/constant, both selected losses unchanged.

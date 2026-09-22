@@ -1,6 +1,25 @@
 阶段 3 操作手册
 ================
 
+2026-09-22 投影尺度更新
+----------------------
+
+新实验默认 ``--structure-projection-mode sum``：row/col 对投影轴求和，
+再对 batch 取均值；旧定义用 ``--structure-projection-mode legacy``。
+旧 checkpoint 缺少此字段时仍按 legacy 加载。VGG 仍为 legacy，与此开关独立。
+
+必须从选定阶段 2 checkpoint 重新运行 calibrate，使用新的输出目录，例如
+``runs/stage3/calibration-sum``，不能复用此前 blocked 的 calibration.json。
+校准以旧定义等权 structure 的参数合成梯度为基准匹配公共倍率；报告包含
+``structure_common_scale`` 与 ``effective_structure_coefficients``，后者必须在
+[0.1, 100] 内。失败时不手动修改 status 或截断系数。
+
+internal 生成器的 equal 组明确使用 legacy 等权，calibrated 组默认使用 sum
+及新系数。这是投影尺度和内部比例的联合对照，不可只归因于其中一个变化。
+若 equal 胜出，后续生成扫描命令时省略 ``--coefficients``，并显式添加
+``--structure-projection-mode legacy``；若 calibrated 胜出则保留新系数与 sum。
+历史运行与新定义不混用，正式训练仍从相同阶段 2 初始化独立开始。
+
 适用范围
 --------
 
@@ -142,7 +161,7 @@ batch × accum × 卡数 = 128）。
 看 ``runs/stage3/calibration/calibration.json``：
 
 - ``status`` 必须是 ``ok``。``blocked`` 时 ``reason`` 为
-  ``Required coefficient outside bounds``（系数超出 [0.1, 100]）、
+  ``Effective coefficient outside bounds``（最终有效系数超出 [0.1, 100]）、
   ``Zero/nonfinite pixel gradient`` 或 ``Degenerate parameter gradient``；
   **不要放宽阈值**，先分析原因。
 - ``structure_coefficients``：row / col / centroid / area 四个系数。预期 row、col

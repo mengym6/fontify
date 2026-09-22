@@ -49,6 +49,11 @@ def configure(model, config):
     ):
         raise ValueError("Four finite positive structure coefficients required")
     model.structure_coefficients = coefficients
+    model.structure_projection_mode = config.get(
+        "structure_projection_mode", "legacy"
+    )
+    if model.structure_projection_mode not in ("legacy", "sum"):
+        raise ValueError("Invalid structure projection mode")
     model.detail_per_sample_normalize = False
     model.detail_gradient_ratio = 0.1
     model.detail_kernel_size = 5
