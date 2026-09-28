@@ -1,3 +1,8 @@
+.. warning::
+
+   历史实验文档：2026-09-28 已移除旧 structure/detail、FiLM 和阶段 3 实验入口。
+   本文命令不再用于当前代码；当前基线见 baseline_reset.rst。
+
 Stage 3: reference conditioning and loss calibration
 ==================================================
 

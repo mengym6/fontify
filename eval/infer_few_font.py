@@ -22,7 +22,8 @@ def get_args_parser():
                         default='')
     parser.add_argument('--model', type=str, help='dir to ckpt',
                         default='vit_base_patch16_input896x448_win_dec64_8glb_sl1')
-    parser.add_argument('--input_size', type=int, default=448)
+    parser.add_argument('--input_size', type=int, choices=[448], default=448,
+                        help='baseline checkpoint requires 448x448 glyphs')
     parser.add_argument('--reference_font_dir', type=str, help='directory containing reference font styles',
                         default='font_datasets/reference')
     parser.add_argument('--img_src_dir', type=str, help='directory containing source images',
@@ -35,12 +36,9 @@ def get_args_parser():
 def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_sl1'):
     model = getattr(models_eval, arch)()
     checkpoint = torch.load(chkpt_dir, map_location='cuda:0')
-    if "stage3_config" in checkpoint:
-        from util.stage3_runtime import load_inference_checkpoint
+    from util.checkpoint import load_baseline_checkpoint
 
-        return load_inference_checkpoint(model, checkpoint)
-    msg = model.load_state_dict(checkpoint['model'], strict=False)
-    print(msg)
+    load_baseline_checkpoint(model, checkpoint)
     return model
 
 
@@ -102,19 +100,17 @@ def run_single_character(char, reference_path, model, device, img_src_dir, outpu
     img = np.concatenate((img2, img), axis=0)
 
     tgt2 = Image.open(reference_path).convert("RGB")
-    tgt2 = tgt2.resize((64, 64))
     tgt2 = tgt2.resize((input_size, input_size))
     tgt2 = np.array(tgt2) / 255.
     tgt2 = tgt2 - imagenet_mean
     tgt2 = tgt2 / imagenet_std
 
-    if getattr(model, "stage3_inference", False):
-        from util.stage3_data import image_tensor
+    from util.stage3_data import image_tensor
 
-        img2 = image_tensor(img2_path).permute(1, 2, 0).numpy()
-        query = image_tensor(img_path).permute(1, 2, 0).numpy()
-        img = np.concatenate((img2, query), axis=0)
-        tgt2 = image_tensor(reference_path).permute(1, 2, 0).numpy()
+    img2 = image_tensor(img2_path).permute(1, 2, 0).numpy()
+    query = image_tensor(img_path).permute(1, 2, 0).numpy()
+    img = np.concatenate((img2, query), axis=0)
+    tgt2 = image_tensor(reference_path).permute(1, 2, 0).numpy()
 
     tgt = np.concatenate((tgt2, tgt2), axis=0)
 

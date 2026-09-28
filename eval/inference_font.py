@@ -34,7 +34,8 @@ def get_args_parser():
                         default='vit_base_patch16_input896x448_win_dec64_8glb_sl1')
     parser.add_argument('--prompt_json', type=str, help='path to prompt json file',
                         default=os.getenv('PROMPT_JSON', 'prompts.json'))
-    parser.add_argument('--input_size', type=int, default=448)
+    parser.add_argument('--input_size', type=int, choices=[448], default=448,
+                        help='baseline checkpoint requires 448x448 glyphs')
     parser.add_argument('--num_gpus', type=int, default=1, help='Number of GPUs to use')
     parser.add_argument('--batch_size', type=int, default=2, help='Batch size for processing')
     parser.add_argument('--out_dir', type=str, default='', help='Output dir')
@@ -56,13 +57,9 @@ def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_
     device = torch.device("cuda:{}".format(rank))
     model = getattr(models_eval, arch)()
     checkpoint = torch.load(chkpt_dir, map_location=device)
-    if "stage3_config" in checkpoint:
-        from util.stage3_runtime import load_inference_checkpoint
+    from util.checkpoint import load_baseline_checkpoint
 
-        return load_inference_checkpoint(model, checkpoint).to(device)
-    msg = model.load_state_dict(checkpoint['model'], strict=False)
-    print(f"Rank {rank} checkpoint load: {msg}", flush=True)
-
+    load_baseline_checkpoint(model, checkpoint)
     model.to(device)
     return model
 
@@ -210,11 +207,10 @@ def main(rank, world_size):
         img2 = img2 - imagenet_mean
         img2 = img2 / imagenet_std
 
-        if getattr(model_fontify, "stage3_inference", False):
-            from util.stage3_data import image_tensor
+        from util.stage3_data import image_tensor
 
-            tgt2 = image_tensor(prompt_path).permute(1, 2, 0).numpy()
-            img2 = image_tensor(img2_path).permute(1, 2, 0).numpy()
+        tgt2 = image_tensor(prompt_path).permute(1, 2, 0).numpy()
+        img2 = image_tensor(img2_path).permute(1, 2, 0).numpy()
 
         tgt = np.concatenate((tgt2, tgt2), axis=0)
 
@@ -247,8 +243,7 @@ def main(rank, world_size):
                     img = np.array(img) / 255.
                     img = img - imagenet_mean
                     img = img / imagenet_std
-                    if getattr(model_fontify, "stage3_inference", False):
-                        img = image_tensor(img_path).permute(1, 2, 0).numpy()
+                    img = image_tensor(img_path).permute(1, 2, 0).numpy()
                     img = np.concatenate((img2, img), axis=0)
 
                     imgs.append(img)

@@ -6,14 +6,12 @@
 export CUDA_VISIBLE_DEVICES=0,1
 
 DATA_PATH=fontdata_example
-# A 对照：NAME=finetune_stele_baseline_a DETAIL_LOSS_WEIGHT=0 ./finetune_font.sh
-# B 实验：直接运行本脚本（默认 detail=0.03）。
-name=finetune_stele_test5
+name=finetune_calliphase_baseline
 
 PRETRAIN_CKPT=models/vit_base_font/checkpoint-14.pth
 
-# 手动切换阶段时修改 --mask_mix_probs：
-# stage1: 0.7 0.2 0.1; stage2: 0.4 0.3 0.3; stage3: 0.3 0.3 0.4
+# 使用旧 JSON 清单与按 type 随机配对，沿用原有遮盖选择逻辑。
+# 默认恢复输出目录中的最新 checkpoint。
 
 python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
 	--use_env main_train.py  \
@@ -36,19 +34,10 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --adv_weight_final 0.4 \
     --edge_weight_final 0.3 \
     --no_gan \
-    --structure_loss_weight 2.0 \
-    --structure_warmup_epochs 6 \
-    --structure_warmup_duration 6 \
-    --detail_loss_weight 0.05 \
-    --detail_warmup_epochs 10 \
-    --detail_warmup_duration 6 \
-    --detail_kernel_size 5 \
-    --detail_sigma 1.0 \
-    --detail_gradient_ratio 0.1 \
     --save_freq 5 \
     --data_path $DATA_PATH/ \
-    --json_path $DATA_PATH/train_json_mix/*.json \
-    --val_json_path $DATA_PATH/val_json_mix/*.json \
+    --json_path $DATA_PATH/train_json_new/*.json \
+    --val_json_path $DATA_PATH/val_json_new/*.json \
     --output_dir models/$name \
     --log_dir models/$name/logs \
     --finetune $PRETRAIN_CKPT \
@@ -62,5 +51,4 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --semantic_only_epochs 0 \
     --val_tb_image_limit 76 \
     --val_tb_images_per_batch 2 \
-    --grad_log_interval 5 \
-    #--mask_mix_probs 0.8 0.0 0.2
+    --grad_log_interval 5

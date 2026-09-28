@@ -1,3 +1,13 @@
+# 当前基线更新（2026-09-28，优先于下文历史登记）
+
+- 初始化为 models/vit_base_font/checkpoint-14.pth，跳过阶段 2 checkpoint。
+- 已删除旧 structure/detail 损失、FiLM 条件模块及旧阶段 3 训练/校准/扫描框架。
+- 保留 recon、VGG Gram style（legacy）、原 edge、可选 GAN；不引入新架构。
+- 保留 G/D 优化器隔离、D 梯度清理、参数迭代器物化裁剪、梯度监控、CalliPhase 数据及配对/审计能力。
+- 当前训练入口 finetune_font.sh；使用 train_json_new/val_json_new 的 CalliPhase 清单，沿用按 type 随机配对，不启用 strict_style_pairing。新实验从 checkpoint-14 初始化，保留原有 --auto_resume 断点续训。
+- 下文阶段 2/旧阶段 3 实现和命令均为历史记录，当前改动详见 docs/baseline_reset.rst。
+- 新技术路线采用完整方案开发、必要正确性检查、完整实验后集中消融，不要求每个模块先独立证明收益。
+
 # Fontify 项目说明与开发约束
 
 ## 代码规范

@@ -496,12 +496,6 @@ class Fontify(nn.Module):
         return imgs
 
     def forward_encoder(self, imgs, tgts, bool_masked_pos):
-        if hasattr(self, "style_conditioner"):
-            from models_train import Fontify as TrainingFontify
-
-            return TrainingFontify.forward_encoder(
-                self, imgs, tgts, bool_masked_pos
-            )
         x = self.patch_embed(imgs)
         y = self.patch_embed(tgts)
         batch_size, Hp, Wp, _ = x.size()

@@ -22,46 +22,6 @@ from util.vitdet_utils import (
 )
 
 
-def rgb_to_gray(x):
-    """Convert an RGB image tensor from (B, 3, H, W) to (B, 1, H, W)."""
-    return (
-        0.299 * x[:, 0:1]
-        + 0.587 * x[:, 1:2]
-        + 0.114 * x[:, 2:3]
-    )
-
-
-def gaussian_blur(x, kernel_size=5, sigma=1.0):
-    """Apply a fixed separable Gaussian blur without trainable parameters."""
-    coords = (
-        torch.arange(kernel_size, device=x.device, dtype=torch.float32)
-        - kernel_size // 2
-    )
-    kernel = torch.exp(-(coords ** 2) / (2 * sigma ** 2))
-    kernel = kernel / kernel.sum()
-    kernel2d = (kernel[:, None] * kernel[None, :])[None, None].to(x.dtype)
-    return F.conv2d(x, kernel2d, padding=kernel_size // 2)
-
-
-def highpass(x, kernel_size=5, sigma=1.0):
-    """Return the high-frequency residual of a single-channel image."""
-    return x - gaussian_blur(x, kernel_size, sigma)
-
-
-def sobel_gradients(x):
-    """Return horizontal and vertical Sobel gradients for a single-channel image."""
-    sobel_x = torch.tensor(
-        [[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]],
-        device=x.device,
-        dtype=x.dtype,
-    ).view(1, 1, 3, 3)
-    sobel_y = torch.tensor(
-        [[-1.0, -2.0, -1.0], [0.0, 0.0, 0.0], [1.0, 2.0, 1.0]],
-        device=x.device,
-        dtype=x.dtype,
-    ).view(1, 1, 3, 3)
-    return F.conv2d(x, sobel_x, padding=1), F.conv2d(x, sobel_y, padding=1)
-
 
 class Discriminator(nn.Module):
     def __init__(self, in_channels=3):
@@ -583,11 +543,6 @@ class Fontify(nn.Module):
         return imgs
 
     def forward_encoder(self, imgs, tgts, bool_masked_pos):
-        conditioning = None
-        if hasattr(self, "style_conditioner"):
-            conditioning = self.style_conditioner(
-                tgts, bool_masked_pos, self.patch_size
-            )
         x = self.patch_embed(imgs)
         y = self.patch_embed(tgts)
         batch_size, Hp, Wp, _ = x.size()
@@ -618,11 +573,6 @@ class Fontify(nn.Module):
             if idx == merge_idx:
                 x = (x[:x.shape[0]//2] + x[x.shape[0]//2:]) * 0.5
 
-            if conditioning is not None and idx >= self.depth - 3:
-                scale, shift = conditioning[idx - (self.depth - 3)]
-                x = x * (1 + scale[:, None, None, :])
-                x = x + shift[:, None, None, :]
-
             if self.depth == 24:
                 if idx in [5, 11, 17, 23]:
                     out.append(self.norm(x))
@@ -645,17 +595,7 @@ class Fontify(nn.Module):
         x = self.decoder_pred(x) # Bx3xHxW
         return x
 
-    def forward_loss(
-        self,
-        imgs,
-        pred,
-        tgts,
-        mask,
-        valid,
-        epoch=0,
-        no_gan=False,
-        keep_loss_graph=False,
-    ):
+    def forward_loss(self, imgs, pred, tgts, mask, valid, epoch=0, no_gan=False):
         """
         tgts: [N, 3, H, W]
         pred: [N, 3, H, W]
@@ -673,7 +613,6 @@ class Fontify(nn.Module):
         if inds_ign.sum() > 0:
             valid[inds_ign] = 0.
 
-        valid_ratio = valid.mean().detach()
         mask = mask * valid
 
         target = tgts
@@ -695,9 +634,6 @@ class Fontify(nn.Module):
         with torch.cuda.amp.autocast(enabled=False):
             pred_img = transform_vgg(pred).float()
             target_img = transform_vgg(target).float()
-            if getattr(self, "vgg_input_mode", "legacy") == "rgb":
-                pred_img = pred_img * imagenet_std + imagenet_mean
-                target_img = target_img * imagenet_std + imagenet_mean
             # 原作者设置：VGG loss 使用 Gram style；content 不进入总 loss。
             loss_style = self.vgg_loss(pred_img, target_img)
             loss_vgg = loss_style
@@ -707,230 +643,8 @@ class Fontify(nn.Module):
         edge_target = self.improved_edge_detection(target)
         loss_edge = F.l1_loss(edge_pred, edge_target)
 
-        # Global, differentiable layout prior. Inputs are normalized; recover
-        # grayscale foreground probabilities before computing projections.
-        mean = imagenet_mean.to(dtype=pred.dtype)
-        std = imagenet_std.to(dtype=pred.dtype)
-        pred_rgb = (pred * std + mean).clamp(0, 1)
-        tgt_rgb = (tgts * std + mean).clamp(0, 1)
-        pred_gray_2d = 0.299 * pred_rgb[:, 0] + 0.587 * pred_rgb[:, 1] + 0.114 * pred_rgb[:, 2]
-        tgt_gray_2d = 0.299 * tgt_rgb[:, 0] + 0.587 * tgt_rgb[:, 1] + 0.114 * tgt_rgb[:, 2]
-        pred_fg = torch.sigmoid((0.9 - pred_gray_2d) * 10.0)
-        tgt_fg = torch.sigmoid((0.9 - tgt_gray_2d) * 10.0)
-        eps = pred_fg.new_tensor(1e-6)
-        pred_mass = pred_fg.sum((1, 2), keepdim=True) + eps
-        tgt_mass = tgt_fg.sum((1, 2), keepdim=True) + eps
-        pred_row = pred_fg.sum(2, keepdim=True) / pred_mass
-        tgt_row = tgt_fg.sum(2, keepdim=True) / tgt_mass
-        pred_col = pred_fg.sum(1, keepdim=True) / pred_mass
-        tgt_col = tgt_fg.sum(1, keepdim=True) / tgt_mass
-        h, w = pred_fg.shape[-2:]
-        yy = torch.linspace(-1, 1, h, device=pred.device, dtype=pred.dtype).view(1, h, 1)
-        xx = torch.linspace(-1, 1, w, device=pred.device, dtype=pred.dtype).view(1, 1, w)
-        pred_cx = (pred_fg * xx).sum((1, 2), keepdim=True) / pred_mass
-        tgt_cx = (tgt_fg * xx).sum((1, 2), keepdim=True) / tgt_mass
-        pred_cy = (pred_fg * yy).sum((1, 2), keepdim=True) / pred_mass
-        tgt_cy = (tgt_fg * yy).sum((1, 2), keepdim=True) / tgt_mass
-        loss_row = F.l1_loss(pred_row, tgt_row)
-        loss_col = F.l1_loss(pred_col, tgt_col)
-        if getattr(self, "structure_projection_mode", "legacy") == "sum":
-            # Sum distribution distance along its axis; retain batch averaging.
-            loss_row = loss_row * h
-            loss_col = loss_col * w
-        loss_centroid = F.l1_loss(pred_cx, tgt_cx) + F.l1_loss(pred_cy, tgt_cy)
-        loss_area = F.l1_loss(pred_fg.mean((1, 2)), tgt_fg.mean((1, 2)))
-        structure_terms = (loss_row, loss_col, loss_centroid, loss_area)
-        structure_coefficients = getattr(
-            self, "structure_coefficients", (1.0, 1.0, 1.0, 1.0)
-        )
-        loss_structure = sum(
-            coefficient * term
-            for coefficient, term in zip(structure_coefficients, structure_terms)
-        ) * getattr(self, "structure_common_scale", 1.0)
-
         phase, adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
-        structure_weight = getattr(self, 'structure_loss_weight', 0.0)
-        structure_warmup_epochs = getattr(self, 'structure_warmup_epochs', 0)
-        structure_warmup_duration = getattr(self, 'structure_warmup_duration', 0)
-        _, phase_epoch = self.get_loss_phase(epoch)
-
-        if phase_epoch < structure_warmup_epochs:
-            structure_weight_current = 0.0
-        elif structure_warmup_duration > 0 and phase_epoch < structure_warmup_epochs + structure_warmup_duration:
-            progress = (phase_epoch - structure_warmup_epochs) / structure_warmup_duration
-            structure_weight_current = structure_weight * progress
-        else:
-            structure_weight_current = structure_weight
-
-        # Fixed high-frequency supervision for brush strokes. It uses the same
-        # pixel-space masked region as reconstruction, then emphasizes strong
-        # target edges without letting the target weight contribute gradients.
-        detail_kernel_size = getattr(self, "detail_kernel_size", 5)
-        detail_sigma = getattr(self, "detail_sigma", 1.0)
-        detail_gradient_ratio = getattr(self, "detail_gradient_ratio", 0.5)
-        pred_gray = rgb_to_gray(pred_rgb)
-        tgt_gray = rgb_to_gray(tgt_rgb)
-        pred_high = highpass(pred_gray, detail_kernel_size, detail_sigma)
-        target_high = highpass(tgt_gray, detail_kernel_size, detail_sigma)
-        pred_gx, pred_gy = sobel_gradients(pred_gray)
-        target_gx, target_gy = sobel_gradients(tgt_gray)
-
-        # mask has already been expanded to pixel space and multiplied by valid.
-        detail_region = mask[:, :1].float()
-        detail_region_ratio = detail_region.mean().detach()
-        detail_region_counts = detail_region.flatten(1).sum(1)
-        target_response = target_high.abs().detach()
-        target_response = target_response / (
-            target_response.mean(dim=(-2, -1), keepdim=True) + 1e-6
-        )
-        detail_weight = torch.clamp(1.0 + 2.0 * target_response, max=3.0)
-        weighted_highpass_error = (
-            detail_weight * detail_region * (pred_high - target_high).abs()
-        )
-        gradient_error = (
-            detail_region
-            * (
-                (pred_gx - target_gx).abs()
-                + (pred_gy - target_gy).abs()
-            )
-        )
-        target_gradient_response = target_gx.abs() + target_gy.abs()
-
-        if getattr(self, "detail_per_sample_normalize", False):
-            detail_denom = detail_region_counts.clamp_min(1.0)
-            loss_highpass = (
-                weighted_highpass_error.flatten(1).sum(1) / detail_denom
-            ).mean()
-            loss_gradient = (
-                gradient_error.flatten(1).sum(1) / detail_denom
-            ).mean()
-            target_highpass_mean = (
-                (detail_region * target_high.abs()).flatten(1).sum(1)
-                / detail_denom
-            ).mean()
-            target_gradient_mean = (
-                (detail_region * target_gradient_response).flatten(1).sum(1)
-                / detail_denom
-            ).mean()
-        else:
-            detail_denom = detail_region.sum() + 1e-6
-            loss_highpass = weighted_highpass_error.sum() / detail_denom
-            loss_gradient = gradient_error.sum() / detail_denom
-            target_highpass_mean = (
-                (detail_region * target_high.abs()).sum() / detail_denom
-            )
-            target_gradient_mean = (
-                (detail_region * target_gradient_response).sum() / detail_denom
-            )
-
-        loss_detail = loss_highpass + detail_gradient_ratio * loss_gradient
-
-        detail_weight_target = getattr(self, "detail_loss_weight", 0.03)
-        detail_warmup_epochs = getattr(self, "detail_warmup_epochs", 4)
-        detail_warmup_duration = getattr(self, "detail_warmup_duration", 4)
-        if phase_epoch < detail_warmup_epochs:
-            detail_weight_current = 0.0
-        elif (
-            detail_warmup_duration > 0
-            and phase_epoch < detail_warmup_epochs + detail_warmup_duration
-        ):
-            progress = (
-                phase_epoch - detail_warmup_epochs
-            ) / detail_warmup_duration
-            detail_weight_current = detail_weight_target * progress
-        else:
-            detail_weight_current = detail_weight_target
-
-        if hasattr(self, "stage3_update"):
-            progress = min(1.0, self.stage3_update / 40.0)
-            structure_weight_current = structure_weight * progress
-            detail_weight_current = detail_weight_target * progress
-            edge_weight = 0.3 * progress
-
-        structure_weighted_contribution = loss_structure.detach() * (
-            structure_weight_current
-            if torch.is_tensor(structure_weight_current)
-            else loss_structure.new_tensor(structure_weight_current)
-        )
-        detail_weighted_contribution = loss_detail.detach() * (
-            detail_weight_current
-            if torch.is_tensor(detail_weight_current)
-            else loss_detail.new_tensor(detail_weight_current)
-        )
-        gradient_contribution = loss_gradient.detach() * (
-            detail_weight_current
-            if torch.is_tensor(detail_weight_current)
-            else loss_gradient.new_tensor(detail_weight_current)
-        ) * (
-            detail_gradient_ratio
-            if torch.is_tensor(detail_gradient_ratio)
-            else loss_gradient.new_tensor(detail_gradient_ratio)
-        )
-
-        loss = (
-            loss_l1l2
-            + loss_vgg
-            + edge_weight * loss_edge
-            + structure_weight_current * loss_structure
-            + detail_weight_current * loss_detail
-        )
-        if keep_loss_graph:
-            self.last_loss_graph = {
-                'total_weighted': loss,
-                'recon_weighted': loss_l1l2,
-                'style_weighted': loss_vgg,
-                'edge_weighted': edge_weight * loss_edge,
-                'structure_weighted': structure_weight_current * loss_structure,
-                'detail_weighted': detail_weight_current * loss_detail,
-                'structure': loss_structure,
-                'structure_row': loss_row,
-                'structure_col': loss_col,
-                'structure_centroid': loss_centroid,
-                'structure_area': loss_area,
-                'detail': loss_detail,
-                'highpass': loss_highpass,
-                'gradient': loss_gradient,
-                'highpass_weighted': detail_weight_current * loss_highpass,
-                'gradient_weighted': (
-                    detail_weight_current * detail_gradient_ratio * loss_gradient
-                ),
-            }
-
-        self.last_loss_components = {
-            'structure': loss_structure.detach(),
-            'structure_row': loss_row.detach(), 'structure_col': loss_col.detach(),
-            'structure_centroid': loss_centroid.detach(), 'structure_area': loss_area.detach(),
-            'structure_weight': structure_weight_current,
-            'structure_weighted': structure_weighted_contribution,
-            'detail': loss_detail.detach(),
-            'highpass': loss_highpass.detach(),
-            'gradient': loss_gradient.detach(),
-            'detail_weight': detail_weight_current,
-            'detail_weighted': detail_weighted_contribution,
-            'gradient_contribution': gradient_contribution,
-            'detail_region_ratio': detail_region_ratio,
-            'valid_ratio': valid_ratio,
-            'target_highpass_mean': target_highpass_mean.detach(),
-            'target_gradient_mean': target_gradient_mean.detach(),
-            'structure_row_grad_ok': float(
-                loss_row.requires_grad and loss_row.grad_fn is not None
-            ),
-            'structure_col_grad_ok': float(
-                loss_col.requires_grad and loss_col.grad_fn is not None
-            ),
-            'structure_centroid_grad_ok': float(
-                loss_centroid.requires_grad and loss_centroid.grad_fn is not None
-            ),
-            'structure_area_grad_ok': float(
-                loss_area.requires_grad and loss_area.grad_fn is not None
-            ),
-            'highpass_grad_ok': float(
-                loss_highpass.requires_grad and loss_highpass.grad_fn is not None
-            ),
-            'gradient_grad_ok': float(
-                loss_gradient.requires_grad and loss_gradient.grad_fn is not None
-            ),
-        }
+        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
 
         adv_loss = pred.new_tensor(0.0)
         if not no_gan:
@@ -951,12 +665,6 @@ class Fontify(nn.Module):
                 "recon": loss_l1l2.detach(),
                 "style": loss_style.detach(),
                 "edge": loss_edge.detach() * loss_edge.new_tensor(edge_weight),
-                "structure": loss_structure.detach() * loss_structure.new_tensor(
-                    structure_weight_current
-                ),
-                "detail": loss_detail.detach() * loss_detail.new_tensor(
-                    detail_weight_current
-                ),
                 "adv": adv_loss.detach() * adv_loss.new_tensor(adv_weight),
             }
             contrib_total = loss_l1l2.new_tensor(0.0)
@@ -971,23 +679,16 @@ class Fontify(nn.Module):
             print(f"[loss-dbg] epoch={epoch} phase={phase} step={self._dbg_step} "
                   f"raw: recon({self.loss_func})={scalar(loss_l1l2):.4f} "
                   f"style={scalar(loss_style):.4f} edge={scalar(loss_edge):.4f} "
-                  f"structure={scalar(loss_structure):.4f} "
-                  f"detail={scalar(loss_detail):.4f} "
                   f"adv={scalar(adv_loss):.4f} | "
                   f"w: recon=1.000 style=1.000 "
-                  f"edge={edge_weight:.3f} structure={structure_weight_current:.3f} "
-                  f"detail={detail_weight_current:.3f} adv={adv_weight:.3f} | "
+                  f"edge={edge_weight:.3f} adv={adv_weight:.3f} | "
                   f"contrib: recon={scalar(contribs['recon']):.4f} "
                   f"style={scalar(contribs['style']):.4f} "
                   f"edge={scalar(contribs['edge']):.4f} "
-                  f"structure={scalar(contribs['structure']):.4f} "
-                  f"detail={scalar(contribs['detail']):.4f} "
                   f"adv={scalar(contribs['adv']):.4f} | "
                   f"share%: recon={scalar(actual_shares['recon'])*100:.1f} "
                   f"style={scalar(actual_shares['style'])*100:.1f} "
                   f"edge={scalar(actual_shares['edge'])*100:.1f} "
-                  f"structure={scalar(actual_shares['structure'])*100:.1f} "
-                  f"detail={scalar(actual_shares['detail'])*100:.1f} "
                   f"adv={scalar(actual_shares['adv'])*100:.1f}", flush=True)
         # === 临时调试结束 ===
         return loss, loss_l1l2, loss_vgg
