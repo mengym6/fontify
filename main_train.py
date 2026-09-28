@@ -87,9 +87,6 @@ def get_args_parser():
     parser.add_argument('--mask_mix_probs', default=None, type=float, nargs=3,
                         help='训练遮盖比例: random JT-semantic BF-semantic，例如 0.7 0.2 0.1。'
                              '不设置则沿用原数据集遮盖逻辑')
-    parser.add_argument('--semantic_only_epochs', default=0, type=int,
-                        help='前 N 个 epoch 只用结体(JT)随机遮盖，BF 样本重定向到 JT；'
-                             'epoch>=N 后恢复 JT/BF 同步训练，JT 随机遮盖、BF 语义遮盖。0 表示不启用 JT-only 课程')
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
                         help='use checkpoint to save GPU memory')
 
@@ -320,8 +317,6 @@ def main(args, ds_init):
 
     # define the model
     model = models_train.__dict__[args.model]()
-    # curriculum 切换点：数据端从 JT-only 切到 JT/BF 同步训练，loss 端从禁用 edge/adv 切到 warmup
-    model.semantic_only_epochs = args.semantic_only_epochs
     if min(args.adv_warmup_epochs, args.edge_warmup_epochs, args.loss_warmup_duration) < 0:
         raise ValueError('loss warmup epochs and duration must be non-negative')
     if min(args.adv_weight_final, args.edge_weight_final) < 0:
@@ -395,7 +390,6 @@ def main(args, ds_init):
         num_mask_annotations_bf=args.num_mask_annotations_bf,
         num_mask_annotations_jt=args.num_mask_annotations_jt,
         mask_coverage_threshold=args.mask_coverage_threshold,
-        semantic_only_epochs=args.semantic_only_epochs,
     )
     if args.mask_mix_probs is not None:
         dataset_train_kwargs["mask_mix_probs"] = args.mask_mix_probs
@@ -537,7 +531,6 @@ def main(args, ds_init):
     start_time = time.time()
     gradient_monitor = GradientMonitor(args.output_dir, args.grad_log_interval, global_rank)
     for epoch in range(args.start_epoch, args.epochs):
-        dataset_train.set_epoch(epoch)  # 课程学习：让 dataset 知道当前 epoch
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
         train_stats = train_one_epoch(

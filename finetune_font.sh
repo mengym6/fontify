@@ -29,11 +29,10 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --input_size 896 448 \
     --augmentation_policy finetune \
     --adv_warmup_epochs 8 \
-    --edge_warmup_epochs 8 \
+    --edge_warmup_epochs 10 \
     --loss_warmup_duration 8 \
-    --adv_weight_final 0.4 \
-    --edge_weight_final 0.3 \
-    --no_gan \
+    --adv_weight_final 0.3 \
+    --edge_weight_final 0.2 \
     --save_freq 5 \
     --data_path $DATA_PATH/ \
     --json_path $DATA_PATH/train_json_new/*.json \
@@ -42,13 +41,11 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --log_dir models/$name/logs \
     --finetune $PRETRAIN_CKPT \
     --auto_resume \
-    --freeze_encoder \
-    --freeze_blocks 9 \
     --semantic_mask_dir $DATA_PATH/font/train/new \
     --num_mask_annotations_bf 11 \
     --num_mask_annotations_jt 1 \
     --mask_coverage_threshold 0.1 \
-    --semantic_only_epochs 0 \
     --val_tb_image_limit 76 \
     --val_tb_images_per_batch 2 \
     --grad_log_interval 5
+    #--mask_mix_probs 0.8 0.0 0.2

@@ -119,7 +119,7 @@ def test_baseline_loss_and_backward(no_gan):
             return value.transpose(1, 2).reshape(-1, 3, 16, 8)
 
         def get_dynamic_loss_weights(self, epoch):
-            return "jt_bf_sync", 0.4, 0.3
+            return 0.4, 0.3
 
         def improved_edge_detection(self, value):
             return value
@@ -316,7 +316,6 @@ def test_pairdataset_enforces_style_and_character(tmp_path):
         masked_position_generator=MaskingGenerator((2, 1), num_masking_patches=1),
         half_mask_ratio=1.0,
         strict_style_pairing=True,
-        semantic_only_epochs=0,
     )
     for index in range(4):
         _, target, _, _ = dataset[index]

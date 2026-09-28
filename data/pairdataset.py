@@ -44,7 +44,6 @@ class PairDataset(VisionDataset):
         num_mask_annotations_bf: int = 3,
         num_mask_annotations_jt: int = 1,
         mask_coverage_threshold: float = 0.5,
-        semantic_only_epochs: int = 0,
         mask_mix_probs: Optional[List[float]] = None,
         annotation_subdir: str = "annotations",
         annotation_filename: str = "instances_default.json",
@@ -86,7 +85,6 @@ class PairDataset(VisionDataset):
         self.num_mask_annotations_bf = num_mask_annotations_bf
         self.num_mask_annotations_jt = num_mask_annotations_jt
         self.mask_coverage_threshold = mask_coverage_threshold
-        self.semantic_only_epochs = semantic_only_epochs
         self.annotation_subdir = annotation_subdir
         self.annotation_filename = annotation_filename
         self.use_annotation_masks = semantic_mask_dir is not None if use_annotation_masks is None else use_annotation_masks
@@ -103,12 +101,6 @@ class PairDataset(VisionDataset):
             if prob_sum <= 0:
                 raise ValueError("mask_mix_probs sum must be positive")
             self.mask_mix_probs = [p / prob_sum for p in mask_mix_probs]
-        self.current_epoch = 0  # 由训练循环每个 epoch 更新
-        # 课程学习用：前期只抽 JT；切换后恢复原始采样，JT/BF 同步训练。
-        self._jt_indices = [i for i, p in enumerate(self.pairs) if 'JT' in p.get('type', '')]
-        self._jt_weights = [self.weights[i] for i in self._jt_indices]
-        self._bf_indices = [i for i, p in enumerate(self.pairs) if 'BF' in p.get('type', '')]
-        self._bf_weights = [self.weights[i] for i in self._bf_indices]
         self._semantic_indices_by_type = {}
         self._jt_semantic_indices = []
         self._bf_semantic_indices = []
@@ -128,10 +120,6 @@ class PairDataset(VisionDataset):
                 raise ValueError("mask_mix_probs requests JT semantic masks, but no JT semantic mask files were found")
             if self.mask_mix_probs[2] > 0 and not self._bf_semantic_indices:
                 raise ValueError("mask_mix_probs requests BF semantic masks, but no BF semantic mask files were found")
-
-    def set_epoch(self, epoch: int) -> None:
-        """训练循环每个 epoch 调用，供课程学习判断当前阶段"""
-        self.current_epoch = epoch
 
     def _load_image(self, path: str) -> Image.Image:
         while True:
@@ -423,18 +411,7 @@ class PairDataset(VisionDataset):
                 mask_mode = 'jt_semantic' if 'JT' in pair_type_hint else 'bf_semantic'
             else:
                 mask_mode = 'random'
-        # curriculum 仅训练集启用：前 N 个 epoch 只用 JT；
-        # epoch>=N 后恢复原始采样分布，让 JT 随机遮盖和 BF 语义遮盖同步训练。
-        # 验证集没有 semantic_mask_dir，不重定向。
-        if (self.mask_mix_probs is None
-                and (self.semantic_mask_dir is not None or self.use_annotation_masks)
-                and self.semantic_only_epochs > 0):
-            pair_type_cur = self.pairs[index].get('type', '')
-            if (self.current_epoch < self.semantic_only_epochs
-                    and self._jt_indices
-                    and 'JT' not in pair_type_cur):
-                index = random.choices(self._jt_indices, weights=self._jt_weights, k=1)[0]
-        elif mask_mode in ("jt_semantic", "bf_semantic") and source_dataset != 'calliphase':
+        if mask_mode in ("jt_semantic", "bf_semantic") and source_dataset != 'calliphase':
             index = self._sample_semantic_index(mask_mode)
         pair = self.pairs[index]
         image = self._load_image(pair['image_path'])

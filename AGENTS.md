@@ -35,7 +35,7 @@ Fontify 是一个基于上下文学习（in-context learning）的单/少样本�
 
 每个 JSON 是字典列表，至少包含 `image_path`（参考/已知字） 、`target_path`（目标字体字形）和 `type`（样本类别，如 `font_<字体名>`、JT、BF）。路径相对 `--data_path`；图像被转为 RGB。默认 `use_two_pairs=True`：同一 `type` 再随机采样一对，沿高度拼接为 `(3, 2H, W)`，因此默认模型输入尺寸为 `896x448`，patch 为 `16`，patch 网格为 `56x28`、共 `1568` 个 token。返回 `(image, target, mask, valid)`，图像经 ImageNet mean/std 归一化，`mask` 是 `(56,28)` 的 0/1 patch mask，1 表示遮盖，`valid` 与 target 同形状。
 
-训练遮罩可为：`MaskingGenerator` 随机块、下半图强制遮盖（`half_mask_ratio`）、由 `semantic_masks/*.npy` 或 COCO annotation 生成的 JT/BF 语义遮罩。`mask_mix_probs` 按 `random, JT semantic, BF semantic` 归一化抽样；`semantic_only_epochs` 可使早期只采样 JT 随机遮盖。验证集通过 `half_mask_ratio=1.0` 强制遮盖目标区域。训练采样器是带 JSON 文件均衡权重的 `WeightedRandomSampler`，再包装为分布式采样器。
+训练遮罩可为：`MaskingGenerator` 随机块、下半图强制遮盖（`half_mask_ratio`）、由 `semantic_masks/*.npy` 或 COCO annotation 生成的 JT/BF 语义遮罩。`mask_mix_probs` 按 `random, JT semantic, BF semantic` 归一化抽样。验证集通过 `half_mask_ratio=1.0` 强制遮盖目标区域。（2026-09-28：已移除 `semantic_only_epochs` 课程学习——原先"前 N 个 epoch 只用 JT 随机遮盖、BF 重定向到 JT"的逻辑及其 `set_epoch`/`current_epoch` 支撑代码全部删除，对齐原作者采样行为。）训练采样器是带 JSON 文件均衡权重的 `WeightedRandomSampler`，再包装为分布式采样器。
 
 阶段 2 的 `train_json_mix`/`val_json_mix` 是固定 1:1 chinese/CalliPhase 混合清单。chinese 样本的 `image_path` 使用 `ttf/source` 下与 target 同名的字形图；CalliPhase 样本优先使用自身的 `semantic_masks/*.npy`。BF 的 `.npy` 当前按“每个非 text 标注一层”生成，因此 `num_mask_annotations_bf` 表示从全部起笔/中笔/收笔标签中随机抽取的单标签数量，而不是抽取笔画种类。生成固定混合 JSON 使用 `tools/build_stage2_mix_json.py`。
 
@@ -47,7 +47,7 @@ Fontify 是一个基于上下文学习（in-context learning）的单/少样本�
 
 $$L=L_{recon}+L_{style}+w_{edge}L_{edge}+w_{structure}L_{structure}+w_{detail}L_{detail}+w_{adv}L_{adv}.$$
 
-`L_recon` 默认是仅在 `mask*valid` 区域计算的 Smooth-L1（`loss_func=smoothl1`）；`L_style` 是冻结 VGG19 特征的 Gram style L1（VGG content 不计入总损失）；`L_edge` 是温和 Gaussian+Sobel 边缘图的 L1；`L_structure` 是反归一化灰度前景的行/列投影、质心和面积损失；`L_detail` 是固定 Gaussian 高通与 Sobel 梯度损失；`L_adv` 是判别器对生成图判为真的 BCE-with-logits。JT-only 阶段 edge/adv 权重为 0；同步阶段按起始 epoch 和持续时间线性 warmup，默认最终权重 `adv=0.4`、`edge=0.3`。即使 `w_adv=0`，判别器分支仍保留在生成器计算图中以满足 DDP static graph。
+`L_recon` 默认是仅在 `mask*valid` 区域计算的 Smooth-L1（`loss_func=smoothl1`）；`L_style` 是冻结 VGG19 特征的 Gram style L1（VGG content 不计入总损失）；`L_edge` 是温和 Gaussian+Sobel 边缘图的 L1；`L_structure` 是反归一化灰度前景的行/列投影、质心和面积损失；`L_detail` 是固定 Gaussian 高通与 Sobel 梯度损失；`L_adv` 是判别器对生成图判为真的 BCE-with-logits。edge/adv 按全局 epoch 线性 warmup（`adv_warmup_epochs`、`edge_warmup_epochs` 起点，`loss_warmup_duration` 时长），默认最终权重 `adv=0.4`、`edge=0.3`；`recon`/`style` 权重恒为 1。（2026-09-28：已移除课程学习 phase——原先 `get_loss_phase` 的 `jt_random`/`jt_bf_sync` 分阶段、以及 warmup 计时在阶段切换处归零重算的逻辑全部删除，现 `get_dynamic_loss_weights(epoch)` 直接按全局 epoch warmup，返回 `(adv_weight, edge_weight)`。）即使 `w_adv=0`，判别器分支仍保留在生成器计算图中以满足 DDP static graph。
 
 当前阶段 2 的 `finetune_loss_diag.sh` 使用 `--no_gan`，实际训练总损失不包含有效 `L_adv`。detail loss 的代码默认权重为 `0.03`，使用 `kernel_size=5`、`sigma=1.0` 的高通和默认 `gradient_ratio=0.5` 的 Sobel 项；诊断脚本的显式覆盖值见下节，它与 structure loss 都只在 `mask*valid` 对应的像素区域内计算。若开启 GAN，注意当前非 DeepSpeed 路径中 D 每个 micro-batch 更新一次，而 G 每 `accum_iter=32` 更新一次；这会显著改变 GAN 动态，不能把阶段 2 的 `--no_gan` 配置直接去掉后视为同等实验。
 
