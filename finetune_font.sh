@@ -6,7 +6,7 @@
 export CUDA_VISIBLE_DEVICES=0,1
 
 DATA_PATH=fontdata_example
-name=finetune_gan_nojt/freeze_baseline
+name=finetune_gan_nojt_freeze_baseline
 NO_JT=1  # 设为 0 时，恢复 JT 语义遮盖
 
 NO_JT_ARGS=()
