@@ -677,7 +677,7 @@ class Fontify(nn.Module):
                   f"edge={scalar(actual_shares['edge'])*100:.1f} "
                   f"adv={scalar(actual_shares['adv'])*100:.1f}", flush=True)
         # === 临时调试结束 ===
-        return loss, loss_l1l2, loss_vgg
+        return loss, loss_l1l2, loss_vgg, loss_edge, adv_loss
 
     def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False):
         #imgs = self.tps(imgs)
@@ -688,10 +688,11 @@ class Fontify(nn.Module):
             bool_masked_pos = bool_masked_pos.flatten(1).to(torch.bool)
         latent = self.forward_encoder(imgs, tgts, bool_masked_pos)
         pred = self.forward_decoder(latent)  # [N, L, p*p*3]
-        loss, loss_l1l2, loss_vgg = self.forward_loss(
+        loss, loss_l1l2, loss_vgg, loss_edge, adv_loss = self.forward_loss(
             imgs, pred, tgts, bool_masked_pos, valid, epoch=epoch, no_gan=no_gan
         )
-        return loss, loss_l1l2, loss_vgg, self.patchify(pred), bool_masked_pos, pred
+        return (loss, loss_l1l2, loss_vgg, loss_edge, adv_loss,
+                self.patchify(pred), bool_masked_pos, pred)
 
 
 

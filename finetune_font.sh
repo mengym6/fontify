@@ -6,7 +6,13 @@
 export CUDA_VISIBLE_DEVICES=0,1
 
 DATA_PATH=fontdata_example
-name=finetune_calliphase_baseline
+name=finetune_gan_nojt/freeze_baseline
+NO_JT=1  # 设为 0 时，恢复 JT 语义遮盖
+
+NO_JT_ARGS=()
+if [ "$NO_JT" -eq 1 ]; then
+    NO_JT_ARGS=(--no_jt)
+fi
 
 PRETRAIN_CKPT=models/vit_base_font/checkpoint-14.pth
 
@@ -44,6 +50,7 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --semantic_mask_dir $DATA_PATH/font/train/new \
     --num_mask_annotations_bf 11 \
     --num_mask_annotations_jt 1 \
+    "${NO_JT_ARGS[@]}" \
     --mask_coverage_threshold 0.1 \
     --val_tb_image_limit 76 \
     --val_tb_images_per_batch 2 \

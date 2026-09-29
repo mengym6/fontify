@@ -261,7 +261,16 @@ def train_one_epoch(model: torch.nn.Module,
         valid = valid.to(device, non_blocking=True, dtype=torch.bfloat16)
 
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            loss, loss_l1l2, loss_vgg, y, mask, pred = model(
+            (
+                loss,
+                loss_l1l2,
+                loss_vgg,
+                loss_edge,
+                adv_loss,
+                y,
+                mask,
+                pred,
+            ) = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
                 valid=valid, epoch=epoch, no_gan=args.no_gan
             )
@@ -362,6 +371,8 @@ def train_one_epoch(model: torch.nn.Module,
         loss_value_reduce = misc.all_reduce_mean(loss_value)
         loss_l1l2_reduce = misc.all_reduce_mean(loss_l1l2)
         loss_vgg_reduce = misc.all_reduce_mean(loss_vgg)
+        loss_edge_reduce = misc.all_reduce_mean(loss_edge)
+        loss_adv_reduce = misc.all_reduce_mean(adv_loss)
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
                 f.write(
@@ -397,6 +408,8 @@ def train_one_epoch(model: torch.nn.Module,
             log_writer.add_scalars('train_loss_detail', {
                 'loss_l1l2': loss_l1l2_reduce,
                 'loss_vgg': loss_vgg_reduce,
+                'loss_edge': loss_edge_reduce,
+                'loss_adv': loss_adv_reduce,
             }, epoch_1000x)
 
 
@@ -496,7 +509,16 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
 
         # compute output
         with torch.cuda.amp.autocast(dtype=torch.bfloat16):
-            loss, loss_l1l2, loss_vgg, y, mask, pred = model(
+            (
+                loss,
+                loss_l1l2,
+                loss_vgg,
+                loss_edge,
+                adv_loss,
+                y,
+                mask,
+                pred,
+            ) = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
                 valid=valid, epoch=epoch, no_gan=args.no_gan
             )
@@ -504,6 +526,8 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         metric_logger.update(loss=loss.item())
         metric_logger.update(loss_l1l2=loss_l1l2)
         metric_logger.update(loss_vgg=loss_vgg)
+        metric_logger.update(loss_edge=loss_edge)
+        metric_logger.update(loss_adv=adv_loss)
         """
             在tensorboard内展示图片nchw->nhwc
         """

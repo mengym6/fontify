@@ -50,6 +50,7 @@ class PairDataset(VisionDataset):
         use_annotation_masks: Optional[bool] = None,
         annotation_mask_size: int = 448,
         strict_style_pairing: bool = False,
+        no_jt: bool = False,
     ) -> None:
         super().__init__(root, transforms, transform, target_transform)
 
@@ -91,6 +92,7 @@ class PairDataset(VisionDataset):
         self.annotation_mask_size = annotation_mask_size
         self._annotation_cache = {}
         self.mask_mix_probs = None
+        self.no_jt = no_jt
         if mask_mix_probs is not None:
             if len(mask_mix_probs) != 3:
                 raise ValueError("mask_mix_probs must contain 3 values: random, JT semantic, BF semantic")
@@ -105,7 +107,9 @@ class PairDataset(VisionDataset):
         self._jt_semantic_indices = []
         self._bf_semantic_indices = []
         for i, pair in enumerate(self.pairs):
-            if not self._has_semantic_source(pair):
+            if not self._has_semantic_source(pair) and not (
+                self.no_jt and 'JT' in pair.get('type', '')
+            ):
                 continue
             pair_type = pair.get('type', '')
             self._semantic_indices_by_type.setdefault(pair_type, []).append(i)
@@ -117,7 +121,9 @@ class PairDataset(VisionDataset):
         self._bf_semantic_weights = [self.weights[i] for i in self._bf_semantic_indices]
         if self.mask_mix_probs is not None:
             if self.mask_mix_probs[1] > 0 and not self._jt_semantic_indices:
-                raise ValueError("mask_mix_probs requests JT semantic masks, but no JT semantic mask files were found")
+                raise ValueError(
+                    "mask_mix_probs requests JT samples, but none were found"
+                )
             if self.mask_mix_probs[2] > 0 and not self._bf_semantic_indices:
                 raise ValueError("mask_mix_probs requests BF semantic masks, but no BF semantic mask files were found")
 
@@ -414,6 +420,8 @@ class PairDataset(VisionDataset):
         if mask_mode in ("jt_semantic", "bf_semantic") and source_dataset != 'calliphase':
             index = self._sample_semantic_index(mask_mode)
         pair = self.pairs[index]
+        if self.no_jt and 'JT' in pair.get('type', ''):
+            mask_mode = 'random'
         image = self._load_image(pair['image_path'])
         target = self._load_image(pair['target_path'])
 
@@ -495,6 +503,8 @@ class PairDataset(VisionDataset):
         else:
             # train：按 half_mask_ratio 概率全程走 half mask，JT/BF 都生效。
             use_half_mask = torch.rand(1)[0] < self.half_mask_ratio
+        if self.no_jt and 'JT' in pair_type:
+            use_half_mask = False
         if (self.transforms_seccrop is None) or use_half_mask:
             pass
         else:

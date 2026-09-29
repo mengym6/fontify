@@ -87,6 +87,11 @@ def get_args_parser():
     parser.add_argument('--mask_mix_probs', default=None, type=float, nargs=3,
                         help='训练遮盖比例: random JT-semantic BF-semantic，例如 0.7 0.2 0.1。'
                              '不设置则沿用原数据集遮盖逻辑')
+    parser.add_argument('--no_jt', action='store_true',
+                        help=(
+                            '训练时 JT（结体）样本使用随机遮盖，'
+                            '不使用 JT 语义遮盖'
+                        ))
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
                         help='use checkpoint to save GPU memory')
 
@@ -390,6 +395,7 @@ def main(args, ds_init):
         num_mask_annotations_bf=args.num_mask_annotations_bf,
         num_mask_annotations_jt=args.num_mask_annotations_jt,
         mask_coverage_threshold=args.mask_coverage_threshold,
+        no_jt=args.no_jt,
     )
     if args.mask_mix_probs is not None:
         dataset_train_kwargs["mask_mix_probs"] = args.mask_mix_probs
@@ -559,7 +565,9 @@ def main(args, ds_init):
             if log_writer is not None:
                 log_writer.flush()
                 log_writer.add_scalars('test_loss', {
-                    'loss': test_stats['loss']
+                    'loss': test_stats['loss'],
+                    'loss_edge': test_stats['loss_edge'],
+                    'loss_adv': test_stats['loss_adv'],
                 }, epoch)
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")

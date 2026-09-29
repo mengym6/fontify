@@ -8,6 +8,7 @@ import sys
 import types
 from pathlib import Path
 
+import numpy as np
 import pytest
 import torch
 from PIL import Image
@@ -142,15 +143,19 @@ def test_baseline_loss_and_backward(no_gan):
     target = torch.rand_like(pred) + 1
     mask = torch.zeros(2, 128)
     mask[:, -16:] = 1
-    loss, recon, style = forward(
+    loss, recon, style, edge, adv = forward(
         pred, pred, target, mask, torch.ones_like(pred), no_gan=no_gan
     )
-    expected = recon + style + 0.3 * F.l1_loss(pred, target)
+    torch.testing.assert_close(edge, F.l1_loss(pred, target))
+    expected = recon + style + 0.3 * edge
     if not no_gan:
         logits = model.discriminator(pred).squeeze(1)
-        expected += 0.4 * F.binary_cross_entropy_with_logits(
+        torch.testing.assert_close(adv, F.binary_cross_entropy_with_logits(
             logits, torch.ones_like(logits)
-        )
+        ))
+        expected += 0.4 * adv
+    else:
+        assert adv.item() == 0
     torch.testing.assert_close(loss, expected)
     loss.backward()
     assert torch.isfinite(pred.grad).all() and pred.grad.abs().sum() > 0
@@ -321,3 +326,87 @@ def test_pairdataset_enforces_style_and_character(tmp_path):
         _, target, _, _ = dataset[index]
         top, bottom = target[0, :8].mean(), target[0, 8:].mean()
         assert abs((top - bottom).item()) == pytest.approx(1 / 255, abs=1e-6)
+
+
+@pytest.mark.parametrize("source_dataset", [None, "calliphase"])
+def test_no_jt_uses_random_mask_for_jt_and_keeps_bf_semantic(
+    tmp_path, source_dataset
+):
+    from data import pair_transforms
+    from data.pairdataset import PairDataset
+    from util.masking_generator import MaskingGenerator
+
+    records = []
+    for pair_type in ("JT", "BF"):
+        name = f"{pair_type}.png"
+        Image.new("RGB", (16, 32), (255, 255, 255)).save(tmp_path / name)
+        np.save(tmp_path / f"{pair_type}.npy", np.ones((1, 32, 16)))
+        pair = {
+            "image_path": name,
+            "target_path": name,
+            "semantic_mask_path": f"{pair_type}.npy",
+            "type": pair_type,
+        }
+        if source_dataset is not None:
+            pair["source_dataset"] = source_dataset
+        records.append(pair)
+    json_path = tmp_path / "train.json"
+    json_path.write_text(json.dumps(records))
+    transform = pair_transforms.Compose([pair_transforms.ToTensor()])
+    dataset = PairDataset(
+        str(tmp_path),
+        [str(json_path)],
+        transform=transform,
+        masked_position_generator=MaskingGenerator(
+            (2, 1), num_masking_patches=1
+        ),
+        use_two_pairs=False,
+        half_mask_ratio=0.0,
+        no_jt=True,
+    )
+    _, _, jt_mask, _ = dataset[0]
+    _, _, bf_mask, _ = dataset[1]
+    assert jt_mask.shape == (2, 1) and jt_mask.sum() == 1
+    assert bf_mask.shape == (2, 1) and bf_mask.sum() == 2
+
+    dataset.half_mask_ratio = 1.0
+    _, _, jt_mask, _ = dataset[0]
+    assert jt_mask.sum() == 1
+
+    dataset.no_jt = False
+    dataset.half_mask_ratio = 0.0
+    _, _, jt_semantic_mask, _ = dataset[0]
+    assert jt_semantic_mask.sum() == 2
+
+
+def test_no_jt_mask_mix_keeps_jt_sample_without_annotation(tmp_path):
+    from data import pair_transforms
+    from data.pairdataset import PairDataset
+    from util.masking_generator import MaskingGenerator
+
+    records = []
+    for pair_type, color in (("JT", (255, 0, 0)), ("BF", (0, 255, 0))):
+        name = f"{pair_type}.png"
+        Image.new("RGB", (16, 32), color).save(tmp_path / name)
+        records.append({
+            "image_path": name,
+            "target_path": name,
+            "type": pair_type,
+        })
+    json_path = tmp_path / "train.json"
+    json_path.write_text(json.dumps(records))
+    dataset = PairDataset(
+        str(tmp_path),
+        [str(json_path)],
+        transform=pair_transforms.Compose([pair_transforms.ToTensor()]),
+        masked_position_generator=MaskingGenerator(
+            (2, 1), num_masking_patches=1
+        ),
+        use_two_pairs=False,
+        mask_mix_probs=[0.0, 1.0, 0.0],
+        no_jt=True,
+    )
+    _, target, mask, _ = dataset[1]
+    assert target[0].mean().item() == pytest.approx(1.0)
+    assert target[1].mean().item() == pytest.approx(0.0)
+    assert mask.sum() == 1
