@@ -42,6 +42,11 @@ class PadToSquare:
         self.fill = fill
 
     def __call__(self, img, tgt, interpolation1=None, interpolation2=None, mask=None):
+        if mask is not None and mask.size != tgt.size:
+            raise ValueError(
+                f"Semantic mask size {mask.size} differs from target {tgt.size}"
+            )
+
         def _pad(image, fill):
             w, h = image.size
             size = max(w, h)
@@ -356,4 +361,3 @@ class GaussianBlur(object):
     def __repr__(self) -> str:
         s = f"{self.__class__.__name__}( sigma={self.sigma})"
         return s
-

@@ -6,7 +6,7 @@ script traverses every font folder under ``fontdata_example/font/train/new``:
 
   <font>/annotations/instances_default.json
   <font>/images/*.png
-  -> <font>/images_text_denoised/*.png (448x448)
+  -> <font>/images_text_denoised/*.png (center-padded, 448x448)
 
 Default mode preserves original pixels inside the text mask and sets everything
 outside the mask to white. Set ``MODE = "mask"`` to rebuild pure black glyphs
@@ -279,6 +279,15 @@ def flatten_to_rgb(image: Image.Image) -> Image.Image:
     return image.convert("RGB")
 
 
+def pad_to_square(image: Image.Image, fill: tuple[int, int, int]) -> Image.Image:
+    """Center-pad using the same offsets as semantic mask generation."""
+    width, height = image.size
+    side = max(width, height)
+    square = Image.new(image.mode, (side, side), fill)
+    square.paste(image, ((side - width) // 2, (side - height) // 2))
+    return square
+
+
 def apply_text_mask(image: Image.Image, mask: Image.Image, mode: str) -> Image.Image:
     if mode == "mask":
         result = Image.new("RGB", image.size, "white")
@@ -371,6 +380,7 @@ def process_font_dir(font_dir: Path, config: Config) -> tuple[int, int]:
                     feather_radius=max(0.0, config.feather_radius),
                 )
                 result = apply_text_mask(image, mask, config.mode)
+                result = pad_to_square(result, (255, 255, 255))
                 result = result.resize(config.output_size, Image.Resampling.LANCZOS)
                 out_path = output_path_for(output_dir, file_name)
                 result.save(out_path)

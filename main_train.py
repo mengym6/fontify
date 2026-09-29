@@ -268,7 +268,7 @@ def build_data_transforms(args):
         ])
     else:
         # 阶段2混合数据里 chinese target 是 64x64，CalliPhase 是 448x448。
-        # 这里只做等比垫白和确定性缩放，不引入随机增强，避免 collate 尺寸冲突。
+        # target 与语义 mask 共用同一次轻微裁剪和缩放参数。
         transform_train = pair_transforms.Compose([
             pair_transforms.PadToSquare(fill=255),
             pair_transforms.RandomResizedCrop(
@@ -566,8 +566,6 @@ def main(args, ds_init):
                 log_writer.flush()
                 log_writer.add_scalars('test_loss', {
                     'loss': test_stats['loss'],
-                    'loss_edge': test_stats['loss_edge'],
-                    'loss_adv': test_stats['loss_adv'],
                 }, epoch)
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")

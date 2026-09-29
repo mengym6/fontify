@@ -241,6 +241,8 @@ def train_one_epoch(model: torch.nn.Module,
 
     accum_iter = args.accum_iter
     num_updates = 0
+    raw_model = model.module if hasattr(model, "module") else model
+    adv_weight, edge_weight = raw_model.get_dynamic_loss_weights(epoch)
 
     optimizer.zero_grad()
 
@@ -371,8 +373,9 @@ def train_one_epoch(model: torch.nn.Module,
         loss_value_reduce = misc.all_reduce_mean(loss_value)
         loss_l1l2_reduce = misc.all_reduce_mean(loss_l1l2)
         loss_vgg_reduce = misc.all_reduce_mean(loss_vgg)
-        loss_edge_reduce = misc.all_reduce_mean(loss_edge)
-        loss_adv_reduce = misc.all_reduce_mean(adv_loss)
+        # Match the contributions actually added to the generator loss.
+        loss_edge_reduce = misc.all_reduce_mean(loss_edge * edge_weight)
+        loss_adv_reduce = misc.all_reduce_mean(adv_loss * adv_weight)
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
                 f.write(
@@ -408,8 +411,8 @@ def train_one_epoch(model: torch.nn.Module,
             log_writer.add_scalars('train_loss_detail', {
                 'loss_l1l2': loss_l1l2_reduce,
                 'loss_vgg': loss_vgg_reduce,
-                'loss_edge': loss_edge_reduce,
-                'loss_adv': loss_adv_reduce,
+                'loss_edge_weighted': loss_edge_reduce,
+                'loss_adv_weighted': loss_adv_reduce,
             }, epoch_1000x)
 
 
@@ -513,8 +516,8 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                 loss,
                 loss_l1l2,
                 loss_vgg,
-                loss_edge,
-                adv_loss,
+                _loss_edge,
+                _adv_loss,
                 y,
                 mask,
                 pred,
@@ -526,8 +529,6 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         metric_logger.update(loss=loss.item())
         metric_logger.update(loss_l1l2=loss_l1l2)
         metric_logger.update(loss_vgg=loss_vgg)
-        metric_logger.update(loss_edge=loss_edge)
-        metric_logger.update(loss_adv=adv_loss)
         """
             在tensorboard内展示图片nchw->nhwc
         """

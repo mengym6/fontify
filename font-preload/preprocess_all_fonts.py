@@ -6,8 +6,9 @@ Default flow:
 2. images -> images_white_bg_v1
 3. images_white_bg + images_white_bg_v1 -> images_white_bg_mask_denoised
 4. resize images_white_bg_mask_denoised in place to 448x448
-5. annotations/*.json -> semantic_masks/*.npy
-6. regenerate train_json_new/ and val_json_new/
+5. images + text annotations -> center-padded images_text_denoised/*.png
+6. annotations/*.json -> center-padded semantic_masks/*.npy
+7. regenerate train_json_new/ and val_json_new/
 """
 
 from __future__ import annotations
@@ -15,12 +16,16 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import importlib
+from dataclasses import replace
 from pathlib import Path
 
 from preprocess_common import DEFAULT_NEW_DIR, REPO_ROOT
 
 
-STAGES = ("white-bg", "white-bg-v1", "denoise", "resize", "semantic", "json")
+STAGES = (
+    "white-bg", "white-bg-v1", "denoise", "resize", "text-denoise",
+    "semantic", "json",
+)
 
 
 def run_generate_json():
@@ -75,14 +80,20 @@ def main():
         pad_and_resize.NEW_DIR = new_dir
         pad_and_resize.main()
 
+    if "text-denoise" in stages:
+        print("\n=== 5. center-pad text-denoised training targets ===")
+        text_denoise = importlib.import_module("denoise_by_text_annotation")
+        config = replace(text_denoise.default_config(), new_dir=new_dir)
+        text_denoise.process_all_fonts(config)
+
     if "semantic" in stages:
-        print("\n=== 5. annotations JSON -> semantic_masks ===")
+        print("\n=== 6. annotations JSON -> semantic_masks ===")
         render_semantic_mask = importlib.import_module("render_semantic_mask")
         render_semantic_mask.NEW_DIR = new_dir
         render_semantic_mask.batch_mode(verbose=True)
 
     if "json" in stages:
-        print("\n=== 6. regenerate train/val JSON ===")
+        print("\n=== 7. regenerate train/val JSON ===")
         run_generate_json()
 
 

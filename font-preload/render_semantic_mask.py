@@ -14,6 +14,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from PIL import Image
 try:
     from pycocotools import mask as mask_util
 except ImportError:
@@ -103,18 +104,18 @@ def render_polygon(segmentation, h, w):
 
 
 def pad_and_resize_mask(mask, target_size):
-    """与 pad_and_resize.py 相同的空间变换，但用 NEAREST 插值"""
-    h, w = mask.shape[:2]
-    max_side = max(h, w)
-    # 居中 pad 到正方形（fill=0，即背景）
-    square = np.zeros((max_side, max_side), dtype=np.uint8)
-    offset_x = (max_side - w) // 2
-    offset_y = (max_side - h) // 2
-    square[offset_y:offset_y + h, offset_x:offset_x + w] = mask
-    # resize 到目标尺寸
-    resized = cv2.resize(square, (target_size, target_size),
-                         interpolation=cv2.INTER_NEAREST)
-    return resized
+    """Center-pad like the target image, then resize without label blending."""
+    height, width = mask.shape
+    side = max(width, height)
+    square = Image.new("L", (side, side), 0)
+    square.paste(
+        Image.fromarray(mask.astype(np.uint8), mode="L"),
+        ((side - width) // 2, (side - height) // 2),
+    )
+    resized = square.resize(
+        (target_size, target_size), Image.Resampling.NEAREST
+    )
+    return np.asarray(resized, dtype=np.uint8)
 
 
 def extract_stroke_name(category_name):
@@ -248,7 +249,7 @@ def process_font_dir(font_dir: Path, verbose=False):
                 print(f"    [跳过] {file_name}：无有效标注")
             continue
 
-        # 每层独立 pad + resize
+        # Apply the target PNG's center-padding geometry to each layer.
         resized_layers = []
         for layer in layers:
             resized = pad_and_resize_mask(layer, TARGET_SIZE)
@@ -286,7 +287,7 @@ def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: 
 
     print(f"    标注数量：{layers.shape[0]}")
 
-    # 逐层 pad+resize，合并后统计覆盖率
+    # Use the same center-padding geometry as the training target PNG.
     resized_layers = []
     for layer in layers:
         resized = pad_and_resize_mask(layer, TARGET_SIZE)
@@ -297,19 +298,13 @@ def test_single(font_dir: Path, img_info: dict, annotations: list, text_cat_id: 
     coverage = np.sum(combined > 0) / (TARGET_SIZE ** 2) * 100
     print(f"    全部合并覆盖率：{coverage:.1f}%")
 
-    # 加载原图做叠加对比
-    orig_img_path = font_dir / IMAGES_SUBDIR / img_info['file_name']
+    # Compare against the image actually referenced by training JSON.
+    orig_img_path = font_dir / "images_text_denoised" / img_info['file_name']
     overlay = None
     orig_resized = None
     if orig_img_path.exists():
         orig = cv2.imread(str(orig_img_path), cv2.IMREAD_GRAYSCALE)
-        h, w = orig.shape[:2]
-        max_side = max(h, w)
-        square = np.full((max_side, max_side), 255, dtype=np.uint8)
-        ox, oy = (max_side - w) // 2, (max_side - h) // 2
-        square[oy:oy+h, ox:ox+w] = orig
-        orig_resized = cv2.resize(square, (TARGET_SIZE, TARGET_SIZE),
-                                  interpolation=cv2.INTER_AREA)
+        orig_resized = orig
         overlay = cv2.cvtColor(orig_resized, cv2.COLOR_GRAY2BGR)
         red_layer = np.zeros_like(overlay)
         red_layer[:, :, 2] = 255
