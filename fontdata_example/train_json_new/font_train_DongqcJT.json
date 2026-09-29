@@ -1,51 +1,227 @@
 [
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/儀.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/儀.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/投.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/投.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/儀.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/投.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/周.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/周.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/孔.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/孔.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/周.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/孔.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/何.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/何.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/偏.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/偏.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/何.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/偏.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/號.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/號.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/陽.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/陽.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/號.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/陽.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/樂.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/樂.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/表.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/表.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/樂.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/表.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/節.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/節.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/娥.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/娥.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/節.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/娥.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/孝.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/孝.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/孝.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/伊.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/伊.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/伊.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/澤.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/澤.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/澤.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/施.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/施.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/施.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/設.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/設.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/設.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/遂.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/遂.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/遂.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/曹.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/曹.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/曹.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/盱.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/盱.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/盱.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/窕.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/窕.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/窕.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/屍.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/屍.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/屍.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/以.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/以.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/以.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/洽.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/洽.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/洽.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/虞.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/虞.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/虞.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/待.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/待.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/待.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/淑.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/淑.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/淑.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/漢.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/漢.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/漢.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/旬.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/旬.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/旬.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/胄.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/胄.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/胄.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/色.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/色.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/色.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/適.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/適.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/適.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/誄.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/誄.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/誄.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/居.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/居.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/居.npy"
   },
   {
     "image_path": "ttf/SourceHanSansSC-Regular/娑.png",
@@ -64,20 +240,20 @@
     "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/巧.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/姿.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/姿.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/夘.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/夘.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/姿.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/夘.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/孝.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/孝.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/江.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/江.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/孝.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/江.npy"
   },
   {
     "image_path": "ttf/SourceHanSansSC-Regular/禮.png",
@@ -88,124 +264,20 @@
     "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/禮.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/家.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/家.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/辭.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/辭.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/家.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/辭.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/神.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/神.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/莫.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/莫.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/神.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/畔.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/畔.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/畔.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/窕.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/窕.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/窕.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/慕.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/慕.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/慕.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/尚.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/尚.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/尚.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/夘.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/夘.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/夘.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/設.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/設.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/設.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/祭.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/祭.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/祭.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/青.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/青.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/青.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/吟.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/吟.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/吟.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/表.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/表.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/表.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/淑.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/淑.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/淑.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/澤.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/澤.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/澤.npy"
-  },
-  {
-    "image_path": "ttf/SourceHanSansSC-Regular/度.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/度.png",
-    "type": "font_DongqcJT",
-    "font_folder": "DongqcJT",
-    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/度.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/莫.npy"
   },
   {
     "image_path": "ttf/SourceHanSansSC-Regular/者.png",
@@ -216,28 +288,92 @@
     "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/者.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/屍.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/屍.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/家.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/家.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/屍.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/家.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/待.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/待.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/逆.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/逆.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/待.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/逆.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/兮.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/兮.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/度.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/度.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/兮.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/度.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/荒.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/荒.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/荒.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/尚.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/尚.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/尚.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/其.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/其.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/其.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/嘉.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/嘉.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/嘉.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/號.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/號.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/號.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/淹.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/淹.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/淹.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/倩.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/倩.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/倩.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/令.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/令.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/令.npy"
   },
   {
     "image_path": "ttf/SourceHanSansSC-Regular/爰.png",
@@ -248,19 +384,179 @@
     "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/爰.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/遂.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/遂.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/慈.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/慈.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/遂.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/慈.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/辭.png",
-    "target_path": "font/train/new/DongqcJT/images_text_denoised/辭.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/時.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/時.png",
     "type": "font_DongqcJT",
     "font_folder": "DongqcJT",
     "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/辭.npy"
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/時.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/伍.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/伍.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/伍.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/青.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/青.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/青.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/神.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/神.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/神.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/兮.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/兮.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/兮.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/返.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/返.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/返.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/窈.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/窈.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/窈.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/慕.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/慕.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/慕.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/安.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/安.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/安.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/畔.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/畔.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/畔.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/姿.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/姿.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/姿.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/祭.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/祭.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/祭.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/蒼.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/蒼.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/蒼.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/迄.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/迄.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/迄.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/室.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/室.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/室.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/彼.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/彼.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/彼.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/周.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/周.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/周.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/樂.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/樂.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/樂.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/濤.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/濤.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/濤.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/儀.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/儀.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/儀.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/吟.png",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/吟.png",
+    "type": "font_DongqcJT",
+    "font_folder": "DongqcJT",
+    "annotation_path": "font/train/new/DongqcJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/DongqcJT/semantic_masks/吟.npy"
   }
 ]

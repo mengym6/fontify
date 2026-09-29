@@ -1,19 +1,27 @@
 [
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/泉.png",
-    "target_path": "font/train/new/CaoqbJT/images_text_denoised/泉.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/若.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/若.png",
     "type": "font_CaoqbJT",
     "font_folder": "CaoqbJT",
     "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/泉.npy"
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/若.npy"
   },
   {
-    "image_path": "ttf/SourceHanSansSC-Regular/守.png",
-    "target_path": "font/train/new/CaoqbJT/images_text_denoised/守.png",
+    "image_path": "ttf/SourceHanSansSC-Regular/貢.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/貢.png",
     "type": "font_CaoqbJT",
     "font_folder": "CaoqbJT",
     "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
-    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/守.npy"
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/貢.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/無.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/無.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/無.npy"
   },
   {
     "image_path": "ttf/SourceHanSansSC-Regular/完.png",
@@ -22,5 +30,45 @@
     "font_folder": "CaoqbJT",
     "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
     "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/完.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/冈.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/冈.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/冈.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/載.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/載.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/載.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/討.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/討.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/討.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/和.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/和.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/和.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/事.png",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/事.png",
+    "type": "font_CaoqbJT",
+    "font_folder": "CaoqbJT",
+    "annotation_path": "font/train/new/CaoqbJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/CaoqbJT/semantic_masks/事.npy"
   }
 ]

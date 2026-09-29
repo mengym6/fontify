@@ -1,10 +1,74 @@
 [
   {
+    "image_path": "ttf/SourceHanSansSC-Regular/銜.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/銜.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/銜.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/通.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/通.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/通.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/誕.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/誕.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/誕.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/持.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/持.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/持.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/使.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/使.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/使.npy"
+  },
+  {
     "image_path": "ttf/SourceHanSansSC-Regular/列.png",
     "target_path": "font/train/new/LongmenJT/images_text_denoised/列.png",
     "type": "font_LongmenJT",
     "font_folder": "LongmenJT",
     "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
     "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/列.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/此.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/此.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/此.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/扵.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/扵.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/扵.npy"
+  },
+  {
+    "image_path": "ttf/SourceHanSansSC-Regular/終.png",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/終.png",
+    "type": "font_LongmenJT",
+    "font_folder": "LongmenJT",
+    "annotation_path": "font/train/new/LongmenJT/annotations/instances_default.json",
+    "semantic_mask_path": "font/train/new/LongmenJT/semantic_masks/終.npy"
   }
 ]

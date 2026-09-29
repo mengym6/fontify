@@ -12,7 +12,7 @@ NEW_BASE = Path("font/train/new")
 TRAIN_OUTPUT_DIR = Path("train_json_new")
 VAL_OUTPUT_DIR = Path("val_json_new")
 VAL_RATIO = 0.15
-SAMPLE_RATIO = 0.5
+SAMPLE_RATIO = 1.0
 CLEAR_OUTPUT = True
 
 DEFAULT_SOURCE_DIR = Path("ttf/SourceHanSansSC-Regular")
