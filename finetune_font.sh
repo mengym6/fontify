@@ -6,7 +6,7 @@
 export CUDA_VISIBLE_DEVICES=0,1
 
 DATA_PATH=fontdata_example
-name=finetune_no_gan_nojt_no_freeze_baseline
+name=finetune_no_gan_nojt_freeze_baseline
 NO_JT=1  # 设为 0 时，恢复 JT 语义遮盖
 
 NO_JT_ARGS=()
@@ -48,6 +48,8 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --finetune $PRETRAIN_CKPT \
     --auto_resume \
     --no_gan \
+    --freeze_encoder \
+    --freeze_blocks 9 \
     --semantic_mask_dir $DATA_PATH/font/train/new \
     --num_mask_annotations_bf 11 \
     --num_mask_annotations_jt 1 \
