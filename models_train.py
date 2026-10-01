@@ -11,7 +11,6 @@ from timm.models.layers import DropPath, trunc_normal_
 from timm.models.vision_transformer import Mlp
 
 from util.vgg_perceptual_loss import VGGPerceptualLoss
-from util.calli_labels import NUM_LABELS, label_loss
 
 from util.vitdet_utils import (
     PatchEmbed,
@@ -680,22 +679,7 @@ class Fontify(nn.Module):
         # === 临时调试结束 ===
         return loss, loss_l1l2, loss_vgg, loss_edge, adv_loss
 
-    def enable_label_head(self, loss_weight):
-        """加线性语义标签头：4 抽头拼接 → 70 类（BF 50 + JT 20）patch 区域。"""
-        self.label_head = nn.Linear(self.norm.normalized_shape[0] * 4, NUM_LABELS)
-        trunc_normal_(self.label_head.weight, std=0.02)
-        # 区域标签很稀疏，偏置初始化到约 2% 的先验概率，避免初期 BCE 被负样本主导。
-        nn.init.constant_(self.label_head.bias, -4.0)
-        self.label_loss_weight = loss_weight
-
-    def forward_label_head(self, latent):
-        """latent: 4 个 (B,Hp,Wp,E) 抽头 → 下半 query 的 (B,70,Hp/2,Wp) logits。"""
-        x = torch.cat(latent, dim=-1)
-        x = x[:, x.shape[1] // 2:]
-        return self.label_head(x).permute(0, 3, 1, 2)
-
-    def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False,
-                label_targets=None, label_kinds=None):
+    def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False):
         #imgs = self.tps(imgs)
         #tgts = self.tps(tgts)
         if bool_masked_pos is None:
@@ -707,24 +691,8 @@ class Fontify(nn.Module):
         loss, loss_l1l2, loss_vgg, loss_edge, adv_loss = self.forward_loss(
             imgs, pred, tgts, bool_masked_pos, valid, epoch=epoch, no_gan=no_gan
         )
-        loss_label = pred.new_tensor(0.0)
-        if getattr(self, "label_head", None) is not None and label_targets is not None:
-            # 标签头只读 C + g：下半 query 目标全遮，与推理输入一致，遮盖形状和
-            # 可见墨迹都不会泄漏答案。
-            query_mask = torch.zeros_like(bool_masked_pos)
-            query_mask[:, query_mask.shape[1] // 2:] = True
-            logits = self.forward_label_head(self.forward_encoder(imgs, tgts, query_mask))
-            loss_label = label_loss(logits, label_targets, label_kinds)
-            loss = loss + self.label_loss_weight * loss_label
-            if self._dbg_step % 50 == 1 and (
-                not torch.distributed.is_initialized() or torch.distributed.get_rank() == 0
-            ):
-                contrib = self.label_loss_weight * loss_label.item()
-                print(f"[label-dbg] step={self._dbg_step} raw={loss_label.item():.4f} "
-                      f"w={self.label_loss_weight:.3f} contrib={contrib:.4f} "
-                      f"share%={contrib / max(loss.item(), 1e-12) * 100:.1f}", flush=True)
         return (loss, loss_l1l2, loss_vgg, loss_edge, adv_loss,
-                self.patchify(pred), bool_masked_pos, pred, loss_label)
+                self.patchify(pred), bool_masked_pos, pred)
 
 
 

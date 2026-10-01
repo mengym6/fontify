@@ -10,8 +10,6 @@ import torch
 from torchvision.datasets.vision import VisionDataset, StandardTransform
 import torch.nn.functional as F
 
-from util.calli_labels import LabelRenderer
-
 
 class PairDataset(VisionDataset):
     """`MS Coco Detection <https://cocodataset.org/#detection-2016>`_ Dataset.
@@ -53,7 +51,6 @@ class PairDataset(VisionDataset):
         annotation_mask_size: int = 448,
         strict_style_pairing: bool = False,
         no_jt: bool = False,
-        return_labels: bool = False,
     ) -> None:
         super().__init__(root, transforms, transform, target_transform)
 
@@ -96,8 +93,6 @@ class PairDataset(VisionDataset):
         self._annotation_cache = {}
         self.mask_mix_probs = None
         self.no_jt = no_jt
-        # 返回下半 query（第二对）的 (70,28,28) 语义区域标签及其 BF/JT 类型。
-        self.label_renderer = LabelRenderer(root) if return_labels else None
         if mask_mix_probs is not None:
             if len(mask_mix_probs) != 3:
                 raise ValueError("mask_mix_probs must contain 3 values: random, JT semantic, BF semantic")
@@ -528,9 +523,6 @@ class PairDataset(VisionDataset):
         else:
             mask = self.masked_position_generator()
 
-        if self.label_renderer is not None:
-            label, kind = self.label_renderer.render(pair2)
-            return image, target, mask, valid, torch.from_numpy(label), kind
         return image, target, mask, valid
 
     def __len__(self) -> int:
