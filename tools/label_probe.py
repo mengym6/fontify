@@ -51,9 +51,9 @@ def parse_args():
     p.add_argument("--visible", nargs="*", default=[],
                    help="这些 name 不遮盖 query 目标（墨迹可见上界）")
     p.add_argument("--output_dir", required=True)
-    p.add_argument("--epochs", type=int, default=20)
+    p.add_argument("--epochs", type=int, default=60)
     p.add_argument("--batch_size", type=int, default=32)
-    p.add_argument("--lr", type=float, default=1e-3)
+    p.add_argument("--lr", type=float, default=3e-3)
     p.add_argument("--target_threshold", type=float, default=0.1,
                    help="patch 覆盖率超过该值记为正样本，与训练 mask_coverage_threshold 一致")
     p.add_argument("--seed", type=int, default=0)
@@ -61,21 +61,39 @@ def parse_args():
     return p.parse_args()
 
 
+def coverage_prior(labels, kinds):
+    """每类每位置的平均覆盖率（只在对应类型样本上统计），(70,28,28)。"""
+    task = task_channel_mask(kinds, labels.device)[:, :, None, None]
+    return (labels.float() * task).sum(0) / task.sum(0).clamp_min(1)
+
+
+def to_logit(p):
+    return torch.logit(p.clamp(1e-4, 1 - 1e-4))
+
+
 class LinearProbe(nn.Module):
-    def __init__(self, channels, prior=False):
+    def __init__(self, channels, bias):
         super().__init__()
         self.channels = channels
-        if prior:
-            self.logit = nn.Parameter(torch.full((1, NUM_LABELS, 28, 28), -4.0))
-        else:
-            dim = len(range(3072)[channels])
-            self.linear = nn.Linear(dim, NUM_LABELS)
-            nn.init.constant_(self.linear.bias, -4.0)
+        dim = len(range(3072)[channels])
+        self.linear = nn.Linear(dim, NUM_LABELS)
+        # 偏置初始化为各类的全局先验 logit，避免从 -4 慢慢爬导致欠拟合。
+        with torch.no_grad():
+            self.linear.bias.copy_(bias)
 
     def forward(self, feats):
-        if hasattr(self, "logit"):
-            return self.logit.expand(feats.shape[0], -1, -1, -1)
         return self.linear(feats[..., self.channels].float()).permute(0, 3, 1, 2)
+
+
+class PriorProbe(nn.Module):
+    """位置先验：与特征无关，直接输出训练集每类每位置的平均覆盖率。"""
+
+    def __init__(self, logit):
+        super().__init__()
+        self.register_buffer("logit", logit)
+
+    def forward(self, feats):
+        return self.logit.expand(feats.shape[0], -1, -1, -1)
 
 
 @torch.no_grad()
@@ -99,17 +117,24 @@ def train_probes(probes, data, args):
     steps = args.epochs * math.ceil(n / args.batch_size)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, steps)
     gen = torch.Generator().manual_seed(args.seed)
-    for _ in range(args.epochs):
+    for epoch in range(args.epochs):
+        total = {name: 0.0 for name in probes}
         perm = torch.randperm(n, generator=gen).to(feats.device)
         for i in range(0, n, args.batch_size):
             idx = perm[i:i + args.batch_size]
             f, y, k = feats[idx], labels[idx], kinds[idx]
             # 各探针参数互不共享，损失求和等价于分别训练。
-            loss = sum(label_loss(probe(f), y, k) for probe in probes.values())
+            losses = {name: label_loss(probe(f), y, k) for name, probe in probes.items()}
+            loss = sum(losses.values())
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
             sched.step()
+            for name, value in losses.items():
+                total[name] += value.item() * len(idx) / n
+        if epoch % 10 == 0 or epoch == args.epochs - 1:
+            print(f"  probe epoch {epoch}: " +
+                  " ".join(f"{k}={v:.4f}" for k, v in total.items()), flush=True)
 
 
 @torch.no_grad()
@@ -167,15 +192,23 @@ def main():
         model = build_model(None if ckpt == "random" else ckpt, device)
         train_data = extract(model, train_set, device, visible)
         val_data = extract(model, val_set, device, visible)
+        head = getattr(model, "label_head", None)
         del model
         torch.cuda.empty_cache()
 
+        prior = coverage_prior(train_data[1], train_data[2])
+        bias = to_logit(prior.mean((1, 2)))
         torch.manual_seed(args.seed)
-        probes = {tap: LinearProbe(ch).to(device) for tap, ch in TAPS.items()}
-        if not results["summary"]:
-            # 位置先验与特征无关，只需在第一个模型上训练一次。
-            probes["prior"] = LinearProbe(None, prior=True).to(device)
+        probes = {tap: LinearProbe(ch, bias).to(device) for tap, ch in TAPS.items()}
         train_probes(probes, train_data, args)
+        if not results["summary"]:
+            # 位置先验与特征无关，只需算一次。
+            probes["prior"] = PriorProbe(to_logit(prior)[None])
+        if head is not None:
+            # 训练时联合优化得到的标签头本身，作为非冻结的上界参照。
+            trained = LinearProbe(TAPS["all"], bias).to(device)
+            trained.linear.load_state_dict(head.state_dict())
+            probes["trained_head"] = trained
         for tap, probe in probes.items():
             key = "prior" if tap == "prior" else f"{name}/{tap}"
             summary, per_class = evaluate(probe, val_data, args.target_threshold)
