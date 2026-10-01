@@ -87,6 +87,10 @@ def get_args_parser():
     parser.add_argument('--mask_mix_probs', default=None, type=float, nargs=3,
                         help='训练遮盖比例: random JT-semantic BF-semantic，例如 0.7 0.2 0.1。'
                              '不设置则沿用原数据集遮盖逻辑')
+    parser.add_argument('--label_head', action='store_true',
+                        help='加线性语义标签头（BF 50 + JT 20 类 patch 区域），读下半全遮的 C+g')
+    parser.add_argument('--label_loss_weight', default=0.1, type=float,
+                        help='标签损失（BCE+Dice）权重')
     parser.add_argument('--no_jt', action='store_true',
                         help=(
                             '训练时 JT（结体）样本使用随机遮盖，'
@@ -334,6 +338,8 @@ def main(args, ds_init):
 
     if args.grad_log_interval < 0:
         raise ValueError('grad_log_interval must be non-negative')
+    if args.label_head:
+        model.enable_label_head(args.label_loss_weight)
 
     if args.finetune:
         checkpoint = torch.load(args.finetune, map_location='cpu')
@@ -396,6 +402,7 @@ def main(args, ds_init):
         num_mask_annotations_jt=args.num_mask_annotations_jt,
         mask_coverage_threshold=args.mask_coverage_threshold,
         no_jt=args.no_jt,
+        return_labels=args.label_head,
     )
     if args.mask_mix_probs is not None:
         dataset_train_kwargs["mask_mix_probs"] = args.mask_mix_probs

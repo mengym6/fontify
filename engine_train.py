@@ -27,6 +27,7 @@ _GRADIENT_GROUP_PREFIXES = (
     "decoder_pred",
     "discriminator",
     "vgg_loss",
+    "label_head",
 )
 
 
@@ -252,7 +253,14 @@ def train_one_epoch(model: torch.nn.Module,
 
     # wandb_images = []
     tensorboard_images = []
-    for data_iter_step, (samples, targets, bool_masked_pos, valid) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for data_iter_step, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+        samples, targets, bool_masked_pos, valid = batch[:4]
+        label_kwargs = {}
+        if len(batch) > 4:
+            label_kwargs = {
+                "label_targets": batch[4].to(device, non_blocking=True),
+                "label_kinds": batch[5].to(device, non_blocking=True),
+            }
         # we use a per iteration (instead of per epoch) lr scheduler
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
@@ -272,9 +280,10 @@ def train_one_epoch(model: torch.nn.Module,
                 y,
                 mask,
                 pred,
+                loss_label,
             ) = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
-                valid=valid, epoch=epoch, no_gan=args.no_gan
+                valid=valid, epoch=epoch, no_gan=args.no_gan, **label_kwargs
             )
 
         if not args.no_gan:
@@ -376,6 +385,9 @@ def train_one_epoch(model: torch.nn.Module,
         # Match the contributions actually added to the generator loss.
         loss_edge_reduce = misc.all_reduce_mean(loss_edge * edge_weight)
         loss_adv_reduce = misc.all_reduce_mean(adv_loss * adv_weight)
+        loss_label_reduce = misc.all_reduce_mean(loss_label.item())
+        if label_kwargs:
+            metric_logger.update(loss_label=loss_label_reduce)
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
                 f.write(
@@ -413,6 +425,7 @@ def train_one_epoch(model: torch.nn.Module,
                 'loss_vgg': loss_vgg_reduce,
                 'loss_edge_weighted': loss_edge_reduce,
                 'loss_adv_weighted': loss_adv_reduce,
+                'loss_label_raw': loss_label_reduce,
             }, epoch_1000x)
 
 
@@ -521,6 +534,7 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                 y,
                 mask,
                 pred,
+                _loss_label,
             ) = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
                 valid=valid, epoch=epoch, no_gan=args.no_gan
