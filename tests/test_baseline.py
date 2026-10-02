@@ -143,7 +143,7 @@ def test_baseline_loss_and_backward(no_gan):
     target = torch.rand_like(pred) + 1
     mask = torch.zeros(2, 128)
     mask[:, -16:] = 1
-    loss, recon, style, edge, adv = forward(
+    loss, recon, style, edge, adv, _jieti = forward(
         pred, pred, target, mask, torch.ones_like(pred), no_gan=no_gan
     )
     torch.testing.assert_close(edge, F.l1_loss(pred, target))

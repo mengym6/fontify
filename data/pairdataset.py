@@ -10,6 +10,8 @@ import torch
 from torchvision.datasets.vision import VisionDataset, StandardTransform
 import torch.nn.functional as F
 
+from util.jieti_partition import build_partition, ink_label_map
+
 
 class PairDataset(VisionDataset):
     """`MS Coco Detection <https://cocodataset.org/#detection-2016>`_ Dataset.
@@ -51,6 +53,12 @@ class PairDataset(VisionDataset):
         annotation_mask_size: int = 448,
         strict_style_pairing: bool = False,
         no_jt: bool = False,
+        return_jieti: bool = False,
+        jieti_k_max: int = 4,
+        jieti_pool: int = 224,
+        jieti_valid_ink: int = 200,
+        jieti_struct_pair_prob: float = 1.0,
+        fixed_pair_path: Optional[str] = None,
     ) -> None:
         super().__init__(root, transforms, transform, target_transform)
 
@@ -64,6 +72,20 @@ class PairDataset(VisionDataset):
             cur_num = len(cur_pairs)
             self.weights.extend([type_weight_list[idx] * 1./cur_num]*cur_num)
             #print(json_path, type_weight_list[idx])
+        # 固定 val：物理过滤到 fixed 列出的样本（已跳过无候选 JT），这样 val 的
+        # DistributedSampler 也只遍历这批，与所有组、baseline 用同一份 val。
+        if fixed_pair_path is not None and os.path.exists(fixed_pair_path):
+            with open(fixed_pair_path, "r", encoding="utf-8") as _f:
+                self._fixed_pairs = json.load(_f)  # target_path → pair2 完整记录
+            # 固定 val 只遍历 fixed 列出的 query（已跳过无候选 JT）。pair2 参考字直接
+            # 从记录里读，不需要留在 self.pairs 里，所以 val 的 DistributedSampler 也
+            # 只遍历这批 query。
+            keep = [i for i, p in enumerate(self.pairs)
+                    if p["target_path"] in self._fixed_pairs]
+            self.pairs = [self.pairs[i] for i in keep]
+            self.weights = [self.weights[i] for i in keep]
+        else:
+            self._fixed_pairs = None
         self.use_two_pairs = use_two_pairs
         self.strict_style_pairing = strict_style_pairing
         if self.use_two_pairs:
@@ -93,6 +115,13 @@ class PairDataset(VisionDataset):
         self._annotation_cache = {}
         self.mask_mix_probs = None
         self.no_jt = no_jt
+        # 结体（Jieti）相关：返回部件划分、有效部件掩码、is_jt，并实现同结构异字配对。
+        self.return_jieti = return_jieti
+        self.jieti_k_max = jieti_k_max
+        self.jieti_pool = jieti_pool
+        self.jieti_valid_ink = jieti_valid_ink
+        self.jieti_struct_pair_prob = jieti_struct_pair_prob
+        self.fixed_pair_path = fixed_pair_path
         if mask_mix_probs is not None:
             if len(mask_mix_probs) != 3:
                 raise ValueError("mask_mix_probs must contain 3 values: random, JT semantic, BF semantic")
@@ -126,6 +155,76 @@ class PairDataset(VisionDataset):
                 )
             if self.mask_mix_probs[2] > 0 and not self._bf_semantic_indices:
                 raise ValueError("mask_mix_probs requests BF semantic masks, but no BF semantic mask files were found")
+
+        if self.return_jieti:
+            self._build_jieti_pairing()
+
+    def _jt_structure_signature(self, pair: dict) -> Optional[tuple]:
+        """目标字的 JT 类别名集合（去 text、去笔画前缀数字），作为"同结构组合"键。
+
+        无标注或无 JT 实例时返回 None。
+        """
+        if 'JT' not in pair.get('type', ''):
+            return None
+        ann_path = self._annotation_path(pair)
+        if ann_path is None:
+            return None
+        index = self._load_annotation_index(ann_path)
+        if index is None:
+            return None
+        target_name = os.path.basename(pair["target_path"])
+        char_name = os.path.splitext(target_name)[0]
+        image_info = index["images_by_name"].get(target_name) or index["images_by_stem"].get(char_name)
+        if image_info is None:
+            return None
+        anns = index["anns_by_image_id"].get(image_info["id"], [])
+        names = set()
+        for ann in anns:
+            cat_id = ann.get("category_id")
+            if cat_id in index["text_ids"]:
+                continue
+            name = index["cat_id_to_stroke"].get(cat_id)
+            if name:
+                names.add(name)
+        return tuple(sorted(names)) if names else None
+
+    def _build_jieti_pairing(self):
+        """为 JT 样本预建"同书家(type)、同结构组合、异字"候选池；无候选者剔除。
+
+        character 用 target 文件名的字（stem）；"同书家"用 type 承载（type 含书家）。
+        """
+        self._jt_struct_sig = {}
+        self._jt_char = {}
+        for i, pair in enumerate(self.pairs):
+            if 'JT' not in pair.get('type', ''):
+                continue
+            self._jt_struct_sig[i] = self._jt_structure_signature(pair)
+            self._jt_char[i] = os.path.splitext(os.path.basename(pair['target_path']))[0]
+        # (type, 结构签名) → index 列表
+        bucket = {}
+        for i, sig in self._jt_struct_sig.items():
+            if sig is None:
+                continue
+            key = (self.pairs[i]['type'], sig)
+            bucket.setdefault(key, []).append(i)
+        self._jt_struct_pool = {}  # index → 同结构异字候选 index 列表
+        self._jt_dropped = []
+        for i, sig in self._jt_struct_sig.items():
+            if sig is None:
+                self._jt_dropped.append(i)
+                continue
+            key = (self.pairs[i]['type'], sig)
+            cands = [j for j in bucket[key] if self._jt_char[j] != self._jt_char[i]]
+            if cands:
+                self._jt_struct_pool[i] = cands
+            else:
+                self._jt_dropped.append(i)
+        # 从训练/评测中剔除无候选 JT 样本：置零采样权重并记录。
+        for i in self._jt_dropped:
+            self.weights[i] = 0.0
+        if self._jt_dropped:
+            print(f"[jieti] dropped {len(self._jt_dropped)} JT samples without "
+                  f"same-structure different-character candidate", flush=True)
 
     def _load_image(self, path: str) -> Image.Image:
         while True:
@@ -406,6 +505,39 @@ class PairDataset(VisionDataset):
         patch_mask = (coverage > self.mask_coverage_threshold).numpy().astype(np.int32)
         return patch_mask
 
+    def _load_jieti_label_map(self, pair: dict) -> Optional[Image.Image]:
+        """JT 部件墨迹层 → 单张整数标签图 PIL(L)，0=背景，1..k_max=部件。"""
+        if 'JT' not in pair.get('type', ''):
+            return None
+        layers = self._load_semantic_layers(pair)
+        if layers is None:
+            return None
+        label_map = ink_label_map(layers, self.jieti_k_max)
+        return Image.fromarray(label_map, mode='L')
+
+    def _build_jieti_tensors(self, lm_top, lm_bot, is_jt):
+        """由上/下半增强后的部件标签图构造 (2,R,R) 划分与 (2,k_max) 有效掩码。
+
+        lm_top/lm_bot: ToTensor 后的 (1,448,448) int64，或 None。
+        """
+        k = self.jieti_k_max
+        R = self.jieti_pool
+        voro = torch.zeros(2, R, R, dtype=torch.long)
+        valid_parts = torch.zeros(2, k, dtype=torch.bool)
+        if is_jt:
+            for h, lm in enumerate((lm_top, lm_bot)):
+                if lm is None:
+                    continue
+                arr = lm[0].numpy().astype(np.int64)  # (448,448)，增强后
+                valid_k = np.array(
+                    [int((arr == (c + 1)).sum()) >= self.jieti_valid_ink
+                     for c in range(k)]
+                )
+                part = build_partition(arr, valid_k, k, R)
+                voro[h] = torch.from_numpy(part)
+                valid_parts[h] = torch.from_numpy(valid_k)
+        return voro, valid_parts
+
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         mask_mode = self._sample_mask_mode()
         # 阶段 2 混合数据：原电脑字体使用随机 mask，CalliPhase 优先使用样本自带的
@@ -439,13 +571,18 @@ class PairDataset(VisionDataset):
         else:
             sem_mask = self._load_semantic_mask(pair, pair_type)
 
+        is_jt = self.return_jieti and 'JT' in pair_type
+        jieti_lm = self._load_jieti_label_map(pair) if is_jt else None
+
         # no aug for instance segmentation
         if "font" in pair['type'] and self.transforms3 is not None:
             cur_transforms = self.transforms3
         else:
             cur_transforms = self.transforms
 
-        image, target, sem_mask = cur_transforms(image, target, interpolation1, interpolation2, mask=sem_mask)
+        image, target, sem_mask, jieti_lm = cur_transforms(
+            image, target, interpolation1, interpolation2, mask=sem_mask, mask2=jieti_lm
+        )
 
         if self.use_two_pairs:
             pair_type = pair['type']
@@ -460,6 +597,14 @@ class PairDataset(VisionDataset):
                 pair2_pool = self._semantic_indices_by_type.get(pair_type, [])
                 if pair2_pool:
                     pair2_index = random.choice(pair2_pool)
+            fixed_pair2 = None
+            if self._fixed_pairs is not None and pair['target_path'] in self._fixed_pairs:
+                # val 固定配对：直接用预存的 pair2 完整记录（见 U4）。
+                fixed_pair2 = self._fixed_pairs[pair['target_path']]
+            elif is_jt and index in getattr(self, '_jt_struct_pool', {}):
+                # Q3：JT 以概率 p 走"同书家、同结构组合、异字"配对，否则随机同 type。
+                if random.random() < self.jieti_struct_pair_prob:
+                    pair2_index = random.choice(self._jt_struct_pool[index])
             if self.strict_style_pairing:
                 pool = self.pair_type_dict[pair_type]
                 if mask_mode in ("jt_semantic", "bf_semantic"):
@@ -475,15 +620,18 @@ class PairDataset(VisionDataset):
                         f"{pair['style_id']}/{pair_type}"
                     )
                 pair2_index = random.choice(pool)
-            pair2 = self.pairs[pair2_index]
+            pair2 = fixed_pair2 if fixed_pair2 is not None else self.pairs[pair2_index]
             image2 = self._load_image(pair2['image_path'])
             target2 = self._load_image(pair2['target_path'])
             if mask_mode == "random":
                 sem_mask2 = None
             else:
                 sem_mask2 = self._load_semantic_mask(pair2, pair_type)
+            jieti_lm2 = self._load_jieti_label_map(pair2) if is_jt else None
             assert pair2['type'] == pair_type
-            image2, target2, sem_mask2 = cur_transforms(image2, target2, interpolation1, interpolation2, mask=sem_mask2)
+            image2, target2, sem_mask2, jieti_lm2 = cur_transforms(
+                image2, target2, interpolation1, interpolation2, mask=sem_mask2, mask2=jieti_lm2
+            )
 
             image = self._combine_images(image, image2, interpolation1)
             target = self._combine_images(target, target2, interpolation2)
@@ -492,6 +640,8 @@ class PairDataset(VisionDataset):
                 sem_mask = torch.cat([sem_mask, sem_mask2], dim=1)
             else:
                 sem_mask = None
+        else:
+            jieti_lm2 = None
 
         if self.mask_mix_probs is not None:
             # mask_mix_probs 控制 random/JT semantic/BF semantic 主比例；
@@ -508,7 +658,8 @@ class PairDataset(VisionDataset):
         if (self.transforms_seccrop is None) or use_half_mask:
             pass
         else:
-            image, target, sem_mask = self.transforms_seccrop(image, target, interpolation1, interpolation2, mask=sem_mask)
+            # seccrop 只在 pretrain 增强策略下非 None；结体用 finetune 策略，不走这里。
+            image, target, sem_mask, _ = self.transforms_seccrop(image, target, interpolation1, interpolation2, mask=sem_mask)
 
         valid = torch.ones_like(target)
 
@@ -523,6 +674,10 @@ class PairDataset(VisionDataset):
         else:
             mask = self.masked_position_generator()
 
+        if self.return_jieti:
+            # 上半=pair（风格参考，始终可见），下半=pair2（query 目标）。
+            voro, valid_parts = self._build_jieti_tensors(jieti_lm, jieti_lm2, is_jt)
+            return image, target, mask, valid, voro, valid_parts, torch.tensor(bool(is_jt))
         return image, target, mask, valid
 
     def __len__(self) -> int:
@@ -533,7 +688,9 @@ class PairStandardTransform(StandardTransform):
     def __init__(self, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None) -> None:
         super().__init__(transform=transform, target_transform=target_transform)
 
-    def __call__(self, input: Any, target: Any, interpolation1: Any, interpolation2: Any, mask=None) -> Tuple[Any, Any, Any]:
+    def __call__(self, input: Any, target: Any, interpolation1: Any, interpolation2: Any, mask=None, mask2=None) -> Tuple[Any, Any, Any, Any]:
         if self.transform is not None:
-            input, target, mask = self.transform(input, target, interpolation1, interpolation2, mask=mask)
-        return input, target, mask
+            input, target, mask, mask2 = self.transform(
+                input, target, interpolation1, interpolation2, mask=mask, mask2=mask2
+            )
+        return input, target, mask, mask2

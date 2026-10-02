@@ -17,10 +17,8 @@
 本脚本不依赖 torch，训练由 subprocess 调起 python -m torch.distributed.launch。
 --dry_run 只打印命令，不执行，用于本地测试命令拼接与各分支逻辑。
 
-注意（已交主控）：main_train.py L657 的周期 checkpoint 条件是
-`epoch % save_freq == 0 or epoch+1 == epochs`，epoch 0 与最后一个 epoch 无论
-save_freq 多大都会存，命令行无法关闭。runner 把 save_freq 设得很大以避免中间
-周期 checkpoint，但 epoch 0 和 epoch 50 的 checkpoint 仍会落盘。
+C3：核心代码已加 --save_best_only，打开后跳过周期保存与末轮强制保存，只留
+checkpoint-best.pth。runner 对搜索组统一带上这个 flag。
 """
 
 import argparse
@@ -181,8 +179,9 @@ def build_cmd(python_bin, master_port, output_dir, row, args):
     ]
     # 固定路径与开关。
     cmd += [
-        "--save_freq", str(args.save_freq),  # 调大以避免中间周期 checkpoint
+        "--save_freq", str(args.save_freq),
         "--save_best",
+        "--save_best_only",  # C3：搜索组只保留 checkpoint-best.pth
         "--data_path", args.data_path + "/",
         "--json_path", os.path.join(args.data_path, "train_json_new", "*.json"),
         "--val_json_path", os.path.join(args.data_path, "val_json_new", "*.json"),

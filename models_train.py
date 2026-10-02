@@ -581,13 +581,15 @@ class Fontify(nn.Module):
         x = self.decoder_pred(x) # Bx3xHxW
         return x
 
-    def forward_loss(self, imgs, pred, tgts, mask, valid, epoch=0, no_gan=False):
+    def forward_loss(self, imgs, pred, tgts, mask, valid, epoch=0, no_gan=False,
+                     voro=None, valid_parts=None, is_jt=None):
         """
         tgts: [N, 3, H, W]
         pred: [N, 3, H, W]
-        mask: [N, L], 0 is keep, 1 is remove, 
+        mask: [N, L], 0 is keep, 1 is remove,
         valid: [N, 3, H, W]
         epoch: 当前训练epoch，用于动态损失权重计算
+        voro/valid_parts/is_jt: 结体 loss 的部件划分、有效部件掩码与 JT 标志（可选）
         """
         mask = mask[:, :, None].repeat(1, 1, self.patch_size**2 * 3)
         mask = self.unpatchify(mask)
@@ -598,6 +600,13 @@ class Fontify(nn.Module):
         inds_ign = ((tgts * imagenet_std + imagenet_mean) * (1 - 1.*mask)).sum((1, 2, 3)) < 100*3
         if inds_ign.sum() > 0:
             valid[inds_ign] = 0.
+
+        # 结体 loss 的拼接图：遮盖区(mask=1)用预测，可见区用 GT。用乘 valid 之前
+        # 的几何 remove-mask 构造，避免被忽略样本的置零影响拼接。
+        jieti_on = getattr(self, 'jieti_loss_mod', None) is not None and is_jt is not None
+        jieti_extra = None
+        if jieti_on:
+            composite = pred * mask + tgts * (1 - mask)
 
         mask = mask * valid
 
@@ -610,7 +619,21 @@ class Fontify(nn.Module):
             loss = (pred - target) ** 2.
         elif self.loss_func == "smoothl1":
             loss = F.smooth_l1_loss(pred, target, reduction="none", beta=0.01)
-        loss_l1l2 = (loss * mask).sum() / (mask.sum() + 1e-2)  # mean loss on removed patches
+
+        if jieti_on:
+            # 按样本加权：JT 样本原 loss 乘 α_jt，BF 保持 1。分母沿用原 mask.sum()，
+            # 所以 α_jt=1 时与 baseline 逐值相等。
+            wj = torch.where(is_jt.to(pred.device).bool(),
+                             pred.new_tensor(self.jieti_alpha_jt),
+                             pred.new_tensor(1.0))  # (N,)
+            wmap = wj.view(-1, 1, 1, 1)
+            loss_l1l2 = (loss * mask * wmap).sum() / (mask.sum() + 1e-2)
+            # 逐样本不加权重建 L1（遮盖区，不乘 α_jt，与 loss_func/epoch 无关）：
+            # 用纯 |pred-target|，与 tools/eval_s_baseline.py 的 S 分母定义一致。
+            abs_l1 = (pred - target).abs()
+            l1_per_sample = (abs_l1 * mask).sum((1, 2, 3)) / (mask.sum((1, 2, 3)) + 1e-2)
+        else:
+            loss_l1l2 = (loss * mask).sum() / (mask.sum() + 1e-2)  # mean loss on removed patches
 
 
         transform_vgg = transforms.Compose([
@@ -621,13 +644,23 @@ class Fontify(nn.Module):
             pred_img = transform_vgg(pred).float()
             target_img = transform_vgg(target).float()
             # 原作者设置：VGG loss 使用 Gram style；content 不进入总 loss。
-            loss_style = self.vgg_loss(pred_img, target_img)
+            if jieti_on:
+                # 按样本求 Gram style 再按 α_jt 加权平均（PROGRESS Q10/按样本设权）。
+                style_ps = self.vgg_loss(pred_img, target_img, per_sample=True)
+                loss_style = (style_ps * wj).mean()
+            else:
+                loss_style = self.vgg_loss(pred_img, target_img)
             loss_vgg = loss_style
             # Edge Loss
 
         edge_pred = self.improved_edge_detection(pred)
         edge_target = self.improved_edge_detection(target)
-        loss_edge = F.l1_loss(edge_pred, edge_target)
+        if jieti_on:
+            # 按样本求 edge L1 再按 α_jt 加权平均。
+            edge_ps = (edge_pred - edge_target).abs().mean(dim=(1, 2, 3))  # (N,)
+            loss_edge = (edge_ps * wj).mean()
+        else:
+            loss_edge = F.l1_loss(edge_pred, edge_target)
 
         adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
         loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
@@ -642,6 +675,22 @@ class Fontify(nn.Module):
             real_labels = torch.ones_like(fake_logits)
             adv_loss = F.binary_cross_entropy_with_logits(fake_logits, real_labels)
             loss = loss + adv_weight * adv_loss
+
+        # === 结体结构 loss（只在 JT 样本生效；无 JT 时 J=0 仍进计算图）===
+        if jieti_on:
+            J, jparts, shield = self.jieti_loss_mod(
+                composite, tgts, voro.to(pred.device), valid_parts.to(pred.device),
+                is_jt.to(pred.device).bool(),
+            )
+            loss = loss + self.jieti_w * J
+            jieti_extra = {
+                "J": J,
+                "centroid": jparts["centroid"],
+                "logsigma": jparts["logsigma"],
+                "shape": jparts["shape"],
+                "shield": shield,
+                "l1_per_sample": l1_per_sample,
+            }
 
         # === 调试: 打印原作者式固定系数与本 batch 数值贡献 ===
         self._dbg_step = getattr(self, '_dbg_step', 0) + 1
@@ -676,10 +725,32 @@ class Fontify(nn.Module):
                   f"style={scalar(actual_shares['style'])*100:.1f} "
                   f"edge={scalar(actual_shares['edge'])*100:.1f} "
                   f"adv={scalar(actual_shares['adv'])*100:.1f}", flush=True)
+            if jieti_extra is not None:
+                print(f"[jieti-dbg] epoch={epoch} step={self._dbg_step} "
+                      f"J={scalar(jieti_extra['J']):.4f} w={self.jieti_w:.4f} "
+                      f"contrib={scalar(jieti_extra['J'])*self.jieti_w:.4f} "
+                      f"centroid={scalar(jieti_extra['centroid']):.4f} "
+                      f"logsigma={scalar(jieti_extra['logsigma']):.4f} "
+                      f"shape={scalar(jieti_extra['shape']):.4f} "
+                      f"shield={scalar(jieti_extra['shield']):.0f}", flush=True)
         # === 临时调试结束 ===
-        return loss, loss_l1l2, loss_vgg, loss_edge, adv_loss
+        return loss, loss_l1l2, loss_vgg, loss_edge, adv_loss, jieti_extra
 
-    def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False):
+    def enable_jieti(self, alpha_jt, w, k_max=4, pool=224, soft_fg="linear",
+                     sigmoid_scale=10.0, pred_mass_ratio=0.1,
+                     w_centroid=1.0, w_logsigma=1.0, w_shape=1.0):
+        """开启结体结构 loss：按样本加权 + 三项结构项。"""
+        from util.jieti_loss import JietiLoss
+        self.jieti_alpha_jt = alpha_jt
+        self.jieti_w = w
+        self.jieti_loss_mod = JietiLoss(
+            k_max=k_max, pool=pool, soft_fg=soft_fg, sigmoid_scale=sigmoid_scale,
+            pred_mass_ratio=pred_mass_ratio, w_centroid=w_centroid,
+            w_logsigma=w_logsigma, w_shape=w_shape,
+        )
+
+    def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False,
+                voro=None, valid_parts=None, is_jt=None):
         #imgs = self.tps(imgs)
         #tgts = self.tps(tgts)
         if bool_masked_pos is None:
@@ -688,11 +759,12 @@ class Fontify(nn.Module):
             bool_masked_pos = bool_masked_pos.flatten(1).to(torch.bool)
         latent = self.forward_encoder(imgs, tgts, bool_masked_pos)
         pred = self.forward_decoder(latent)  # [N, L, p*p*3]
-        loss, loss_l1l2, loss_vgg, loss_edge, adv_loss = self.forward_loss(
-            imgs, pred, tgts, bool_masked_pos, valid, epoch=epoch, no_gan=no_gan
+        loss, loss_l1l2, loss_vgg, loss_edge, adv_loss, jieti_extra = self.forward_loss(
+            imgs, pred, tgts, bool_masked_pos, valid, epoch=epoch, no_gan=no_gan,
+            voro=voro, valid_parts=valid_parts, is_jt=is_jt,
         )
         return (loss, loss_l1l2, loss_vgg, loss_edge, adv_loss,
-                self.patchify(pred), bool_masked_pos, pred)
+                self.patchify(pred), bool_masked_pos, pred, jieti_extra)
 
 
 

@@ -252,7 +252,15 @@ def train_one_epoch(model: torch.nn.Module,
 
     # wandb_images = []
     tensorboard_images = []
-    for data_iter_step, (samples, targets, bool_masked_pos, valid) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for data_iter_step, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+        samples, targets, bool_masked_pos, valid = batch[:4]
+        jieti_kwargs = {}
+        if len(batch) > 4:
+            jieti_kwargs = {
+                "voro": batch[4].to(device, non_blocking=True),
+                "valid_parts": batch[5].to(device, non_blocking=True),
+                "is_jt": batch[6].to(device, non_blocking=True),
+            }
         # we use a per iteration (instead of per epoch) lr scheduler
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
@@ -272,9 +280,10 @@ def train_one_epoch(model: torch.nn.Module,
                 y,
                 mask,
                 pred,
+                jieti_extra,
             ) = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
-                valid=valid, epoch=epoch, no_gan=args.no_gan
+                valid=valid, epoch=epoch, no_gan=args.no_gan, **jieti_kwargs
             )
 
         if not args.no_gan:
@@ -376,6 +385,14 @@ def train_one_epoch(model: torch.nn.Module,
         # Match the contributions actually added to the generator loss.
         loss_edge_reduce = misc.all_reduce_mean(loss_edge * edge_weight)
         loss_adv_reduce = misc.all_reduce_mean(adv_loss * adv_weight)
+        if jieti_extra is not None:
+            # 结体项写进 TensorBoard：J 及三分项、屏蔽次数。
+            jieti_reduce = {
+                k: misc.all_reduce_mean(jieti_extra[k].item())
+                for k in ("J", "centroid", "logsigma", "shape", "shield")
+            }
+            metric_logger.update(jieti_J=jieti_reduce["J"])
+            metric_logger.update(jieti_shield=jieti_reduce["shield"])
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
                 f.write(
@@ -408,12 +425,22 @@ def train_one_epoch(model: torch.nn.Module,
                     ),
                     epoch_1000x,
                 )
-            log_writer.add_scalars('train_loss_detail', {
+            detail = {
                 'loss_l1l2': loss_l1l2_reduce,
                 'loss_vgg': loss_vgg_reduce,
                 'loss_edge_weighted': loss_edge_reduce,
                 'loss_adv_weighted': loss_adv_reduce,
-            }, epoch_1000x)
+            }
+            if jieti_extra is not None:
+                _jw = (model.module if hasattr(model, "module") else model).jieti_w
+                detail.update({
+                    'jieti_J_weighted': jieti_reduce["J"] * _jw,
+                    'jieti_centroid': jieti_reduce["centroid"],
+                    'jieti_logsigma': jieti_reduce["logsigma"],
+                    'jieti_shape': jieti_reduce["shape"],
+                    'jieti_shield': jieti_reduce["shield"],
+                })
+            log_writer.add_scalars('train_loss_detail', detail, epoch_1000x)
 
 
             with torch.no_grad():
@@ -499,12 +526,30 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         total_epochs = getattr(args, "epochs", None) if args is not None else None
         if total_epochs is not None:
             write_tb_image_this_epoch = write_tb_image_this_epoch or (epoch + 1 == total_epochs)
+    # U4：每 epoch 导出 4 张固定 val 视觉图。val 顺序固定（shuffle=False）+ 固定配对，
+    # 所以取前 4 张即固定样本。
+    vis_every = bool(getattr(args, "vis_every_epoch", False)) if args is not None else False
+    vis_frames = []
+    # DDP：synchronize_between_processes 对每个 meter 做一次 all_reduce，配对依赖各
+    # rank 的 meter 集合与插入顺序一致。L1_JT/L1_BF/jieti_J 必须在循环前以固定顺序
+    # 预建（n=0 占位），否则某 rank 的 batch 恰好全 JT 或全 BF 会导致顺序错配甚至死锁。
+    jieti_val = bool(getattr(args, "jieti_loss", False)) if args is not None else False
+    if jieti_val:
+        for _k in ("L1_JT", "L1_BF", "jieti_J"):
+            _ = metric_logger.meters[_k]
     for batch in metric_logger.log_every(data_loader, 10, header):
 
         samples = batch[0]
         targets = batch[1]
         bool_masked_pos = batch[2]
         valid = batch[3]
+        jieti_kwargs = {}
+        if len(batch) > 4:
+            jieti_kwargs = {
+                "voro": batch[4].to(device, non_blocking=True),
+                "valid_parts": batch[5].to(device, non_blocking=True),
+                "is_jt": batch[6].to(device, non_blocking=True),
+            }
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True)
@@ -521,14 +566,27 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                 y,
                 mask,
                 pred,
+                jieti_extra,
             ) = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
-                valid=valid, epoch=epoch, no_gan=args.no_gan
+                valid=valid, epoch=epoch, no_gan=args.no_gan, **jieti_kwargs
             )
 
         metric_logger.update(loss=loss.item())
         metric_logger.update(loss_l1l2=loss_l1l2)
         metric_logger.update(loss_vgg=loss_vgg)
+        if jieti_extra is not None:
+            # 排序指标 S 的 val 分项：不加权重建 L1 分 JT/BF、结体三项之和 J。
+            # 按样本数加权累计（SmoothedValue.update 的 n 参数），再在同步后取 global_avg。
+            is_jt_b = jieti_kwargs["is_jt"].to(torch.bool)
+            l1ps = jieti_extra["l1_per_sample"].float()
+            if is_jt_b.any():
+                metric_logger.meters["L1_JT"].update(
+                    l1ps[is_jt_b].mean().item(), n=int(is_jt_b.sum()))
+            if (~is_jt_b).any():
+                metric_logger.meters["L1_BF"].update(
+                    l1ps[~is_jt_b].mean().item(), n=int((~is_jt_b).sum()))
+            metric_logger.update(jieti_J=jieti_extra["J"].item())
         """
             在tensorboard内展示图片nchw->nhwc
         """
@@ -578,6 +636,22 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                     dataformats='HWC',
                 )
                 num_tb_images += 1
+        if vis_every and misc.is_main_process() and len(vis_frames) < 4:
+            raw = model.module if hasattr(model, "module") else model
+            imagenet_mean = np.array([0.485, 0.456, 0.406])
+            imagenet_std = np.array([0.229, 0.224, 0.225])
+            take = min(4 - len(vis_frames), samples.shape[0])
+            for image_idx in range(take):
+                y_show = torch.einsum(
+                    'nchw->nhwc', raw.unpatchify(y[[image_idx]])).detach().float().cpu()
+                m_show = mask[[image_idx]].detach().float().cpu().unsqueeze(-1).repeat(
+                    1, 1, raw.patch_size ** 2 * 3)
+                m_show = torch.einsum('nchw->nhwc', raw.unpatchify(m_show)).detach().cpu()
+                x_show = torch.einsum('nchw->nhwc', samples[[image_idx]].detach().float().cpu())
+                tgt_show = torch.einsum('nchw->nhwc', targets[[image_idx]].detach().float().cpu())
+                frame = torch.cat((x_show, tgt_show * (1 - m_show), y_show, tgt_show), dim=2)[0]
+                frame = torch.clip((frame * imagenet_std + imagenet_mean) * 255, 0, 255).to(torch.uint8)
+                vis_frames.append(frame.numpy())
         num_batch += 1
 
         # if global_rank == 0 and args.log_wandb:
@@ -608,6 +682,14 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
     print('Val loss {losses.global_avg:.3f}'.format(losses=metric_logger.loss))
 
     out = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+
+    if vis_every and misc.is_main_process() and vis_frames:
+        # 4 张固定样本竖向拼成一张，存 vis/epoch_XXX.png（按 epoch 命名）。
+        from PIL import Image as _Image
+        grid = np.concatenate(vis_frames, axis=0)
+        vis_dir = os.path.join(args.output_dir, "vis")
+        os.makedirs(vis_dir, exist_ok=True)
+        _Image.fromarray(grid).save(os.path.join(vis_dir, f"epoch_{epoch:03d}.png"))
 
     # if global_rank == 0 and args.log_wandb:
     #     wandb.log({**{f'test_{k}': v for k, v in out.items()},'epoch': epoch})

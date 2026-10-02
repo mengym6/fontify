@@ -92,6 +92,42 @@ def get_args_parser():
                             '训练时 JT（结体）样本使用随机遮盖，'
                             '不使用 JT 语义遮盖'
                         ))
+    # === 结体（Jieti）结构 loss（T1）===
+    parser.add_argument('--jieti_loss', action='store_true',
+                        help='开启结体结构 loss（相对质心/log σ/形状描述子），只在 JT 样本生效')
+    parser.add_argument('--jieti_alpha_jt', default=0.5, type=float,
+                        help='JT 样本上原 loss 的降权系数 α_jt（<1，不为 0）')
+    parser.add_argument('--jieti_w', default=1.0, type=float,
+                        help='结体项总权重 w（标定值乘搜索倍率后的绝对值）')
+    parser.add_argument('--jieti_struct_pair_prob', default=1.0, type=float,
+                        help='JT 走"同结构异字"配对的概率 p，否则随机同 type')
+    parser.add_argument('--jieti_soft_fg', default='linear', choices=['linear', 'sigmoid'],
+                        help='软前景映射：linear=clamp(1-g) 或 sigmoid')
+    parser.add_argument('--jieti_sigmoid_scale', default=10.0, type=float,
+                        help='sigmoid 软前景的尺度')
+    parser.add_argument('--jieti_k_max', default=4, type=int, help='最大部件数')
+    parser.add_argument('--jieti_pool', default=224, type=int, help='结体计算分辨率')
+    parser.add_argument('--jieti_valid_ink', default=200, type=int,
+                        help='GT 部件增强后墨量(448)达此阈值才算有效部件')
+    parser.add_argument('--jieti_pred_mass_ratio', default=0.1, type=float,
+                        help='预测部件墨量低于 GT 的此比例则屏蔽该部件')
+    parser.add_argument('--jieti_w_centroid', default=1.0, type=float,
+                        help='结体三项相对系数：相对质心（标定得到的固定常数）')
+    parser.add_argument('--jieti_w_logsigma', default=1.0, type=float,
+                        help='结体三项相对系数：log σ（标定得到的固定常数）')
+    parser.add_argument('--jieti_w_shape', default=1.0, type=float,
+                        help='结体三项相对系数：形状描述子（标定得到的固定常数）')
+    parser.add_argument('--fixed_pair_path', default=None, type=str,
+                        help='val 固定配对 json（target_path→pair2 index），所有组与 baseline 共用')
+    parser.add_argument('--save_best', action='store_true',
+                        help='额外按排序指标 S 最低保存 checkpoint-best.pth')
+    parser.add_argument('--save_best_only', action='store_true',
+                        help='搜索组用（C3）：跳过周期保存与末轮强制保存，只留 checkpoint-best.pth')
+    parser.add_argument('--s_baseline_path', default=None, type=str,
+                        help='S 分母：baseline 在固定 val epoch50 的 {L1_JT,L1_BF,J} json；'
+                             '缺省时 best 退回按 val 总 loss 选')
+    parser.add_argument('--vis_every_epoch', action='store_true',
+                        help='每 epoch 导出 4 张固定 val 视觉图到 vis/epoch_XXX.png 并更新 val_loss_curve.png')
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
                         help='use checkpoint to save GPU memory')
 
@@ -302,6 +338,28 @@ def build_data_transforms(args):
     return transform_train, transform_train2, transform_train3, transform_train_seccrop, transform_val
 
 
+def _plot_val_curve(history, path):
+    """画 val 原始总 loss 和 S 两条曲线，每 epoch 覆盖更新（C1）。"""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    epochs = [h[0] for h in history]
+    losses = [h[1] for h in history]
+    s_vals = [h[2] for h in history]
+    fig, ax1 = plt.subplots()
+    ax1.plot(epochs, losses, "b-", label="val total loss")
+    ax1.set_xlabel("epoch")
+    ax1.set_ylabel("val total loss", color="b")
+    if any(s is not None for s in s_vals):
+        ax2 = ax1.twinx()
+        ax2.plot([e for e, s in zip(epochs, s_vals) if s is not None],
+                 [s for s in s_vals if s is not None], "r-", label="S")
+        ax2.set_ylabel("S", color="r")
+    fig.tight_layout()
+    fig.savefig(path)
+    plt.close(fig)
+
+
 def main(args, ds_init):
     misc.init_distributed_mode(args)
 
@@ -334,6 +392,17 @@ def main(args, ds_init):
 
     if args.grad_log_interval < 0:
         raise ValueError('grad_log_interval must be non-negative')
+    if args.jieti_loss:
+        if not (0.0 < args.jieti_alpha_jt <= 1.0):
+            raise ValueError('jieti_alpha_jt must be in (0, 1]')
+        model.enable_jieti(
+            args.jieti_alpha_jt, args.jieti_w, k_max=args.jieti_k_max,
+            pool=args.jieti_pool, soft_fg=args.jieti_soft_fg,
+            sigmoid_scale=args.jieti_sigmoid_scale,
+            pred_mass_ratio=args.jieti_pred_mass_ratio,
+            w_centroid=args.jieti_w_centroid, w_logsigma=args.jieti_w_logsigma,
+            w_shape=args.jieti_w_shape,
+        )
 
     if args.finetune:
         checkpoint = torch.load(args.finetune, map_location='cpu')
@@ -396,6 +465,11 @@ def main(args, ds_init):
         num_mask_annotations_jt=args.num_mask_annotations_jt,
         mask_coverage_threshold=args.mask_coverage_threshold,
         no_jt=args.no_jt,
+        return_jieti=args.jieti_loss,
+        jieti_k_max=args.jieti_k_max,
+        jieti_pool=args.jieti_pool,
+        jieti_valid_ink=args.jieti_valid_ink,
+        jieti_struct_pair_prob=args.jieti_struct_pair_prob,
     )
     if args.mask_mix_probs is not None:
         dataset_train_kwargs["mask_mix_probs"] = args.mask_mix_probs
@@ -403,7 +477,13 @@ def main(args, ds_init):
     dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
                               transform3=None, masked_position_generator=masked_position_generator,
                               use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0,
-                              strict_style_pairing=args.strict_style_pairing)
+                              strict_style_pairing=args.strict_style_pairing,
+                              return_jieti=args.jieti_loss,
+                              jieti_k_max=args.jieti_k_max,
+                              jieti_pool=args.jieti_pool,
+                              jieti_valid_ink=args.jieti_valid_ink,
+                              jieti_struct_pair_prob=args.jieti_struct_pair_prob,
+                              fixed_pair_path=args.fixed_pair_path)
 
     print(dataset_train)
     print(dataset_val)
@@ -536,6 +616,33 @@ def main(args, ds_init):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     gradient_monitor = GradientMonitor(args.output_dir, args.grad_log_interval, global_rank)
+
+    # 步骤 10：每组另存完整 args 到 hparams.json（checkpoint 里只存 args 对象，
+    # 搜索编排需要可读的超参）。
+    if args.output_dir and misc.is_main_process():
+        with open(os.path.join(args.output_dir, "hparams.json"), "w", encoding="utf-8") as f:
+            json.dump({k: (v if isinstance(v, (int, float, str, bool, list, type(None))) else str(v))
+                       for k, v in vars(args).items()}, f, ensure_ascii=False, indent=2)
+
+    # 排序指标 S 的 baseline 分母（固定 val epoch50 的 L1_JT/L1_BF/J）。
+    s_base = None
+    if args.s_baseline_path and os.path.exists(args.s_baseline_path):
+        with open(args.s_baseline_path, "r", encoding="utf-8") as f:
+            s_base = json.load(f)
+    best_s = float("inf")
+    val_s_history = []  # (epoch, total_loss, S)
+
+    def compute_s(stats):
+        """S = L1_JT/base + L1_BF/base + J/base。缺 baseline 时返回 None。"""
+        if s_base is None:
+            return None
+        keys = ("L1_JT", "L1_BF", "jieti_J")
+        if not all(f"test_{k}".replace("test_", "") in stats for k in keys):
+            return None
+        return (stats["L1_JT"] / s_base["L1_JT"]
+                + stats["L1_BF"] / s_base["L1_BF"]
+                + stats["jieti_J"] / s_base["J"])
+
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
@@ -548,7 +655,10 @@ def main(args, ds_init):
             optimizer_d=optimizer_d,
             gradient_monitor=gradient_monitor
         )
-        if args.output_dir and (epoch % args.save_freq == 0 or epoch + 1 == args.epochs):
+        # C3：save_freq 存周期 checkpoint（正式训练用 epoch50 与 baseline 比）；
+        # 搜索组开 --save_best_only 时跳过周期保存与末轮强制保存，只留 best。
+        if (args.output_dir and not args.save_best_only
+                and (epoch % args.save_freq == 0 or epoch + 1 == args.epochs)):
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, optimizer_d=optimizer_d,
                 loss_scaler=loss_scaler, epoch=epoch)
@@ -557,9 +667,23 @@ def main(args, ds_init):
                                  log_writer=log_writer)
         print(f"Val loss of the network on the {len(dataset_val)} test images: {test_stats['loss']:.3f}")
 
+        # C1：按排序指标 S 选最优 epoch（S 最低），额外存 checkpoint-best.pth。
+        cur_s = compute_s(test_stats)
+        if cur_s is not None:
+            test_stats["S"] = cur_s
+        if args.save_best:
+            select = cur_s if cur_s is not None else test_stats["loss"]
+            if select < best_s:
+                best_s = select
+                if misc.is_main_process():
+                    to_save = {"model": model_without_ddp.state_dict(), "epoch": epoch, "args": args}
+                    misc.save_on_master(to_save, os.path.join(args.output_dir, "checkpoint-best.pth"))
+
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      **{f'test_{k}': v for k, v in test_stats.items()},
                      'epoch': epoch, }
+
+        val_s_history.append((epoch, test_stats["loss"], cur_s))
 
         if args.output_dir and misc.is_main_process():
             if log_writer is not None:
@@ -569,6 +693,8 @@ def main(args, ds_init):
                 }, epoch)
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
+            if args.vis_every_epoch:
+                _plot_val_curve(val_s_history, os.path.join(args.output_dir, "val_loss_curve.png"))
     gradient_monitor.close()
 
     total_time = time.time() - start_time
