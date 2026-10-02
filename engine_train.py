@@ -530,13 +530,11 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
     # 所以取前 4 张即固定样本。
     vis_every = bool(getattr(args, "vis_every_epoch", False)) if args is not None else False
     vis_frames = []
-    # DDP：synchronize_between_processes 对每个 meter 做一次 all_reduce，配对依赖各
-    # rank 的 meter 集合与插入顺序一致。L1_JT/L1_BF/jieti_J 必须在循环前以固定顺序
-    # 预建（n=0 占位），否则某 rank 的 batch 恰好全 JT 或全 BF 会导致顺序错配甚至死锁。
+    # 排序指标 S 的 val 分项用本地累加器（sum,count），循环后以固定顺序手动 all_reduce，
+    # 不走 MetricLogger：避免 defaultdict 惰性建 meter 在各 rank 顺序不一致导致 all_reduce
+    # 跨类错配/死锁，也避免 count=0 的 meter 触发 global_avg 的 0/0。
     jieti_val = bool(getattr(args, "jieti_loss", False)) if args is not None else False
-    if jieti_val:
-        for _k in ("L1_JT", "L1_BF", "jieti_J"):
-            _ = metric_logger.meters[_k]
+    jieti_acc = {"L1_JT": [0.0, 0], "L1_BF": [0.0, 0], "jieti_J": [0.0, 0]}
     for batch in metric_logger.log_every(data_loader, 10, header):
 
         samples = batch[0]
@@ -576,17 +574,19 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         metric_logger.update(loss_l1l2=loss_l1l2)
         metric_logger.update(loss_vgg=loss_vgg)
         if jieti_extra is not None:
-            # 排序指标 S 的 val 分项：不加权重建 L1 分 JT/BF、结体三项之和 J。
-            # 按样本数加权累计（SmoothedValue.update 的 n 参数），再在同步后取 global_avg。
+            # 排序指标 S 的 val 分项累计到本地 [sum, count]（按样本数加权）。
             is_jt_b = jieti_kwargs["is_jt"].to(torch.bool)
             l1ps = jieti_extra["l1_per_sample"].float()
-            if is_jt_b.any():
-                metric_logger.meters["L1_JT"].update(
-                    l1ps[is_jt_b].mean().item(), n=int(is_jt_b.sum()))
-            if (~is_jt_b).any():
-                metric_logger.meters["L1_BF"].update(
-                    l1ps[~is_jt_b].mean().item(), n=int((~is_jt_b).sum()))
-            metric_logger.update(jieti_J=jieti_extra["J"].item())
+            n_jt = int(is_jt_b.sum())
+            n_bf = int((~is_jt_b).sum())
+            if n_jt:
+                jieti_acc["L1_JT"][0] += float(l1ps[is_jt_b].sum().item())
+                jieti_acc["L1_JT"][1] += n_jt
+                jieti_acc["jieti_J"][0] += float(jieti_extra["J"].item()) * n_jt
+                jieti_acc["jieti_J"][1] += n_jt
+            if n_bf:
+                jieti_acc["L1_BF"][0] += float(l1ps[~is_jt_b].sum().item())
+                jieti_acc["L1_BF"][1] += n_bf
         """
             在tensorboard内展示图片nchw->nhwc
         """
@@ -682,6 +682,16 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
     print('Val loss {losses.global_avg:.3f}'.format(losses=metric_logger.loss))
 
     out = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+
+    if jieti_val:
+        # 固定顺序手动跨 rank 规约 [sum,count]，再取加权均值写进 out（→ log.txt 的 test_*）。
+        for key in ("L1_JT", "L1_BF", "jieti_J"):
+            s, c = jieti_acc[key]
+            t = torch.tensor([s, c], dtype=torch.float64, device=device)
+            if misc.is_dist_avail_and_initialized():
+                torch.distributed.all_reduce(t)
+            if t[1].item() > 0:
+                out[key] = (t[0] / t[1]).item()
 
     if vis_every and misc.is_main_process() and vis_frames:
         # 4 张固定样本竖向拼成一张，存 vis/epoch_XXX.png（按 epoch 命名）。
