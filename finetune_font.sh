@@ -32,6 +32,7 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=$MASTER_PORT
     --warmup_epochs 5 \
     --lr 1e-3 \
     --clip_grad 3.0 \
+    --style_weight 14.73 \
     --layer_decay 0.8 \
     --drop_path 0.1 \
     --input_size 896 448 \
