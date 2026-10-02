@@ -118,6 +118,18 @@ def is_complete(output_dir):
     return False
 
 
+def has_run_evidence(output_dir):
+    """目录里是否有真正开跑过的痕迹：log.txt 或任意 checkpoint。
+    dry-run 残留只有 search_hparams.json，不算开跑过。"""
+    if os.path.isfile(os.path.join(output_dir, "log.txt")):
+        return True
+    if os.path.isdir(output_dir):
+        for name in os.listdir(output_dir):
+            if name.startswith("checkpoint") and name.endswith(".pth"):
+                return True
+    return False
+
+
 def pick_best_epoch(log_rows):
     """返回 test_S 最小的那一行；缺 test_S 时退回 test_loss。"""
     scored = [r for r in log_rows if "test_S" in r and r["test_S"] is not None]
@@ -284,26 +296,32 @@ def run_group(row, args, s_base, summary_path, search_root):
         else:
             status = "reused_incomplete"
         print(f"[组 {group}] 复用正式训练目录 {g1_dir}（{status}），不重跑。")
-        append_summary(summary_path, summarize_group(row, g1_dir, s_base, status))
+        if not args.dry_run:
+            append_summary(summary_path, summarize_group(row, g1_dir, s_base, status))
         return status
 
     # 断点续跑：已完成直接跳过。
     if is_complete(base_dir):
         print(f"[组 {group}] {base_dir} 已完成，跳过。")
-        append_summary(summary_path, summarize_group(row, base_dir, s_base, "skipped(done)"))
+        if not args.dry_run:
+            append_summary(summary_path, summarize_group(row, base_dir, s_base, "skipped(done)"))
         return "skipped(done)"
 
-    # 目录存在但未完成（崩溃）→ 输出到新目录 _retry<n>，不删旧目录。
+    # 目录存在但未完成。区分两种情况：
+    #   - 没有开跑痕迹（只有 dry-run 残留的 search_hparams.json）→ 当作从未开跑，
+    #     直接用原目录名开跑，不加 _retry。
+    #   - 有 log.txt 或 checkpoint（真跑过但没到 epoch 50，崩溃）→ 输出到 _retry<n>，不删旧目录。
     output_dir = base_dir
     retry = 0
-    if os.path.exists(base_dir):
+    if os.path.exists(base_dir) and has_run_evidence(base_dir):
         retry = 1
         while os.path.exists(os.path.join(search_root, "%s_retry%d" % (base_name, retry))):
             # 已完成的重试目录也算完成。
             cand = os.path.join(search_root, "%s_retry%d" % (base_name, retry))
             if is_complete(cand):
                 print(f"[组 {group}] 重试目录 {cand} 已完成，跳过。")
-                append_summary(summary_path, summarize_group(row, cand, s_base, "skipped(done)"))
+                if not args.dry_run:
+                    append_summary(summary_path, summarize_group(row, cand, s_base, "skipped(done)"))
                 return "skipped(done)"
             retry += 1
         output_dir = os.path.join(search_root, "%s_retry%d" % (base_name, retry))
@@ -317,7 +335,6 @@ def run_group(row, args, s_base, summary_path, search_root):
         print("磁盘不足，需用户确认", file=sys.stderr)
         sys.exit(3)
 
-    write_search_hparams(output_dir, row)
     master_port = args.master_port_base + group
     cmd = build_cmd(args.python_bin, master_port, output_dir, row, args)
 
@@ -325,6 +342,7 @@ def run_group(row, args, s_base, summary_path, search_root):
     if args.dry_run:
         return "dry_run"
 
+    write_search_hparams(output_dir, row)
     os.makedirs(os.path.join(output_dir, "logs"), exist_ok=True)
     train_log = os.path.join(output_dir, "train.log")
     with open(train_log, "a", encoding="utf-8") as lf:
