@@ -23,6 +23,7 @@ checkpoint-best.pth。runner 对搜索组统一带上这个 flag。
 
 import argparse
 import csv
+import glob
 import json
 import os
 import shutil
@@ -171,6 +172,17 @@ def disk_ok(output_root, required_bytes):
     return free >= required_bytes, free
 
 
+def expand_glob(pattern):
+    """展开通配符，和 bash 在 shell 里展开 *.json 的效果一致。
+    bash 的通配符按字典序排列，这里用 sorted(glob.glob()) 对齐。
+    空匹配直接报错退出，不启动训练（避免把字面 '*.json' 当文件名传下去）。"""
+    matches = sorted(glob.glob(pattern))
+    if not matches:
+        print(f"错误：通配符 {pattern} 没有匹配到任何文件，终止。", file=sys.stderr)
+        sys.exit(4)
+    return matches
+
+
 def build_cmd(python_bin, master_port, output_dir, row, args):
     """拼接单组训练命令。6 个超参来自 row，其余来自 BASE_ARGS。"""
     log_dir = os.path.join(output_dir, "logs")
@@ -196,8 +208,12 @@ def build_cmd(python_bin, master_port, output_dir, row, args):
         "--save_best",
         "--save_best_only",  # C3：搜索组只保留 checkpoint-best.pth
         "--data_path", args.data_path + "/",
-        "--json_path", os.path.join(args.data_path, "train_json_new", "*.json"),
-        "--val_json_path", os.path.join(args.data_path, "val_json_new", "*.json"),
+    ]
+    # json 通配符在 runner 里展开（subprocess 参数列表不经过 shell，* 不会被展开）。
+    # 和 finetune_jieti.sh 在 shell 里展开的文件、顺序完全一致（字典序）。
+    cmd += ["--json_path"] + expand_glob(os.path.join(args.data_path, "train_json_new", "*.json"))
+    cmd += ["--val_json_path"] + expand_glob(os.path.join(args.data_path, "val_json_new", "*.json"))
+    cmd += [
         "--output_dir", output_dir,
         "--log_dir", log_dir,
         "--finetune", args.pretrain_ckpt,
@@ -380,6 +396,8 @@ def main():
                         help="TB/vis 余量（GB）")
     parser.add_argument("--start_group", type=int, default=1,
                         help="从第几组开始（含）；默认 1，会处理中心组的汇总")
+    parser.add_argument("--end_group", type=int, default=None,
+                        help="跑到第几组为止（含）；默认 None 表示不设上限")
     parser.add_argument("--dry_run", action="store_true",
                         help="只打印命令和分支判断，不执行训练")
     args = parser.parse_args()
@@ -397,6 +415,8 @@ def main():
     for row in plan:
         group = int(row["group"])
         if group < args.start_group:
+            continue
+        if args.end_group is not None and group > args.end_group:
             continue
         status = run_group(row, args, s_base, summary_path, search_root)
         print(f"[组 {group}] 状态：{status}")
