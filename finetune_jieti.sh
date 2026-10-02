@@ -14,9 +14,9 @@ DATA_PATH=fontdata_example
 name=finetune_jieti
 PRETRAIN_CKPT=models/vit_base_font/checkpoint-14.pth
 
-# 结体首轮超参（Q10）：α_jt=0.5；w 用标定值（这里先占位 1.0，标定后由脚本/搜索覆盖）。
+# 结体首轮超参（Q10）：α_jt=0.5；w 用标定值 w0=0.6423（2026-10-02 ckpt14 标定）。
 JIETI_ALPHA_JT=0.5
-JIETI_W=1.0
+JIETI_W=0.6423
 JIETI_P=1.0
 
 python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
@@ -62,8 +62,8 @@ python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
     --jieti_pool 224 \
     --jieti_valid_ink 200 \
     --jieti_pred_mass_ratio 0.1 \
-    --jieti_w_centroid 1.0 \
-    --jieti_w_logsigma 1.0 \
+    --jieti_w_centroid 0.9688 \
+    --jieti_w_logsigma 0.5409 \
     --jieti_w_shape 1.0 \
     --fixed_pair_path $DATA_PATH/val_pairs_fixed.json \
     --s_baseline_path models/jieti_search/s_baseline.json \

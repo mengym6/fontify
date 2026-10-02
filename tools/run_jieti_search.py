@@ -59,8 +59,9 @@ BASE_ARGS = [
     "--jieti_pool", "224",
     "--jieti_valid_ink", "200",
     "--jieti_pred_mass_ratio", "0.1",
-    "--jieti_w_centroid", "1.0",
-    "--jieti_w_logsigma", "1.0",
+    # 三项相对系数：2026-10-02 ckpt14 梯度范数标定（所有组共用）。
+    "--jieti_w_centroid", "0.9688",
+    "--jieti_w_logsigma", "0.5409",
     "--jieti_w_shape", "1.0",
     "--vis_every_epoch",
     "--val_tb_image_limit", "76",
