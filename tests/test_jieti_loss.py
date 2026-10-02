@@ -73,17 +73,29 @@ def _two_square_glyph(H=896, W=448, offset=0, scale=1.0, bold=0):
 
 
 def test_translation_scaling_bold_responses():
+    # 按项检验：每项对各自目标扰动有响应，对单纯加粗响应很小（整体 J 会把
+    # 三项混在一起，不能用来区分，故逐项断言）。
     mod = JietiLoss()
     is_jt = torch.tensor([True])
     gt, voro, valid = _two_square_glyph(offset=0, scale=1.0, bold=0)
-    base, _, _ = mod(gt, gt, voro, valid, is_jt)  # 自身对自身应接近 0
-    trans, _, _ = mod(_two_square_glyph(offset=60)[0], gt, voro, valid, is_jt)
-    scal, _, _ = mod(_two_square_glyph(scale=1.6)[0], gt, voro, valid, is_jt)
-    bold, _, _ = mod(_two_square_glyph(bold=4)[0], gt, voro, valid, is_jt)
-    assert base < 1e-3
-    # 平移、缩放的响应应明显大于单纯加粗。
-    assert trans > 5 * bold
-    assert scal > 3 * bold
+
+    def parts(**kw):
+        _, p, _ = mod(_two_square_glyph(**kw)[0], gt, voro, valid, is_jt)
+        return p
+
+    base = parts(offset=0, scale=1.0, bold=0)
+    trans = parts(offset=60)
+    scal = parts(scale=1.6)
+    bold = parts(bold=4)
+
+    # 自身对自身：三项都≈0。
+    assert all(v.item() < 1e-3 for v in base.values())
+    # 相对质心对平移有强响应，对加粗≈0。
+    assert trans["centroid"] > 0.1
+    assert bold["centroid"] < 1e-3
+    assert trans["centroid"] > 10 * bold["centroid"]
+    # log σ 对缩放的响应远大于对加粗。
+    assert scal["logsigma"] > 5 * bold["logsigma"]
 
 
 def test_no_jt_batch_zero():
