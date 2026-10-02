@@ -174,6 +174,8 @@ def get_args_parser():
                         help='final adversarial loss weight')
     parser.add_argument('--edge_weight_final', default=0.3, type=float,
                         help='final edge loss weight')
+    parser.add_argument('--style_weight', default=1.0, type=float,
+                        help='全局 VGG style(Gram) 损失权重；默认 1.0 等价于改动前')
     parser.add_argument(
         "--strict_style_pairing", action="store_true",
         help="require same-style, different-character reference pairs",
@@ -389,6 +391,7 @@ def main(args, ds_init):
     model.loss_warmup_duration = args.loss_warmup_duration
     model.adv_weight_final = args.adv_weight_final
     model.edge_weight_final = args.edge_weight_final
+    model.style_weight = args.style_weight
 
     if args.grad_log_interval < 0:
         raise ValueError('grad_log_interval must be non-negative')

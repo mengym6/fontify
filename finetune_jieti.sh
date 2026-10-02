@@ -8,7 +8,7 @@
 #   - Q12：--save_freq 10，额外存 best（--save_best），比较只用 epoch 50。
 # α_jt、w、三项相对系数见下。w 为标定后的绝对值，首轮用标定值 w0（见 PROGRESS 步骤 4）。
 
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1}
 
 DATA_PATH=fontdata_example
 name=finetune_jieti
@@ -19,7 +19,9 @@ JIETI_ALPHA_JT=0.5
 JIETI_W=0.6423
 JIETI_P=1.0
 
-python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
+MASTER_PORT=${MASTER_PORT:-29555}
+
+python -m torch.distributed.launch --nproc_per_node=2 --master_port=$MASTER_PORT \
 	--use_env main_train.py  \
     --batch_size 2 \
     --accum_iter 32  \
