@@ -17,7 +17,9 @@ HPARAMS = ["alpha_jt", "w", "p", "lr", "accum_iter", "warmup_epochs"]
 
 def is_valid_status(status):
     """只纳入训练完整跑完的组：done / done(retryN) / reused / skipped(done)。
-    排除 failed(...) / incomplete / reused_incomplete / dry_run 等。"""
+    排除 failed(...) / incomplete / reused_incomplete / dry_run 等。
+    runner 重算过 S 时状态带 ";S_recomputed" 后缀，判断时去掉。"""
+    status = status.split(";")[0]
     if status.startswith("done"):
         return True
     return status in ("reused", "skipped(done)")

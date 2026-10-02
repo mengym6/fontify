@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 """T1 结体 loss 超参随机搜索 runner（PROGRESS 步骤 9、10、12 和 C3）。
 
-读取 search_plan.csv，从第 2 组起按顺序串行运行（每组用 2 卡，组间串行）。
-第 1 组复用正式训练输出目录，不重跑，但照常汇总。
+读取 search_plan.csv，从第 2 组起按 plan 顺序领取运行（每组用 2 卡）。
+--gpu_slots "0,1;2,3" 时有多个卡槽：每个槽同一时间只跑一组，槽之间并行。
+槽开新组前要求槽内 GPU 上没有任何计算进程，且没有第 1 组（--group1_dir）的训练进程
+用到这些卡，不满足就每 --poll_interval 秒查一次。所有 summary.csv 写入、磁盘检查都在
+主进程里串行做，没有并发写。
+第 1 组复用正式训练输出目录，不重跑；排在最后，等它的训练进程全部退出后再汇总。
 
 每组：以 finetune_jieti.sh 的基准配置为底，只覆盖本组抽到的 6 个超参
 （alpha_jt、w、p、lr、accum_iter、warmup_epochs），并带上 --save_best、
@@ -23,12 +27,15 @@ checkpoint-best.pth。runner 对搜索组统一带上这个 flag。
 
 import argparse
 import csv
+import fcntl
 import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
+import time
 
 GB = 1024 ** 3
 
@@ -133,6 +140,24 @@ def has_run_evidence(output_dir):
     return False
 
 
+def fill_missing_s(log_rows, s_base):
+    """缺 test_S 的行用 s_baseline 重算，公式同 main_train.py compute_s：
+    S = L1_JT/L1_JT_base + L1_BF/L1_BF_base + J/J_base。返回是否重算过。
+    第 1 组启动时还没有 s_baseline.json，log.txt 里没有 test_S，靠这里补。"""
+    if not s_base:
+        return False
+    recomputed = False
+    for r in log_rows:
+        if r.get("test_S") is not None:
+            continue
+        if all(r.get(k) is not None for k in ("test_L1_JT", "test_L1_BF", "test_jieti_J")):
+            r["test_S"] = (r["test_L1_JT"] / s_base["L1_JT"]
+                           + r["test_L1_BF"] / s_base["L1_BF"]
+                           + r["test_jieti_J"] / s_base["J"])
+            recomputed = True
+    return recomputed
+
+
 def pick_best_epoch(log_rows):
     """返回 test_S 最小的那一行；缺 test_S 时退回 test_loss。"""
     scored = [r for r in log_rows if "test_S" in r and r["test_S"] is not None]
@@ -146,8 +171,9 @@ def pick_best_epoch(log_rows):
     return best, key
 
 
-def estimate_required_bytes(search_root, margin_gb):
-    """最近一组 best 的大小（没有取 2G）× 2 + 余量。"""
+def estimate_required_bytes(search_root, margin_gb, n_groups=1):
+    """（最近一组 best 的大小（没有取 2G）× 2）× n_groups + 余量。
+    n_groups = 正在跑的组数 + 1：并发时给还在写 checkpoint 的组也留出空间。"""
     best_size = None
     newest_mtime = -1.0
     if os.path.isdir(search_root):
@@ -160,7 +186,7 @@ def estimate_required_bytes(search_root, margin_gb):
                     best_size = os.path.getsize(ckpt)
     if best_size is None:
         best_size = 2 * GB
-    return best_size * 2 + int(margin_gb * GB)
+    return best_size * 2 * n_groups + int(margin_gb * GB)
 
 
 def disk_ok(output_root, required_bytes):
@@ -237,8 +263,16 @@ def write_search_hparams(output_dir, row):
 
 def append_summary(summary_path, record):
     """按 group 幂等写入：已有该组则替换该行，否则追加。
-    这样断点续跑/重复运行不会在 summary.csv 里堆叠重复行。"""
+    这样断点续跑/重复运行不会在 summary.csv 里堆叠重复行。
+    读-改-写整段持有 <summary>.lock 的排他锁：本进程内是串行写，锁防的是另起一个
+    runner（例如事后单独补第 1 组）同时写同一个 summary.csv。"""
     os.makedirs(os.path.dirname(summary_path) or ".", exist_ok=True)
+    with open(summary_path + ".lock", "w") as lock_f:
+        fcntl.flock(lock_f, fcntl.LOCK_EX)
+        _append_summary_locked(summary_path, record)
+
+
+def _append_summary_locked(summary_path, record):
     rows = []
     if os.path.exists(summary_path):
         with open(summary_path, newline="", encoding="utf-8") as f:
@@ -270,6 +304,8 @@ def append_summary(summary_path, record):
 def summarize_group(row, output_dir, s_base, status):
     """从 output_dir/log.txt 取 best epoch，组装 summary 行。"""
     log_rows = parse_log(os.path.join(output_dir, "log.txt"))
+    if fill_missing_s(log_rows, s_base):
+        status = status + ";S_recomputed"
     best, key = pick_best_epoch(log_rows)
     rec = {k: row.get(k, "") for k in
            ("group", "alpha_jt", "w", "u", "p", "lr", "accum_iter", "warmup_epochs")}
@@ -281,7 +317,8 @@ def summarize_group(row, output_dir, s_base, status):
                     "J_raw": "", "J_ratio": ""})
         return rec
     rec["best_epoch"] = best.get("epoch", "")
-    rec["best_S"] = best.get("test_S", best.get(key, ""))
+    # 按 test_loss 退回选出的 best 不填 best_S，免得 loss 值混进 S 排名。
+    rec["best_S"] = best.get("test_S", "") if key == "test_S" else ""
     l1_jt = best.get("test_L1_JT")
     l1_bf = best.get("test_L1_BF")
     j = best.get("test_jieti_J")
@@ -300,30 +337,18 @@ def summarize_group(row, output_dir, s_base, status):
     return rec
 
 
-def run_group(row, args, s_base, summary_path, search_root):
-    """运行（或跳过/重试）一组，并追加 summary。返回状态字符串。"""
+def prepare_group(row, args, s_base, summary_path, search_root):
+    """非第 1 组：判断跳过/重试。已完成返回 None（并写 summary），否则返回 (output_dir, retry)。"""
     group = int(row["group"])
     base_name = "group%02d" % group
     base_dir = os.path.join(search_root, base_name)
-
-    # 第 1 组复用正式训练输出目录，不重跑。
-    if group == 1:
-        g1_dir = args.group1_dir
-        if is_complete(g1_dir):
-            status = "reused"
-        else:
-            status = "reused_incomplete"
-        print(f"[组 {group}] 复用正式训练目录 {g1_dir}（{status}），不重跑。")
-        if not args.dry_run:
-            append_summary(summary_path, summarize_group(row, g1_dir, s_base, status))
-        return status
 
     # 断点续跑：已完成直接跳过。
     if is_complete(base_dir):
         print(f"[组 {group}] {base_dir} 已完成，跳过。")
         if not args.dry_run:
             append_summary(summary_path, summarize_group(row, base_dir, s_base, "skipped(done)"))
-        return "skipped(done)"
+        return None
 
     # 目录存在但未完成。区分两种情况：
     #   - 没有开跑痕迹（只有 dry-run 残留的 search_hparams.json）→ 当作从未开跑，
@@ -340,31 +365,97 @@ def run_group(row, args, s_base, summary_path, search_root):
                 print(f"[组 {group}] 重试目录 {cand} 已完成，跳过。")
                 if not args.dry_run:
                     append_summary(summary_path, summarize_group(row, cand, s_base, "skipped(done)"))
-                return "skipped(done)"
+                return None
             retry += 1
         output_dir = os.path.join(search_root, "%s_retry%d" % (base_name, retry))
         print(f"[组 {group}] 旧目录 {base_dir} 未完成，不删除，重跑到 {output_dir}。")
+    return output_dir, retry
 
-    # 磁盘检查（步骤 12）。
-    required = estimate_required_bytes(search_root, args.disk_margin_gb)
-    ok, free = disk_ok(args.output_root, required)
-    print(f"[组 {group}] 磁盘检查：需 {required/GB:.1f}G，剩 {free/GB:.1f}G。")
-    if not ok and not args.dry_run:
-        print("磁盘不足，需用户确认", file=sys.stderr)
-        sys.exit(3)
 
-    master_port = args.master_port_base + group
-    cmd = build_cmd(args.python_bin, master_port, output_dir, row, args)
+def parse_gpu_slots(spec):
+    """"0,1;2,3" → ["0,1", "2,3"]。None → [None]（单槽，沿用继承的 CUDA_VISIBLE_DEVICES，不查卡）。"""
+    if spec is None:
+        return [None]
+    # 卡号逐个去空格，"0, 1" 也能和 nvidia-smi 的 index 对上。
+    slots = [",".join(g.strip() for g in s.split(",")) for s in spec.split(";") if s.strip()]
+    for s in slots:
+        if len(s.split(",")) != 2:
+            print(f"错误：槽 {s} 不是 2 张卡（每组 --nproc_per_node=2）。", file=sys.stderr)
+            sys.exit(2)
+    return slots
 
-    print(f"[组 {group}] 启动：{' '.join(cmd)}")
-    if args.dry_run:
-        return "dry_run"
 
-    write_search_hparams(output_dir, row)
-    os.makedirs(os.path.join(output_dir, "logs"), exist_ok=True)
-    train_log = os.path.join(output_dir, "train.log")
-    with open(train_log, "a", encoding="utf-8") as lf:
-        ret = subprocess.call(cmd, stdout=lf, stderr=subprocess.STDOUT)
+def _nvidia_smi(query_flag, fields):
+    out = subprocess.run(["nvidia-smi", query_flag + "=" + fields, "--format=csv,noheader"],
+                         capture_output=True, text=True, check=True).stdout
+    return [[c.strip() for c in line.split(",")] for line in out.splitlines() if line.strip()]
+
+
+def group1_procs(group1_dir):
+    """命令行里带 --output_dir <group1_dir> 的进程，返回 [(pid, CUDA_VISIBLE_DEVICES 或 None)]。
+    --output_dir 的值按该进程的 cwd 解析成真实路径再比，写法不同（相对/绝对/./）也能认出。
+    读不到环境变量时记 None，按占用全部卡处理。"""
+    target = os.path.realpath(group1_dir)
+    pat = re.compile(r"(?:^| )--output_dir (\S+)")
+    found = []
+    for pid in os.listdir("/proc") if os.path.isdir("/proc") else []:
+        if not pid.isdigit():
+            continue
+        try:
+            with open("/proc/%s/cmdline" % pid, "rb") as f:
+                cmdline = f.read().replace(b"\0", b" ").decode("utf-8", "replace")
+        except OSError:
+            continue
+        hit = False
+        for val in pat.findall(cmdline):
+            if not os.path.isabs(val):
+                try:
+                    val = os.path.join(os.readlink("/proc/%s/cwd" % pid), val)
+                except OSError:
+                    pass
+            if os.path.realpath(val) == target:
+                hit = True
+        if not hit:
+            continue
+        cvd = None
+        try:
+            with open("/proc/%s/environ" % pid, "rb") as f:
+                for kv in f.read().split(b"\0"):
+                    if kv.startswith(b"CUDA_VISIBLE_DEVICES="):
+                        cvd = kv.split(b"=", 1)[1].decode()
+        except OSError:
+            pass
+        found.append((int(pid), cvd))
+    return found
+
+
+def slot_busy_reasons(gpus, group1_dir):
+    """槽内 GPU 被占用的原因列表；空列表 = 可以开新组。
+    1) nvidia-smi 计算进程（按 index→uuid 映射到本槽的卡）；
+    2) 第 1 组的进程（CUDA_VISIBLE_DEVICES 与本槽相交，或读不到时视为占用全部卡）。
+    nvidia-smi 失败时视为占用，宁可多等。"""
+    want = set(gpus.split(","))
+    reasons = []
+    try:
+        idx2uuid = {r[0]: r[1] for r in _nvidia_smi("--query-gpu", "index,uuid")}
+        uuid2idx = {u: i for i, u in idx2uuid.items()}
+        for uuid, pid in _nvidia_smi("--query-compute-apps", "gpu_uuid,pid"):
+            idx = uuid2idx.get(uuid)
+            if idx in want:
+                reasons.append(f"GPU{idx} 上有进程 {pid}")
+    except (OSError, subprocess.CalledProcessError) as e:
+        reasons.append(f"nvidia-smi 查询失败（{e}）")
+    g1 = [(pid, cvd) for pid, cvd in group1_procs(group1_dir)
+          if cvd is None or set(cvd.split(",")) & want]
+    if g1:
+        # 只给固定文本：dataloader worker 每个 epoch 换 PID，写进来会让等待消息反复变化重打。
+        cvds = sorted({str(c) for _, c in g1})
+        reasons.append(f"第 1 组训练进程仍在用这些卡（CUDA_VISIBLE_DEVICES={','.join(cvds)}）")
+    return reasons
+
+
+def finish_group(row, output_dir, retry, ret, s_base, summary_path):
+    group = int(row["group"])
     if ret != 0:
         print(f"[组 {group}] 训练进程非零退出码 {ret}。", file=sys.stderr)
         status = "failed(rc=%d)" % ret
@@ -374,6 +465,19 @@ def run_group(row, args, s_base, summary_path, search_root):
         status = "incomplete"
     append_summary(summary_path, summarize_group(row, output_dir, s_base, status))
     return status
+
+
+def summarize_group1(row, args, s_base, summary_path):
+    g1_dir = args.group1_dir
+    status = "reused" if is_complete(g1_dir) else "reused_incomplete"
+    print(f"[组 1] 复用正式训练目录 {g1_dir}（{status}），不重跑。")
+    if not args.dry_run:
+        append_summary(summary_path, summarize_group(row, g1_dir, s_base, status))
+    return status
+
+
+def now():
+    return time.strftime("%m-%d %H:%M:%S")
 
 
 def main():
@@ -400,6 +504,11 @@ def main():
                         help="从第几组开始（含）；默认 1，会处理中心组的汇总")
     parser.add_argument("--end_group", type=int, default=None,
                         help="跑到第几组为止（含）；默认 None 表示不设上限")
+    parser.add_argument("--gpu_slots", default=None,
+                        help='卡槽，如 "0,1;2,3"。每槽同时只跑一组，槽间并行。'
+                             "不给时单槽串行，沿用继承的 CUDA_VISIBLE_DEVICES，不查卡")
+    parser.add_argument("--poll_interval", type=float, default=60.0,
+                        help="等卡/等训练结束的轮询间隔（秒）")
     parser.add_argument("--dry_run", action="store_true",
                         help="只打印命令和分支判断，不执行训练")
     args = parser.parse_args()
@@ -414,14 +523,128 @@ def main():
               file=sys.stderr)
 
     search_root = args.output_root
-    for row in plan:
-        group = int(row["group"])
-        if group < args.start_group:
-            continue
-        if args.end_group is not None and group > args.end_group:
-            continue
-        status = run_group(row, args, s_base, summary_path, search_root)
-        print(f"[组 {group}] 状态：{status}")
+    slots = parse_gpu_slots(args.gpu_slots)
+    selected = [r for r in plan
+                if int(r["group"]) >= args.start_group
+                and (args.end_group is None or int(r["group"]) <= args.end_group)]
+    group1_row = next((r for r in selected if int(r["group"]) == 1), None)
+    queue = [r for r in selected if int(r["group"]) != 1]
+
+    if args.dry_run:
+        # 只演示槽分配（按 plan 顺序轮流），不等卡、不写文件。
+        for i, gpus in enumerate(slots):
+            if gpus is not None:
+                reasons = slot_busy_reasons(gpus, args.group1_dir)
+                print(f"[dry_run] 槽 {i}（GPU {gpus}）当前："
+                      + ("空闲" if not reasons else "占用，正式运行会等待：" + "；".join(reasons)))
+        k = 0
+        for row in queue:
+            group = int(row["group"])
+            prep = prepare_group(row, args, s_base, summary_path, search_root)
+            if prep is None:
+                print(f"[组 {group}] 状态：skipped(done)")
+                continue
+            output_dir, _ = prep
+            gpus = slots[k % len(slots)]
+            k += 1
+            required = estimate_required_bytes(search_root, args.disk_margin_gb, min(len(slots), 2))
+            ok, free = disk_ok(args.output_root, required)
+            print(f"[组 {group}] 磁盘检查：需 {required/GB:.1f}G，剩 {free/GB:.1f}G。")
+            cmd = build_cmd(args.python_bin, args.master_port_base + group, output_dir, row, args)
+            print(f"[组 {group}] 槽 {(k - 1) % len(slots)} CUDA_VISIBLE_DEVICES={gpus} "
+                  f"启动：{' '.join(cmd)}")
+            print(f"[组 {group}] 状态：dry_run")
+        if group1_row is not None:
+            procs = group1_procs(args.group1_dir)
+            print(f"[组 1] 训练进程：{procs or '无'}；正式运行会等它们全部退出后再汇总。")
+            summarize_group1(group1_row, args, s_base, summary_path)
+        return
+
+    # running: 槽号 → (Popen, row, output_dir, retry, 日志文件句柄)
+    running = {}
+    group1_pending = group1_row is not None
+    stop_dispatch = False
+    exit_code = 0
+    last_wait_msg = {}
+    while queue or running or group1_pending:
+        # 1) 回收跑完的组（summary 只在主进程里串行写）。
+        for si in list(running):
+            proc, row, output_dir, retry, lf = running[si]
+            ret = proc.poll()
+            if ret is None:
+                continue
+            lf.close()
+            del running[si]
+            status = finish_group(row, output_dir, retry, ret, s_base, summary_path)
+            print(f"[{now()}] [组 {row['group']}] 状态：{status}（槽 {si} 空出）", flush=True)
+
+        # 2) 第 1 组：训练进程全部退出后才汇总，不在它没跑完时标成完成。
+        if group1_pending and not group1_procs(args.group1_dir):
+            status = summarize_group1(group1_row, args, s_base, summary_path)
+            print(f"[{now()}] [组 1] 状态：{status}", flush=True)
+            group1_pending = False
+
+        # 3) 给空槽派新组，按 plan 顺序领取。
+        for si, gpus in enumerate(slots):
+            if stop_dispatch or not queue or si in running:
+                continue
+            if gpus is not None:
+                reasons = slot_busy_reasons(gpus, args.group1_dir)
+                if reasons:
+                    msg = "；".join(reasons)
+                    # 原因不变时不重复打印，免得 runner.log 每分钟刷一行。
+                    if last_wait_msg.get(si) != msg:
+                        print(f"[{now()}] 槽 {si}（GPU {gpus}）等待（每 {args.poll_interval:.0f}s 查一次）：{msg}",
+                              flush=True)
+                        last_wait_msg[si] = msg
+                    continue
+                last_wait_msg.pop(si, None)
+            # 跳过已完成的组，直到拿到一组要跑的。
+            prep = None
+            while queue and prep is None:
+                row = queue[0]
+                prep = prepare_group(row, args, s_base, summary_path, search_root)
+                if prep is None:
+                    queue.pop(0)
+                    print(f"[组 {row['group']}] 状态：skipped(done)", flush=True)
+            if prep is None:
+                break
+            output_dir, retry = prep
+            group = int(row["group"])
+            # 磁盘检查（步骤 12）：给正在跑的组和本组都留出 best 的空间。
+            required = estimate_required_bytes(search_root, args.disk_margin_gb, len(running) + 1)
+            ok, free = disk_ok(args.output_root, required)
+            print(f"[{now()}] [组 {group}] 磁盘检查：需 {required/GB:.1f}G，剩 {free/GB:.1f}G。",
+                  flush=True)
+            if not ok:
+                print("磁盘不足，需用户确认；不再派新组，等在跑的组结束后退出。",
+                      file=sys.stderr, flush=True)
+                stop_dispatch = True
+                exit_code = 3
+                break
+            cmd = build_cmd(args.python_bin, args.master_port_base + group, output_dir, row, args)
+            env = os.environ.copy()
+            if gpus is not None:
+                env["CUDA_VISIBLE_DEVICES"] = gpus
+                # 让 CUDA 的卡号和 nvidia-smi 的 index 一致（都按 PCI 总线顺序）。
+                env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            write_search_hparams(output_dir, row)
+            os.makedirs(os.path.join(output_dir, "logs"), exist_ok=True)
+            lf = open(os.path.join(output_dir, "train.log"), "a", encoding="utf-8")
+            proc = subprocess.Popen(cmd, stdout=lf, stderr=subprocess.STDOUT, env=env)
+            running[si] = (proc, row, output_dir, retry, lf)
+            queue.pop(0)
+            print(f"[{now()}] [组 {group}] 槽 {si} CUDA_VISIBLE_DEVICES={gpus} PID {proc.pid} "
+                  f"启动：{' '.join(cmd)}", flush=True)
+
+        if stop_dispatch and not running and not group1_pending:
+            break
+        if not (queue or running or group1_pending):
+            break
+        time.sleep(args.poll_interval)
+    if stop_dispatch:
+        print(f"磁盘不足退出，剩 {len(queue)} 组未跑。", file=sys.stderr, flush=True)
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
