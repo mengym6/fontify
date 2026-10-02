@@ -42,15 +42,20 @@ def _two_square_glyph(H=896, W=448, offset=0, scale=1.0, bold=0):
     k_max = 4
     img = torch.ones(1, half * 2, W)  # 灰度，白底(1)
     # 在每半画两个方块（部件 1 左、部件 2 右）。
+    def ring(c, y0, x0, s, thick):
+        # 画空心方框（笔画），外延固定为 s×s；thick 只向内加粗，不改外接范围。
+        # 这样"加粗"忠实模拟真实笔画变粗（范围不变），而非整体放大。
+        c[y0:y0 + s, x0:x0 + thick] = 0.0
+        c[y0:y0 + s, x0 + s - thick:x0 + s] = 0.0
+        c[y0:y0 + thick, x0:x0 + s] = 0.0
+        c[y0 + s - thick:y0 + s, x0:x0 + s] = 0.0
+
     def draw(canvas_half):
         c = torch.ones(half, W)
-        # 部件 1
-        y0, x0 = 150, 100
         s = int(60 * scale)
-        c[y0 - bold:y0 + s + bold, x0 - bold:x0 + s + bold] = 0.0
-        # 部件 2（受 offset 平移）
-        y1, x1 = 150, 260 + offset
-        c[y1 - bold:y1 + s + bold, x1 - bold:x1 + s + bold] = 0.0
+        thick = 6 + bold  # 基础笔画宽 6px，bold 只增加笔画厚度
+        ring(c, 150, 100, s, thick)              # 部件 1
+        ring(c, 150, 260 + offset, s, thick)     # 部件 2（受 offset 平移）
         return c
     top = draw(True)
     bot = draw(True)
