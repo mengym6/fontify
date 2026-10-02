@@ -41,6 +41,8 @@ BASE_ARGS = [
     "--max_mask_patches_per_block", "392",
     "--epochs", "51",
     "--clip_grad", "3.0",
+    # VGG 修复后的 style 权重：2026-10-02 ckpt14 梯度范数标定（所有组共用）。
+    "--style_weight", "14.73",
     "--layer_decay", "0.8",
     "--drop_path", "0.1",
     "--input_size", "896", "448",
