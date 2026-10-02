@@ -3,7 +3,7 @@
 # Finetune 脚本：用于小数据集（~1200对）微调预训练模型
 # 核心改动：降lr、短训练、弱化判别器、关闭数据增强中的颜色抖动
 
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1}
 
 DATA_PATH=fontdata_example
 name=finetune_no_gan_nojt_no_freeze_baseline_vggfix
@@ -19,7 +19,9 @@ PRETRAIN_CKPT=models/vit_base_font/checkpoint-14.pth
 # 使用旧 JSON 清单与按 type 随机配对，沿用原有遮盖选择逻辑。
 # 默认恢复输出目录中的最新 checkpoint。
 
-python -m torch.distributed.launch --nproc_per_node=2 --master_port=29555 \
+MASTER_PORT=${MASTER_PORT:-29555}
+
+python -m torch.distributed.launch --nproc_per_node=2 --master_port=$MASTER_PORT \
 	--use_env main_train.py  \
     --batch_size 2 \
     --accum_iter 32  \

@@ -630,7 +630,8 @@ class Fontify(nn.Module):
         loss_edge = F.l1_loss(edge_pred, edge_target)
 
         adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
-        loss = loss_l1l2 + loss_vgg + edge_weight * loss_edge
+        style_weight = getattr(self, 'style_weight', 1.0)
+        loss = loss_l1l2 + style_weight * loss_vgg + edge_weight * loss_edge
 
         adv_loss = pred.new_tensor(0.0)
         if not no_gan:
@@ -649,7 +650,7 @@ class Fontify(nn.Module):
         if _rank0 and self._dbg_step % 50 == 1:
             contribs = {
                 "recon": loss_l1l2.detach(),
-                "style": loss_style.detach(),
+                "style": loss_style.detach() * loss_style.new_tensor(style_weight),
                 "edge": loss_edge.detach() * loss_edge.new_tensor(edge_weight),
                 "adv": adv_loss.detach() * adv_loss.new_tensor(adv_weight),
             }
@@ -666,7 +667,7 @@ class Fontify(nn.Module):
                   f"raw: recon({self.loss_func})={scalar(loss_l1l2):.4f} "
                   f"style={scalar(loss_style):.4f} edge={scalar(loss_edge):.4f} "
                   f"adv={scalar(adv_loss):.4f} | "
-                  f"w: recon=1.000 style=1.000 "
+                  f"w: recon=1.000 style={style_weight:.3f} "
                   f"edge={edge_weight:.3f} adv={adv_weight:.3f} | "
                   f"contrib: recon={scalar(contribs['recon']):.4f} "
                   f"style={scalar(contribs['style']):.4f} "
