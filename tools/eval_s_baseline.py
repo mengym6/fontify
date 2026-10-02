@@ -86,7 +86,7 @@ def main():
 
             latent = model.forward_encoder(images, targets, bmp)
             pred = model.forward_decoder(latent)
-            mask_px = bmp[:, :, None].repeat(1, 1, model.patch_size ** 2 * 3)
+            mask_px = bmp[:, :, None].repeat(1, 1, model.patch_size ** 2 * 3).float()
             mask_px = model.unpatchify(mask_px)
             # 不加权重建 L1（遮盖区）。
             l1 = ((pred - targets).abs() * mask_px).sum() / (mask_px.sum() + 1e-2)
