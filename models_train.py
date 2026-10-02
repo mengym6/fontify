@@ -606,7 +606,8 @@ class Fontify(nn.Module):
         jieti_on = getattr(self, 'jieti_loss_mod', None) is not None and is_jt is not None
         jieti_extra = None
         if jieti_on:
-            composite = pred * mask + tgts * (1 - mask)
+            mask_f = 1. * mask  # mask 为 bool，先转 float 再做拼接
+            composite = pred * mask_f + tgts * (1 - mask_f)
 
         mask = mask * valid
 
