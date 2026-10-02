@@ -53,6 +53,8 @@ class VGGPerceptualLoss(torch.nn.Module):
         super(VGGPerceptualLoss, self).__init__()
         self.vgg = VGG19Feats().to(device)
         self.criterion = torch.nn.functional.l1_loss
+        # 输入已在 dataloader 的 pair_transforms.Normalize 做过 ImageNet 归一化，这里不再重复归一化；
+        # 保留这两个 buffer 以兼容旧 checkpoint（它们会进 state_dict，删除会导致 strict 加载报 unexpected key）
         self.register_buffer("mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
         self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
         # conv5 权重从 10/1.5 降到 1/1.5: 原本 conv5 占 content 权重和~86%,
@@ -65,9 +67,6 @@ class VGGPerceptualLoss(torch.nn.Module):
             input_img = input_img.repeat(1, 3, 1, 1)
         if target_img.shape[1] != 3:
             target_img = target_img.repeat(1, 3, 1, 1)
-
-        input_img = (input_img - self.mean) / self.std
-        target_img = (target_img - self.mean) / self.std
 
         x_vgg, y_vgg = self.vgg(input_img), self.vgg(target_img)
         loss_style = self.criterion(gram(x_vgg[0]), gram(y_vgg[0]))+\
