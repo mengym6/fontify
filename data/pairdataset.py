@@ -219,6 +219,11 @@ class PairDataset(VisionDataset):
                 self._jt_struct_pool[i] = cands
             else:
                 self._jt_dropped.append(i)
+        # p=0 时不走同结构配对，训练集保持与 baseline 一致，不剔除（T1-C）。
+        if self.jieti_struct_pair_prob <= 0:
+            print(f"[jieti] struct_pair_prob={self.jieti_struct_pair_prob}: dropped 0 JT samples "
+                  f"({len(self._jt_dropped)} without candidate kept)", flush=True)
+            return
         # 从训练/评测中剔除无候选 JT 样本：置零采样权重并记录。
         for i in self._jt_dropped:
             self.weights[i] = 0.0
