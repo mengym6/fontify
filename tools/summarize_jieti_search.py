@@ -25,7 +25,8 @@ def is_valid_status(status):
     return status in ("reused", "skipped(done)")
 
 
-def read_summary(path):
+def read_summary(path, s_column="best_S", hparams=HPARAMS):
+    """s_column：排序用的列（旧搜索 best_S；T1-S 用工具口径 tool_S），读进来统一放在 rec["best_S"]。"""
     with open(path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     out = []
@@ -34,12 +35,12 @@ def read_summary(path):
         if not is_valid_status(status):
             continue  # 跳过失败/未完成组，避免未训完的 best_S 混入排名
         try:
-            s = float(r["best_S"])
+            s = float(r[s_column])
         except (ValueError, KeyError, TypeError):
             continue  # 跳过没有有效 best_S 的组
         rec = {"group": r.get("group", ""), "best_S": s,
                "status": status, "best_epoch": r.get("best_epoch", "")}
-        for h in HPARAMS:
+        for h in hparams:
             try:
                 rec[h] = float(r[h])
             except (ValueError, KeyError, TypeError):
@@ -98,21 +99,22 @@ def value_range(records, h):
     return "[%s, %s]" % (fmt(min(vals)), fmt(max(vals)))
 
 
-def build_report(records):
+def build_report(records, s_column="best_S", hparams=HPARAMS):
     """返回 markdown 文本。records 已过滤出有 best_S 的组。"""
     records = sorted(records, key=lambda r: r["best_S"])
     lines = []
     lines.append("# T1 超参搜索汇总\n")
-    lines.append("有效组数（含 best_S）：%d\n" % len(records))
+    lines.append("有效组数（含 %s）：%d\n" % (s_column, len(records)))
 
     # 前 5 组表。
-    lines.append("## 前 5 组（按 S 升序）\n")
-    header = ["组", "S", "best_epoch"] + HPARAMS + ["status"]
+    s_label = "S" if s_column == "best_S" else s_column  # 默认输出与旧版逐字一致
+    lines.append("## 前 5 组（按 %s 升序）\n" % s_label)
+    header = ["组", s_label, "best_epoch"] + hparams + ["status"]
     lines.append("| " + " | ".join(header) + " |")
     lines.append("| " + " | ".join(["---"] * len(header)) + " |")
     for r in records[:5]:
         cells = [fmt(r["group"]), fmt(r["best_S"]), fmt(r.get("best_epoch", ""))] + \
-                [fmt(r[h]) for h in HPARAMS] + [r.get("status", "")]
+                [fmt(r[h]) for h in hparams] + [r.get("status", "")]
         lines.append("| " + " | ".join(cells) + " |")
     lines.append("")
 
@@ -124,7 +126,7 @@ def build_report(records):
     top5 = records[:5]
     top10 = records[:10]
     all_s = [r["best_S"] for r in records]
-    for h in HPARAMS:
+    for h in hparams:
         rho = spearman([r[h] for r in records], all_s)
         lines.append("| %s | %s | %s | %s | %s |" % (
             h, value_range(top5, h), value_range(top10, h),
@@ -140,13 +142,18 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--summary", default="models/jieti_search/summary.csv")
     parser.add_argument("--output", default="models/jieti_search/search_report.txt")
+    parser.add_argument("--s_column", default="best_S",
+                        help="排序列；T1-S（run_jieti_search2.py 的 summary）用 tool_S")
+    parser.add_argument("--hparams", default=",".join(HPARAMS),
+                        help="逗号分隔的超参列；T1-S 用 alpha_jt,w,u,lr,accum_iter,warmup_epochs")
     args = parser.parse_args()
+    hparams = [h for h in args.hparams.split(",") if h]
 
-    records = read_summary(args.summary)
+    records = read_summary(args.summary, args.s_column, hparams)
     if not records:
         print("没有可汇总的组（summary.csv 为空或无有效 best_S）。", file=sys.stderr)
         sys.exit(1)
-    report = build_report(records)
+    report = build_report(records, args.s_column, hparams)
     print(report)
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(report + "\n")
