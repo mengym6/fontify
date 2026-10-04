@@ -4,9 +4,10 @@
 以及盲评页导出的 jieti_ab_answers.json。只依赖 numpy 和标准库。
 
 口径（事先定好，评完不改）：
-- J 的偏好：ΔJ = J_ctrl − J_base < 0 → J 认为对照组（ctrl）更好，否则认为 baseline 更好。
+- J 的偏好：ΔJ = J_ctrl − J_base < 0 → J 认为对照组（ctrl）更好，> 0 → 认为 baseline 更好，
+  = 0 → J 无偏好，该题不进该项一致率分母，单独计数 n_no_pref。
 - 人工偏好：A/B 映射回模型；"持平"单独计数，不进一致率分母。
-- 一致率 = 人工偏好与 J 偏好相同的题数 / 非持平题数。
+- 一致率 = 人工偏好与 J 偏好相同的题数 / 人工非持平且 J 有偏好的题数。
   主检验：top 层（|ΔJ| 最大）的单侧精确二项检验，H0: p = 0.5，H1: p > 0.5。
   rand 层、合并结果、三个分项（centroid / logsigma / shape）的一致率只作描述。
 - 另外报告：人工偏好 ctrl 的比例（ctrl 在人眼看来结体是否更好）、持平率、
@@ -94,16 +95,21 @@ def human_pref(item, ans):
 
 
 def j_pref(delta):
+    # Δ = 0（如两模型下半有效部件都 <2 时 centroid 项）表示 J 无偏好，返回 None
+    if delta == 0:
+        return None
     return "ctrl" if delta < 0 else "base"
 
 
 def agree_block(pairs, alternative="greater"):
-    """pairs: [(人工偏好, J 偏好)]。统计非持平题的一致率。"""
+    """pairs: [(人工偏好, J 偏好)]。统计"人工非持平且 J 有偏好"题的一致率。"""
     n_tie = sum(h == "tie" for h, _ in pairs)
-    eff = [(h, j) for h, j in pairs if h != "tie"]
+    n_no_pref = sum(j is None for _, j in pairs)
+    eff = [(h, j) for h, j in pairs if h != "tie" and j is not None]
     k = sum(h == j for h, j in eff)
     n = len(eff)
-    return {"n_items": len(pairs), "n_tie": n_tie, "n_eff": n, "n_agree": k,
+    return {"n_items": len(pairs), "n_tie": n_tie, "n_no_pref": n_no_pref,
+            "n_eff": n, "n_agree": k,
             "agree_rate": k / n if n else float("nan"),
             "ci95": cp_interval(k, n),
             "p_value": binom_test(k, n, 0.5, alternative),

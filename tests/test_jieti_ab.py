@@ -159,6 +159,61 @@ def test_analyze_end_to_end():
         pass
 
 
+def test_analyze_zero_delta_no_pref():
+    rows = _rows()
+    sel = select_pairs(rows, 30, 20, seed=0)
+    items = assign_blind(sel, seed=0)
+    key = {"session": "s0_n50", "items": items}
+    rng = np.random.default_rng(1)
+    ans = {str(it["item"]): str(rng.choice(["L", "R", "T"])) for it in items}
+    per = [{k: str(v) for k, v in r.items()} for r in rows]
+    out0, recs0 = analyze(key, {"session": "s0_n50", "answers": ans}, per)
+
+    # 让 6 题的 centroid 分项 Δ=0（含 top 和 rand），1 道 top 题的总 ΔJ=0
+    top = [it for it in items if it["stratum"] == "top"]
+    rand = [it for it in items if it["stratum"] == "rand"]
+    zero_c = {it["idx"] for it in top[:4] + rand[:2]}
+    zero_j = top[5]["idx"]
+    per1 = [dict(r) for r in per]
+    for r in per1:
+        if int(r["idx"]) in zero_c:
+            r["ctrl_centroid"] = r["base_centroid"]
+        if int(r["idx"]) == zero_j:
+            r["dJ"] = "0.0"
+    out1, recs1 = analyze(key, {"session": "s0_n50", "answers": ans}, per1)
+
+    for r in recs1:
+        assert (r["pref_centroid"] is None) == (r["idx"] in zero_c)
+        assert (r["J_pref"] is None) == (r["idx"] == zero_j)
+    for name in ("top", "rand", "all"):
+        rs0 = [r for r in recs0 if name == "all" or r["stratum"] == name]
+        dropped = [r for r in rs0 if r["idx"] in zero_c]
+        c0, c1 = out0[name]["centroid"], out1[name]["centroid"]
+        assert c0["n_no_pref"] == 0 and c1["n_no_pref"] == len(dropped)
+        assert c1["n_tie"] == c0["n_tie"]
+        eff_drop = [r for r in dropped if r["human"] != "tie"]
+        assert c1["n_eff"] == c0["n_eff"] - len(eff_drop)
+        assert c1["n_agree"] == c0["n_agree"] - sum(r["human"] == r["pref_centroid"]
+                                                   for r in eff_drop)
+        # 手算剩余题的一致率
+        keep = [r for r in rs0 if r["idx"] not in zero_c and r["human"] != "tie"]
+        k = sum(r["human"] == r["pref_centroid"] for r in keep)
+        assert c1["n_eff"] == len(keep) and c1["agree_rate"] == k / len(keep)
+        # 未改动的分项完全不变
+        for p in ("logsigma", "shape"):
+            assert out1[name][p] == out0[name][p]
+    # 总 J：仅 top/all 少掉 zero_j 这一题（若人工非持平）
+    zj = next(r for r in recs0 if r["idx"] == zero_j)
+    for name in ("top", "all"):
+        j0, j1 = out0[name]["J"], out1[name]["J"]
+        assert j1["n_no_pref"] == 1
+        d = int(zj["human"] != "tie")
+        assert j1["n_eff"] == j0["n_eff"] - d
+        assert j1["n_agree"] == j0["n_agree"] - d * int(zj["human"] == zj["J_pref"])
+    assert out1["rand"]["J"] == out0["rand"]["J"]
+    assert out1["primary"]["n_eff"] == out1["top"]["J"]["n_eff"]
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:
