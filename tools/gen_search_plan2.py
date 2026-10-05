@@ -15,6 +15,14 @@
   alpha_jt    ~ U[0.5, 1.0]
   p           固定 0，不搜
 每组抽样顺序固定为 alpha_jt, w, lr, accum_iter, warmup_epochs。
+
+追加计划（PROGRESS T1-S"α_jt 补搜"，用户 2026-10-05 定）：第 26–37 组，seed 2，α_jt ~ U[1.0, 1.5]，
+其余分布与区间不变，不含中心行，写到单独文件：
+  python tools/gen_search_plan2.py --seed 2 --alpha_range 1.0 1.5 --no_center \
+      --first_group 26 --n_groups 12 \
+      --output models/jieti_search2/search_plan_ext.csv \
+      --spec_output models/jieti_search2/search_plan_ext_spec.json
+不加这些参数时输出与原 search_plan.csv / search_plan_spec.json 逐字节一致。
 只依赖标准库；输出不含时间戳，同一 seed 在本地和服务器上逐字一致。
 输出文件已存在时报错退出，不覆盖。
 """
@@ -31,7 +39,7 @@ FIELDS = ["group", "alpha_jt", "w", "u", "p", "lr", "accum_iter", "warmup_epochs
 
 ACCUM_CHOICES = [8, 16, 32]
 WARMUP_CHOICES = [5, 10, 15]
-ALPHA_RANGE = (0.5, 1.0)
+ALPHA_RANGE = (0.5, 1.0)  # --alpha_range 的默认值
 W_REF = 0.6423  # 上一轮搜索的 w0，u 以它为参照
 CENTER_SOURCE = "reuse:models/finetune_jieti_ctrl_g12"
 
@@ -46,7 +54,7 @@ def u_of(w):
 
 
 def build_spec(args):
-    return {
+    spec = {
         "seed": args.seed,
         "n_groups": args.n_groups,
         "center": {"group": 1, "alpha_jt": args.alpha_c, "w": args.w_c, "lr": args.lr_c,
@@ -57,7 +65,7 @@ def build_spec(args):
                    "def": "lr_c/2 .. lr_c*2", "csv_format": "%.6g"},
             "w": {"dist": "loguniform", "lo": args.w_c / 2, "hi": args.w_c * 2,
                   "def": "w_c/2 .. w_c*2", "csv_round": 8},
-            "alpha_jt": {"dist": "uniform", "lo": ALPHA_RANGE[0], "hi": ALPHA_RANGE[1],
+            "alpha_jt": {"dist": "uniform", "lo": args.alpha_range[0], "hi": args.alpha_range[1],
                          "csv_round": 6},
             "accum_iter": {"dist": "choice", "values": ACCUM_CHOICES,
                            "note": "2 卡 x batch 2 → 有效 batch 32/64/128"},
@@ -68,12 +76,25 @@ def build_spec(args):
         "sample_order": ["alpha_jt", "w", "lr", "accum_iter", "warmup_epochs"],
         "generator": "tools/gen_search_plan2.py, random.Random(seed)",
     }
+    # 只在非默认编号时多写这几项，默认参数下 spec 与原文件逐字节一致
+    if args.no_center or args.first_group != 2:
+        spec["center_in_csv"] = not args.no_center
+        spec["first_group"] = args.first_group
+        spec["groups"] = group_ids(args)
+        spec["note"] = "center 只是区间中心的定义；center_in_csv=false 时 csv 里没有中心行"
+    return spec
+
+
+def group_ids(args):
+    """抽样组的组号：从 first_group 起连续编号，共 n_groups - (有中心行 ? 1 : 0) 个。"""
+    n_sample = args.n_groups - (0 if args.no_center else 1)
+    return list(range(args.first_group, args.first_group + n_sample))
 
 
 def build_plan(args):
     rng = random.Random(args.seed)
     w_c = round(args.w_c, 8)
-    rows = [{
+    rows = [] if args.no_center else [{
         "group": 1,
         "alpha_jt": round(args.alpha_c, 6),
         "w": w_c,
@@ -86,8 +107,8 @@ def build_plan(args):
     }]
     lr_lo, lr_hi = args.lr_c / 2, args.lr_c * 2
     w_lo, w_hi = args.w_c / 2, args.w_c * 2
-    for g in range(2, args.n_groups + 1):
-        alpha_jt = rng.uniform(*ALPHA_RANGE)
+    for g in group_ids(args):
+        alpha_jt = rng.uniform(*args.alpha_range)
         w = round(loguniform(rng, w_lo, w_hi), 8)
         lr = loguniform(rng, lr_lo, lr_hi)
         accum = rng.choice(ACCUM_CHOICES)
@@ -110,7 +131,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--seed", type=int, default=1, help="抽样 seed（上一轮用 0）")
-    parser.add_argument("--n_groups", type=int, default=25, help="总组数（含中心组）")
+    parser.add_argument("--n_groups", type=int, default=25,
+                        help="csv 总行数（有中心行时含中心组）")
+    parser.add_argument("--alpha_range", type=float, nargs=2, default=list(ALPHA_RANGE),
+                        metavar=("LO", "HI"), help="alpha_jt 均匀抽样区间")
+    parser.add_argument("--no_center", action="store_true", help="不写第 1 组中心行")
+    parser.add_argument("--first_group", type=int, default=None,
+                        help="第一个抽样组的组号，默认有中心行时 2、无中心行时 1")
     parser.add_argument("--output", default="models/jieti_search2/search_plan.csv")
     parser.add_argument("--spec_output", default=None,
                         help="区间定义 json，默认与 csv 同目录的 search_plan_spec.json")
@@ -121,6 +148,12 @@ def main():
     parser.add_argument("--accum_c", type=int, default=16)
     parser.add_argument("--warmup_c", type=int, default=10)
     args = parser.parse_args()
+    if args.first_group is None:
+        args.first_group = 1 if args.no_center else 2
+    if not args.no_center and args.first_group < 2:
+        parser.error("有中心行（第 1 组）时 --first_group 必须 >= 2")
+    if not args.alpha_range[0] < args.alpha_range[1]:
+        parser.error("--alpha_range 需要 LO < HI")
 
     spec_path = args.spec_output or os.path.join(os.path.dirname(args.output) or ".",
                                                  "search_plan_spec.json")
