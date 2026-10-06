@@ -96,7 +96,7 @@ def get_args_parser():
     parser.add_argument('--jieti_loss', action='store_true',
                         help='开启结体结构 loss（相对质心/log σ/形状描述子），只在 JT 样本生效')
     parser.add_argument('--jieti_alpha_jt', default=0.5, type=float,
-                        help='JT 样本上原 loss 的降权系数 α_jt（<1，不为 0）')
+                        help='JT 样本上原 loss 的权重系数 α_jt（>0；<1 降权，>1 升权）')
     parser.add_argument('--jieti_w', default=1.0, type=float,
                         help='结体项总权重 w（标定值乘搜索倍率后的绝对值）')
     parser.add_argument('--jieti_struct_pair_prob', default=1.0, type=float,
@@ -396,8 +396,8 @@ def main(args, ds_init):
     if args.grad_log_interval < 0:
         raise ValueError('grad_log_interval must be non-negative')
     if args.jieti_loss:
-        if not (0.0 < args.jieti_alpha_jt <= 1.0):
-            raise ValueError('jieti_alpha_jt must be in (0, 1]')
+        if not args.jieti_alpha_jt > 0.0:
+            raise ValueError('jieti_alpha_jt must be > 0')
         model.enable_jieti(
             args.jieti_alpha_jt, args.jieti_w, k_max=args.jieti_k_max,
             pool=args.jieti_pool, soft_fg=args.jieti_soft_fg,

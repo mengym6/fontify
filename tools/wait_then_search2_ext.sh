@@ -8,6 +8,8 @@
 # 启动前检查（失败就每个间隔重试，共 PRECHECK_TRIES 次，仍失败则退出 exit 4，不启动）：
 #   4 卡无计算进程、端口 29726–29737 空闲、磁盘 >= 40G、ext 计划 sha256、两个 json 的 sha256 前缀、
 #   没有已在跑的 ext runner。
+# ext runner 退出后再读一次 summary，第 26–37 组按与 (b) 相同的规则判定：有不合格的组就列出并 exit 5；
+# 全部合格才写"补搜完成"。
 # 全程只读：不 kill、不删除任何东西。日志：models/jieti_search2/wait_ext.log。
 # 不用 set -u：conda 的激活脚本会引用未定义变量。
 #
@@ -61,11 +63,12 @@ ext_runner_pids() {
     ps -eo pid=,args= | grep -E "${RUNNER_RE}" | grep 'search_plan_ext\.csv' | awk '{print $1}' | tr '\n' ' '
 }
 
-# 第 2–25 组状态检查：全部合格时 exit 0；否则打印不合格的组并 exit 1。
+# 第 $1–$2 组状态检查（默认 2–25）：全部合格时 exit 0；否则打印不合格的组并 exit 1。
 check_summary() {
-    python - "${SUMMARY}" <<'PYEOF'
+    python - "${SUMMARY}" "${1:-2}" "${2:-25}" <<'PYEOF'
 import csv, re, sys
 path = sys.argv[1]
+lo, hi = int(sys.argv[2]), int(sys.argv[3])
 ok_re = re.compile(r"^(done|skipped\(done\)|done\(retry\d+\))(;|$)")
 try:
     with open(path, newline="", encoding="utf-8") as f:
@@ -75,7 +78,7 @@ except OSError as e:
     print("读不到 summary：%s" % e)
     sys.exit(1)
 bad, warn = [], []
-for g in range(2, 26):
+for g in range(lo, hi + 1):
     st = status.get(str(g))
     if st is None:
         bad.append("%d:缺行" % g)
@@ -88,7 +91,7 @@ if warn:
 if bad:
     print("不合格：" + "，".join(bad))
     sys.exit(1)
-print("第 2–25 组状态全部合格")
+print("第 %d–%d 组状态全部合格" % (lo, hi))
 PYEOF
 }
 
@@ -180,4 +183,13 @@ python -u tools/run_jieti_search2.py --gpu_slots "0,1;2,3" \
     --start_group 26 --end_group 37 >> "${RUNNER_EXT_LOG}" 2>&1
 rc=$?
 log "ext runner 退出，rc=${rc}。"
-exit "${rc}"
+if ! out="$(check_summary 26 37 2>&1)"; then
+    log "ext 结束后复查 summary，第 26–37 组未全部合格：${out}。退出，由主控处理。"
+    exit 5
+fi
+log "ext 结束后复查 summary：${out}"
+if [ "${rc}" -ne 0 ]; then
+    exit "${rc}"
+fi
+log "补搜完成。"
+exit 0

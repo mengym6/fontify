@@ -395,6 +395,7 @@ def main():
     group1_pending = group1_row is not None
     stop_dispatch = False
     exit_code = 0
+    any_failed = False  # 本次有组训练 rc≠0（不含 eval_failed）→ 退出码 6
     last_wait_msg = {}
 
     def start_eval(si, gpus, row, output_dir, retry, status):
@@ -425,6 +426,8 @@ def main():
             if st["stage"] == "train":
                 status = train_status(ret, d, st["retry"])
                 log(f"[组 {row['group']}] 训练结束 rc={ret}，状态：{status}")
+                if status.startswith("failed"):
+                    any_failed = True
                 if status.startswith("done"):
                     # 同槽接评测；没有 best ckpt 时 start_eval 直接写 summary，槽空出
                     start_eval(si, slots[si], row, d, st["retry"], status)
@@ -496,6 +499,9 @@ def main():
         time.sleep(args.poll_interval)
     if stop_dispatch:
         log(f"磁盘不足退出，剩 {len(queue)} 组未跑。", err=True)
+    if any_failed and exit_code == 0:
+        log("本次有组训练失败（status 为 failed），退出码 6。", err=True)
+        exit_code = 6
     sys.exit(exit_code)
 
 
