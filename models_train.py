@@ -557,7 +557,10 @@ class Fontify(nn.Module):
         for idx, blk in enumerate(self.blocks):
             x = blk(x) # (B*2,Hp,Wp,E)
             if idx == merge_idx:
-                x = (x[:x.shape[0]//2] + x[x.shape[0]//2:]) * 0.5
+                # 局部导入：tests/test_baseline.py 用 AST 单独执行本方法，命名空间里只有 torch
+                from util.fusion import fuse_streams
+                # fusion_lambda 是推理诊断用的普通属性，不进 state_dict；默认 0.5 即原式
+                x = fuse_streams(x, getattr(self, "fusion_lambda", 0.5))
 
             if self.depth == 24:
                 if idx in [5, 11, 17, 23]:

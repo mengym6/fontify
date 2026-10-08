@@ -69,8 +69,10 @@ def paginate(recs, rows_per_page):
     return pages
 
 
-def _font(size):
+def _font(size, font_path=None):
     from PIL import ImageFont
+    if font_path is not None:
+        return ImageFont.truetype(font_path, size)
     return ImageFont.load_default(size=size)
 
 
@@ -83,10 +85,11 @@ def _resize(arr, cell):
     return np.asarray(Image.fromarray(arr).resize((cell, cell), Image.LANCZOS))
 
 
-def compose(rows, heads, cell, labels=None, label_w=0):
+def compose(rows, heads, cell, labels=None, label_w=0, font_path=None):
     """拼一张图：顶部列头 + 每行 4 个 cell×cell 的面板，左侧可选标签列。
 
     rows: 每行 4 张 (cell, cell, 3) uint8；labels: 每行 (文字行列表, 字形 uint8 或 None)。
+    font_path: None 用 Pillow 内置字体（只有拉丁字母）；列头含 λ 等字符时传 TTF 路径。
     第 r 行第 c 列的左上角：x = x0 + c·(cell+GAP)，y = header_h + r·(cell+GAP)，
     x0 = label_w + GAP（有标签列）或 0。
     """
@@ -99,7 +102,7 @@ def compose(rows, heads, cell, labels=None, label_w=0):
     canvas = Image.new("RGB", (width, height), (BG, BG, BG))
     draw = ImageDraw.Draw(canvas)
     draw.rectangle([0, 0, width - 1, hh - 1], fill=(255, 255, 255))
-    font = _font(max(12, cell // 14))
+    font = _font(max(12, cell // 14), font_path)
     for c, head in enumerate(heads):
         x = x0 + c * (cell + GAP)
         tw = draw.textlength(head, font=font)
@@ -111,7 +114,7 @@ def compose(rows, heads, cell, labels=None, label_w=0):
         if labels is not None:
             draw.rectangle([0, y, label_w - 1, y + cell - 1], fill=(255, 255, 255))
             lines, glyph = labels[r]
-            lfont = _font(max(10, cell // 12))
+            lfont = _font(max(10, cell // 12), font_path)
             step = max(10, cell // 12) + 4
             for k, line in enumerate(lines):
                 draw.text((4, y + 4 + k * step), line, fill=(0, 0, 0), font=lfont)
@@ -148,11 +151,14 @@ def check_output_free(out):
             raise FileExistsError(f"{p} 已存在，不覆盖")
 
 
-def write_outputs(items, out, heads, rows_per_page, grid_cell):
+def write_outputs(items, out, heads, rows_per_page, grid_cell, font_path=None,
+                  before_rename=None):
     """items: [(rec, panels(4 张原分辨率 uint8), glyph uint8)]，逐条写单张，最后写拼图和 index。
 
     全部写进临时目录，成功后改名为 out；任何异常（含模型加载失败、Ctrl-C）都删掉
     本次创建的临时目录再原样抛出，不留半成品挡住重跑。
+    before_rename(tmp, recs)：可选，index 写完、改名之前调用，用来往临时目录里补写文件；
+    它抛异常时同样删掉临时目录。
     """
     check_output_free(out)
     tmp = tmp_dir(out)
@@ -164,7 +170,8 @@ def write_outputs(items, out, heads, rows_per_page, grid_cell):
         for rec, panels, glyph in items:
             rec = dict(rec)
             rec["file"] = item_filename(rec["kind"], rec["idx"], rec["char"])
-            save_png(compose([panels], heads, panels[0].shape[0]), per_item / rec["file"])
+            save_png(compose([panels], heads, panels[0].shape[0], font_path=font_path),
+                     per_item / rec["file"])
             # 拼图只留缩小后的面板，省内存
             rec["_cells"] = [_resize(p, grid_cell) for p in panels]
             rec["_glyph"] = glyph
@@ -174,9 +181,11 @@ def write_outputs(items, out, heads, rows_per_page, grid_cell):
             for p, page in enumerate(kpages, start=1):
                 img = compose([r["_cells"] for r in page], heads, grid_cell,
                               labels=[(row_label(r), r["_glyph"]) for r in page],
-                              label_w=grid_cell)
+                              label_w=grid_cell, font_path=font_path)
                 save_png(img, tmp / grid_filename(kind, p))
         write_index(tmp / "index.csv", recs)
+        if before_rename is not None:
+            before_rename(tmp, recs)
         tmp.rename(out)
     except BaseException:
         shutil.rmtree(tmp)
