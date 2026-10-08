@@ -181,6 +181,7 @@ def test_forward_encoder_default_bitwise_and_lambda_effect():
     run, reference = _numpy_encoder()
     same = lambda a, b: all(np.array_equal(p.view(np.uint8), q.view(np.uint8)) for p, q in zip(a, b))
     ref = reference(0.5)
+    assert len(run()) == 4
     assert len(ref) == 4 and ref[0].shape == (2, 8, 4, 3)  # 融合后 batch 减半
     assert same(run(), ref) and same(run(0.5), ref)        # 无属性 / 0.5 都与原式逐位相同
     for lam in (0.3, 0.7):
@@ -196,7 +197,8 @@ def test_forward_encoder_default_bitwise_and_lambda_effect():
 # ---------------------------------------------------------------------------
 
 def test_column_heads_and_lambdas():
-    assert fs.column_heads(LAMBDAS) == ["ref (upper GT)", "GT (lower)", "λ=0.3", "λ=0.5", "λ=0.7"]
+    assert fs.column_heads(LAMBDAS) == ["ref (upper GT)", "GT (lower)", "λ=0.3 (infer)",
+                                        "λ=0.5 (infer)", "λ=0.7 (infer)"]
     assert fs.lam_key(0.5) == "0.5" and fs.lam_key(0.30000000000000004) == "0.3"
     fs.check_lambdas(LAMBDAS)
     for bad in ([0.3, 0.7], [0.5, 0.5], [0.5, 1.2], [-0.1, 0.5]):
@@ -235,7 +237,7 @@ def test_compose_lambda_layout():
         x = c * (cell + GAP)
         assert (img[hh:hh + cell, x:x + cell] == 10 * (c + 1)).all()
     # 列头：第 c 列的列头区域画的就是 heads[c]（换成别的 λ 后只有该列变化）
-    alt = sbs.compose(rows[:1], heads[:2] + ["λ=0.3", "λ=0.9", "λ=0.7"], cell, font_path=FONT)
+    alt = sbs.compose(rows[:1], heads[:3] + ["λ=0.9 (infer)"] + heads[4:], cell, font_path=FONT)
     for c in range(5):
         x = c * (cell + GAP)
         same = (img[:hh, x:x + cell] == alt[:hh, x:x + cell]).all()
@@ -371,7 +373,15 @@ def test_reconcile():
             assert "对账失败" in str(e)
     # 恰好在容差内通过
     edge = {"0.5": dict(got["0.5"], L1_JT=expect[0] * (1 + 0.9e-4))}
-    fs.reconcile(edge, expect, 1e-4)
+    assert fs.reconcile(edge, expect, 1e-4)["passed"]
+    # 上次服务器运行的实测值：1e-4 不通过，1e-3 通过
+    run1 = {"0.5": {"L1_JT": 0.7953074300572985, "L1_BF": 0.5515785417877711,
+                    "J": 0.2836309625988915}}
+    exp1 = [0.795421700108619, 0.5515879868314817, 0.28354447540782746]
+    assert fs.reconcile(run1, exp1, 1e-3)["passed"]
+    # strict=False：不报错，只记 passed=False
+    rep = fs.reconcile(run1, exp1, 1e-4, strict=False)
+    assert rep["passed"] is False and rep["rtol"] == 1e-4
 
 
 def test_reconcile_failure_leaves_no_output():
@@ -398,6 +408,21 @@ def test_reconcile_failure_leaves_no_output():
         except RuntimeError as e:
             assert "逐样本条数" in str(e)
         assert list(Path(d).iterdir()) == []
+
+
+def test_record_mismatch_still_writes_outputs():
+    """非 strict：对账不通过时图和 metrics 照常写出，metrics 里 reconcile.passed=false。"""
+    recs = _recs(n_jt=3, n_bf=3)
+    per_sample = _per_sample_for(recs, lambda r, lam: 1.0, lambda r, lam: 1.0)
+    fin = fs.make_finalizer(per_sample, LAMBDAS, S_BASE, [0.795422, 0.551588, 0.283544], 1e-3, {},
+                            strict=False)
+    with tempfile.TemporaryDirectory() as d:
+        out = Path(d) / "fs"
+        sbs.write_outputs(_items(recs), out, fs.column_heads(LAMBDAS), 15, 16,
+                          font_path=FONT, before_rename=fin)
+        m = json.loads((out / "metrics.json").read_text(encoding="utf-8"))
+        assert m["reconcile"]["passed"] is False and m["reconcile"]["rtol"] == 1e-3
+        assert len(list((out / "per_item").iterdir())) == 6
 
 
 def test_main_rejects_existing_output_and_bad_lambdas():

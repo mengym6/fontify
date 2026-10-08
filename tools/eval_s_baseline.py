@@ -37,12 +37,15 @@ def build_val_transform():
 
 def load_model(checkpoint_path):
     model = models_train.vit_base_patch16_input896x448_win_dec64_8glb_sl1()
-    checkpoint = torch.load(checkpoint_path, map_location="cpu")["model"]
+    ckpt = torch.load(checkpoint_path, map_location="cpu")
+    checkpoint = ckpt["model"]
     state_dict = model.state_dict()
     for key in ("decoder_embed.weight", "decoder_embed.bias", "mask_token"):
         if key in checkpoint and checkpoint[key].shape != state_dict[key].shape:
             del checkpoint[key]
     model.load_state_dict(checkpoint, strict=False)
+    # 融合权重 λ 用训练时的值（随 ckpt['args'] 保存）；旧 ckpt 没有这个字段，按原式 0.5
+    model.fusion_lambda = getattr(ckpt.get("args"), "fusion_lambda", 0.5)
     return model
 
 

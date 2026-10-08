@@ -117,6 +117,8 @@ def get_args_parser():
                         help='结体三项相对系数：log σ（标定得到的固定常数）')
     parser.add_argument('--jieti_w_shape', default=1.0, type=float,
                         help='结体三项相对系数：形状描述子（标定得到的固定常数）')
+    parser.add_argument('--fusion_lambda', default=0.5, type=float,
+                        help='encoder 双流融合权重 λ∈(0,1)：(1-λ)·电脑字路 + λ·风格字路；0.5 即原式')
     parser.add_argument('--fixed_pair_path', default=None, type=str,
                         help='val 固定配对 json（target_path→pair2 index），所有组与 baseline 共用')
     parser.add_argument('--save_best', action='store_true',
@@ -392,6 +394,10 @@ def main(args, ds_init):
     model.adv_weight_final = args.adv_weight_final
     model.edge_weight_final = args.edge_weight_final
     model.style_weight = args.style_weight
+    if not 0.0 < args.fusion_lambda < 1.0:
+        raise ValueError('fusion_lambda must be in (0, 1)')
+    # 训练和训练中的 val 都用这个 λ；随 args 存进 ckpt，评测工具从 ckpt['args'] 读回
+    model.fusion_lambda = args.fusion_lambda
 
     if args.grad_log_interval < 0:
         raise ValueError('grad_log_interval must be non-negative')

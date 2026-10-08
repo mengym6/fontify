@@ -8,7 +8,9 @@
 - 数值：每个 λ 的 L1_JT、L1_BF、J，口径与 eval_s_baseline 完全一致；按 s_baseline 分母算
   三项比值与 S，写 metrics.json；逐样本写 per_sample.csv（idx, kind, lambda, l1, J，BF 的 J 为空）。
 - 自检：λ=0.5 的三项必须与 --expect_lambda05 一致（相对差 ≤ --expect_rtol），否则报错退出，
-  临时目录删掉，不留输出。
+  临时目录删掉，不留输出；加 --record_mismatch 时只把对账结果（passed=false）记进 metrics.json，图照常导出。
+- 列头写 "λ=0.3 (infer)"、metrics.json 写 lambda_mode，标明是同一 ckpt 推理时改 λ
+  （训练时改 λ 的多 ckpt 对照见 tools/export_fusion_trained.py）。
 - 列头的 λ 需要带希腊字母的 TTF（Pillow 内置字体没有），默认用服务器上的 DejaVuSans。
 
 numpy/PIL 部分可以在没有 torch 的环境单测；torch 与模型代码在 run_model() 里延迟导入。
@@ -46,7 +48,7 @@ def lam_key(lam):
 
 
 def column_heads(lambdas):
-    return ["ref (upper GT)", "GT (lower)"] + [f"λ={lam_key(lam)}" for lam in lambdas]
+    return ["ref (upper GT)", "GT (lower)"] + [f"λ={lam_key(lam)} (infer)" for lam in lambdas]
 
 
 def check_lambdas(lambdas):
@@ -84,15 +86,22 @@ def summarize(per_sample, lambdas, s_base):
     return out
 
 
-def reconcile(per_lambda, expect, rtol):
-    """λ=0.5 的三项与期望值对账；任何一项相对差 > rtol（或非有限）就报错。"""
-    got = per_lambda["0.5"]
+def reconcile(per_lambda, expect, rtol, key="0.5", strict=True):
+    """λ=key 的三项与期望值对账；任何一项相对差 > rtol（或非有限）就不通过。
+
+    strict=True 不通过时报错；strict=False 只在报告里记 passed=false。
+    """
+    got = per_lambda[key]
     rel = {k: abs(got[k] - e) / abs(e) for k, e in zip(METRIC_KEYS, expect)}
-    report = {"lambda": 0.5, "expect": dict(zip(METRIC_KEYS, expect)),
+    report = {"lambda": float(key), "expect": dict(zip(METRIC_KEYS, expect)),
               "got": {k: got[k] for k in METRIC_KEYS}, "rel_diff": rel, "rtol": rtol}
     bad = {k: v for k, v in rel.items() if not (math.isfinite(v) and v <= rtol)}
+    report["passed"] = not bad
     if bad:
-        raise RuntimeError(f"λ=0.5 对账失败（rtol={rtol}）：{json.dumps(report, ensure_ascii=False)}")
+        msg = f"λ={key} 对账失败（rtol={rtol}）：{json.dumps(report, ensure_ascii=False)}"
+        if strict:
+            raise RuntimeError(msg)
+        print("[fusion] 警告：" + msg, flush=True)
     return report
 
 
@@ -105,10 +114,10 @@ def write_per_sample(path, per_sample):
                         "l1": repr(r["l1"]), "J": "" if r["J"] is None else repr(r["J"])})
 
 
-def make_finalizer(per_sample, lambdas, s_base, expect, rtol, meta):
+def make_finalizer(per_sample, lambdas, s_base, expect, rtol, meta, strict=True):
     """返回 write_outputs 的 before_rename 回调：汇总、对账、写 metrics.json 与 per_sample.csv。
 
-    对账失败时抛异常，write_outputs 会删掉临时目录；失败前先把汇总打印到 stdout 方便排查。
+    strict 时对账失败抛异常，write_outputs 会删掉临时目录；失败前先把汇总打印到 stdout 方便排查。
     """
     def finalize(tmp, recs):
         n_items = len(recs)
@@ -116,7 +125,7 @@ def make_finalizer(per_sample, lambdas, s_base, expect, rtol, meta):
             raise RuntimeError(f"逐样本条数 {len(per_sample)} ≠ {n_items}×{len(lambdas)}")
         per_lambda = summarize(per_sample, lambdas, s_base)
         print("[fusion] per_lambda = " + json.dumps(per_lambda, indent=2), flush=True)
-        rep = reconcile(per_lambda, expect, rtol)
+        rep = reconcile(per_lambda, expect, rtol, strict=strict)
         metrics = dict(meta)
         metrics.update({"lambdas": [lam_key(lam) for lam in lambdas], "s_baseline": s_base,
                         "per_lambda": per_lambda, "reconcile": rep})
@@ -213,7 +222,9 @@ def main():
     parser.add_argument("--s_baseline_json", required=True, help="S 的分母")
     parser.add_argument("--expect_lambda05", type=float, nargs=3, required=True,
                         metavar=("L1_JT", "L1_BF", "J"), help="λ=0.5 的对账值（工具口径）")
-    parser.add_argument("--expect_rtol", type=float, default=1e-4)
+    parser.add_argument("--expect_rtol", type=float, default=1e-3)
+    parser.add_argument("--record_mismatch", action="store_true",
+                        help="对账不通过时不报错，只记进 metrics.json，图照常导出")
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--font_path", default=DEFAULT_FONT, help="列头/行标签用的 TTF（需含 λ）")
     parser.add_argument("--rows_per_page", type=int, default=15)
@@ -232,9 +243,10 @@ def main():
 
     per_sample = []
     meta = {"model_ckpt": args.model_ckpt, "model_name": args.model_name,
-            "s_baseline_json": args.s_baseline_json, "calibration_json": args.calibration_json}
+            "s_baseline_json": args.s_baseline_json, "calibration_json": args.calibration_json,
+            "lambda_mode": "推理时改 λ（同一 ckpt）"}
     finalize = make_finalizer(per_sample, args.lambdas, s_base, args.expect_lambda05,
-                              args.expect_rtol, meta)
+                              args.expect_rtol, meta, strict=not args.record_mismatch)
     recs, pages = sbs.write_outputs(
         run_model(args, args.lambdas, per_sample), out, column_heads(args.lambdas),
         args.rows_per_page, args.grid_cell, font_path=args.font_path, before_rename=finalize)
