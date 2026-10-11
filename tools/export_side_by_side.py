@@ -112,16 +112,24 @@ def compose(rows, heads, cell, labels=None, label_w=0, font_path=None):
         for c, p in enumerate(panels):
             canvas.paste(Image.fromarray(p), (x0 + c * (cell + GAP), y))
         if labels is not None:
-            draw.rectangle([0, y, label_w - 1, y + cell - 1], fill=(255, 255, 255))
+            # Render text inside a separate label canvas so long labels cannot
+            # overwrite the neighbouring glyph panel on another Pillow build.
+            label_canvas = Image.new('RGB', (label_w, cell), 'white')
+            label_draw = ImageDraw.Draw(label_canvas)
             lines, glyph = labels[r]
             lfont = _font(max(10, cell // 12), font_path)
             step = max(10, cell // 12) + 4
             for k, line in enumerate(lines):
-                draw.text((4, y + 4 + k * step), line, fill=(0, 0, 0), font=lfont)
+                label_draw.text(
+                    (4, 4 + k * step), line, fill=(0, 0, 0), font=lfont,
+                )
             if glyph is not None:
                 g = cell // 2
-                canvas.paste(Image.fromarray(_resize(glyph, g)),
-                             ((label_w - g) // 2, y + cell - g - 4))
+                label_canvas.paste(
+                    Image.fromarray(_resize(glyph, g)),
+                    ((label_w - g) // 2, cell - g - 4),
+                )
+            canvas.paste(label_canvas, (0, y))
     return np.asarray(canvas)
 
 

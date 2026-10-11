@@ -289,7 +289,7 @@ def test_cpu_ddp_static_graph_across_pool_mixtures():
         pytest.skip("distributed unavailable")
     if torch.distributed.is_initialized():
         pytest.skip("caller already owns a distributed process group")
-    with tempfile.TemporaryDirectory(dir="/private/tmp") as directory:
+    with tempfile.TemporaryDirectory() as directory:
         rendezvous = Path(directory) / "gloo-store"
         torch.distributed.init_process_group(
             "gloo", init_method=f"file://{rendezvous}", rank=0, world_size=1,

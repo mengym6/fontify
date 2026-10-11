@@ -11,10 +11,12 @@ from tools.build_dual_manifest import normalize_record
 from util.dual_targets import (
     CACHE_SCHEMA,
     DEFINITION,
+    NATIVE_GEOMETRIES,
     SOURCE_SEAL,
     InstanceRenderer,
     build_instance_targets,
     cache_key,
+    cache_native_geometry,
     coordinate_audit,
     load_cached_targets,
     record_source_paths,
@@ -67,6 +69,7 @@ def audit_cache_partitions(cache_dir, output_path):
         "schema": "dual-partition-audit-v1",
         "definition": DEFINITION,
         "geometry": "identity-448",
+        "native_geometry": cache_native_geometry(metadata),
         "downsample": "nearest-224",
         "overlap_ownership": "ink-label-map-later-instance-wins",
         "distance": "exact-squared-euclidean",
@@ -84,12 +87,19 @@ def audit_cache_partitions(cache_dir, output_path):
     return audit
 
 
-def build_cache(root, records, output_dir, input_paths=(), fixed_pair_path=None):
+def build_cache(
+    root,
+    records,
+    output_dir,
+    input_paths=(),
+    fixed_pair_path=None,
+    native_geometry="pad_square",
+):
     """Write arrays plus source/cache hashes, reporting any coordinate failure."""
     root, output_dir = Path(root), Path(output_dir)
     if output_dir.exists():
         raise FileExistsError(f"Cache output directory must not exist: {output_dir}")
-    renderer = InstanceRenderer(root)
+    renderer = InstanceRenderer(root, native_geometry=native_geometry)
     output_dir.mkdir(parents=True, exist_ok=False)
     (output_dir / "layers").mkdir()
     index, failures, source_inputs = {}, [], []
@@ -148,6 +158,7 @@ def build_cache(root, records, output_dir, input_paths=(), fixed_pair_path=None)
         "definition": DEFINITION,
         "schema": CACHE_SCHEMA,
         "source_seal": SOURCE_SEAL,
+        "native_geometry": native_geometry,
         "status": "failed" if failures else "complete",
         "size": 448,
         "k_max": 4,
@@ -195,6 +206,13 @@ def main(argv=None):
     parser.add_argument("--json_paths", "--json-paths", nargs="+", required=True)
     parser.add_argument("--fixed_pair_path", "--fixed-pair-path")
     parser.add_argument("--output_dir", "--output-dir", required=True)
+    parser.add_argument(
+        "--native_geometry",
+        "--native-geometry",
+        choices=NATIVE_GEOMETRIES,
+        default="pad_square",
+        help="Explicit native COCO-to-GT geometry; never auto-select per image",
+    )
     args = parser.parse_args(argv)
     paths, records = [], []
     for name in args.json_paths:
@@ -207,7 +225,12 @@ def main(argv=None):
             records.extend(rows)
             paths.append(child)
     metadata = build_cache(
-        args.data_path, records, args.output_dir, paths, args.fixed_pair_path
+        args.data_path,
+        records,
+        args.output_dir,
+        paths,
+        args.fixed_pair_path,
+        native_geometry=args.native_geometry,
     )
     print(
         json.dumps(

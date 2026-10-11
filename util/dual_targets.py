@@ -19,6 +19,7 @@ from util.jieti_partition import INF, _edt_sq, ink_label_map
 DEFINITION = "instance-lower-full-v1"
 SOURCE_SEAL = "all-record-inputs-v1"
 CACHE_SCHEMA = "dual-target-cache-v2"
+NATIVE_GEOMETRIES = ("pad_square", "direct_resize")
 K_MAX = 4
 IMAGE_SIZE = 448
 
@@ -94,6 +95,37 @@ def pad_resize_layer(layer, size=IMAGE_SIZE):
     return np.asarray(image.resize((size, size), Image.Resampling.NEAREST))
 
 
+def resize_native_layer(layer, native_geometry, size=IMAGE_SIZE):
+    """Map native COCO geometry to the existing GT's explicit preprocessing."""
+    if native_geometry == "pad_square":
+        return pad_resize_layer(layer, size)
+    if native_geometry == "direct_resize":
+        image = Image.fromarray(np.asarray(layer, dtype=np.uint8))
+        return np.asarray(image.resize((size, size), Image.Resampling.NEAREST))
+    raise ValueError(f"Unknown native geometry: {native_geometry}")
+
+
+def cache_native_geometry(metadata, entry=None):
+    """Validate the sealed native mapping; old v1 caches used square padding."""
+    if metadata.get("schema") == CACHE_SCHEMA:
+        geometry = metadata.get("native_geometry")
+    elif metadata.get("schema") == "dual-target-cache-v1":
+        geometry = "pad_square"
+        if metadata.get("native_geometry", geometry) != geometry:
+            raise ValueError("Legacy instance cache native geometry must be pad_square")
+    else:
+        raise ValueError("Unknown instance cache schema for native geometry")
+    if geometry not in NATIVE_GEOMETRIES:
+        raise ValueError(f"Instance cache native geometry missing/invalid: {geometry}")
+    if entry is not None:
+        entry_geometry = entry.get("native_geometry")
+        if metadata.get("schema") == "dual-target-cache-v1":
+            entry_geometry = entry.get("native_geometry", "pad_square")
+        if entry_geometry != geometry:
+            raise ValueError("Instance cache entry native geometry mismatch")
+    return geometry
+
+
 def deduplicate_instances(regions, classes, annotation_ids, threshold=0.9):
     """Keep the first instance when native region IoU is strictly > threshold."""
     kept = []
@@ -126,8 +158,11 @@ def deduplicate_instances(regions, classes, annotation_ids, threshold=0.9):
 class InstanceRenderer:
     """Index COCO files once and render exact JT instances plus JT text."""
 
-    def __init__(self, root):
+    def __init__(self, root, native_geometry="pad_square"):
+        if native_geometry not in NATIVE_GEOMETRIES:
+            raise ValueError(f"Unknown native geometry: {native_geometry}")
         self.root = Path(root)
+        self.native_geometry = native_geometry
         self._indices = {}
 
     def _index(self, annotation_path):
@@ -174,19 +209,23 @@ class InstanceRenderer:
         padded = np.zeros((K_MAX, IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)
         class_array = np.full(K_MAX, -1, dtype=np.int64)
         for slot, (region, class_id) in enumerate(zip(regions, classes)):
-            padded[slot] = pad_resize_layer(region.astype(np.uint8))
+            padded[slot] = resize_native_layer(
+                region.astype(np.uint8), self.native_geometry
+            )
             class_array[slot] = class_id
         metadata = {
             "annotation_path": annotation_path,
             "jt_target_path": jt_target,
             "image_id": info["id"],
             "native_size": [height, width],
+            "native_geometry": self.native_geometry,
             "annotation_ids": annotation_ids,
             "removed_duplicates": removed,
             "instance_count": len(regions),
             "class_names": list(JT_CLASSES),
         }
-        return padded, pad_resize_layer(text.astype(np.uint8)), class_array, metadata
+        text = resize_native_layer(text.astype(np.uint8), self.native_geometry)
+        return padded, text, class_array, metadata
 
 
 def coordinate_audit(
@@ -250,6 +289,7 @@ def coordinate_audit(
         "max_centroid_offset": max_centroid_offset,
         "original_path": original_path,
         "native_size_verified": True,
+        "native_geometry": metadata.get("native_geometry", "pad_square"),
     }
 
 
@@ -365,6 +405,7 @@ def load_cached_targets(cache_dir, pair, verify=True, index=None, metadata=None)
     if owns_index and sha256_file(cache_dir / "index.json") != metadata["index_sha256"]:
         raise ValueError("Instance cache index hash mismatch")
     entry = index[pair["target_path"]]
+    cache_native_geometry(metadata, entry)
     annotation = pair.get("jt_annotation_path", pair.get("annotation_path"))
     jt_target = pair.get("jt_target_path", pair["target_path"])
     if (

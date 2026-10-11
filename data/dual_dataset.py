@@ -20,6 +20,7 @@ from util.dual_targets import (
     DEFINITION,
     SOURCE_SEAL,
     build_instance_targets,
+    cache_native_geometry,
     empty_instance_targets,
     load_cached_targets,
     pool_weights,
@@ -148,6 +149,7 @@ class DualDataset(Dataset):
         self.source_verification_scope = (
             self.source_seal if verify_sources else "disabled"
         )
+        self.native_geometry = cache_native_geometry(self._cache_metadata)
         if sha256_file(cache_index_path) != self._cache_metadata["index_sha256"]:
             raise ValueError("Instance cache index hash mismatch")
         input_hashes = set(self._cache_metadata["input_sha256"].values())
@@ -170,6 +172,7 @@ class DualDataset(Dataset):
                         f"JT instance cache missing: {pair['target_path']}"
                     )
                 entry = self._cache_index[pair["target_path"]]
+                cache_native_geometry(self._cache_metadata, entry)
             if not verify_sources:
                 continue
             if self.source_seal == SOURCE_SEAL:

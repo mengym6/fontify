@@ -22,6 +22,7 @@ from util.dual_targets import (
     load_cached_targets,
     pool_weights,
     record_source_paths,
+    sha256_file,
     transform_layers,
 )
 from util.jieti_partition import build_partition, ink_label_map
@@ -446,7 +447,12 @@ def test_legacy_cache_reports_only_legacy_jt_verification(synthetic_data):
     metadata["schema"] = "dual-target-cache-v1"
     del metadata["source_seal"]
     del metadata["source_inputs"]
+    del metadata["native_geometry"]
     index = json.loads((cache / "index.json").read_text(encoding="utf-8"))
+    for entry in index.values():
+        del entry["native_geometry"]
+    (cache / "index.json").write_text(json.dumps(index), encoding="utf-8")
+    metadata["index_sha256"] = sha256_file(cache / "index.json")
     paths = {
         path
         for entry in index.values()
@@ -462,7 +468,98 @@ def test_legacy_cache_reports_only_legacy_jt_verification(synthetic_data):
         if key in paths
     }
     path.write_text(json.dumps(metadata), encoding="utf-8")
-    assert dataset(synthetic_data).source_verification_scope == "jt-cache-only-legacy"
+    data = dataset(synthetic_data)
+    assert data.source_verification_scope == "jt-cache-only-legacy"
+    assert data.native_geometry == "pad_square"
+    load_cached_targets(cache, next(p for p in data.pairs if p["has_jt"]))
+
+
+@pytest.mark.parametrize(
+    ("gt_geometry", "cache_geometry"),
+    [
+        ("pad_square", "pad_square"),
+        ("direct_resize", "direct_resize"),
+        ("pad_square", "direct_resize"),
+        ("direct_resize", "pad_square"),
+    ],
+)
+def test_non_square_native_geometry_matches_existing_gt(
+    tmp_path, gt_geometry, cache_geometry
+):
+    row = write_records(tmp_path, "Native", "JT", ["A"])[0]
+    original = tmp_path / "font/train/new/NativeJT/images/A.png"
+    native = np.zeros((120, 240), dtype=np.uint8)
+    native[10:40, 60:180] = 1
+    Image.fromarray(255 * (1 - native)).convert("RGB").save(original)
+    if gt_geometry == "pad_square":
+        canvas = np.zeros((240, 240), dtype=np.uint8)
+        canvas[60:180] = native
+    else:
+        canvas = native
+    ink = np.asarray(
+        Image.fromarray(canvas).resize((448, 448), Image.Resampling.NEAREST)
+    )
+    Image.fromarray(255 * (1 - ink)).convert("RGB").save(
+        tmp_path / row["target_path"]
+    )
+    annotation_path = tmp_path / row["annotation_path"]
+    annotation = json.loads(annotation_path.read_text(encoding="utf-8"))
+    annotation["images"][0].update(height=120, width=240)
+    for item in annotation["annotations"]:
+        item["segmentation"] = [[60, 10, 179, 10, 179, 39, 60, 39]]
+    annotation_path.write_text(json.dumps(annotation), encoding="utf-8")
+    pairs, _ = merge_records([row], tmp_path)
+    manifest = tmp_path / "native.json"
+    manifest.write_text(json.dumps(pairs), encoding="utf-8")
+    cache = tmp_path / "native-cache"
+    if gt_geometry != cache_geometry:
+        with pytest.raises(ValueError, match="cache failures"):
+            build_cache(
+                tmp_path, pairs, cache, [manifest], native_geometry=cache_geometry
+            )
+        metadata = json.loads((cache / "metadata.json").read_text(encoding="utf-8"))
+        assert metadata["status"] == "failed"
+        assert "coordinate audit failed" in metadata["failures"][0]["error"]
+        return
+    metadata = build_cache(
+        tmp_path, pairs, cache, [manifest], native_geometry=cache_geometry
+    )
+    assert metadata["native_geometry"] == gt_geometry
+    entry = json.loads((cache / "index.json").read_text(encoding="utf-8"))[
+        row["target_path"]
+    ]
+    assert entry["native_geometry"] == gt_geometry
+    assert entry["coordinate_audit"]["gt_ink_coverage"] == 1
+    assert np.array_equal(load_cached_targets(cache, pairs[0])["text"], ink)
+    data = DualDataset(tmp_path, [manifest], cache, RandomMask())
+    assert data.native_geometry == gt_geometry
+    assert data[0]["instance_valid"].any()
+
+
+@pytest.mark.parametrize(
+    "change", ["metadata_mode", "entry_mode", "metadata_missing", "entry_missing"]
+)
+def test_cache_native_geometry_is_sealed_and_consistent(synthetic_data, change):
+    _, merged, _, _, _, _, cache = synthetic_data
+    metadata_path, index_path = cache / "metadata.json", cache / "index.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    pair = next(p for p in merged if p["has_jt"])
+    if change == "metadata_mode":
+        metadata["native_geometry"] = "direct_resize"
+    elif change == "metadata_missing":
+        del metadata["native_geometry"]
+    elif change == "entry_mode":
+        index[pair["target_path"]]["native_geometry"] = "direct_resize"
+    else:
+        del index[pair["target_path"]]["native_geometry"]
+    index_path.write_text(json.dumps(index), encoding="utf-8")
+    metadata["index_sha256"] = sha256_file(index_path)
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+    with pytest.raises(ValueError, match="native geometry"):
+        dataset(synthetic_data)
+    with pytest.raises(ValueError, match="native geometry"):
+        load_cached_targets(cache, pair)
 
 
 def test_coordinate_audit_rejects_displaced_gt(synthetic_data):

@@ -30,6 +30,19 @@ Intersection, validity, 28-grid occupancy and 224-grid J partition are then
 derived from those transformed layers. Fixed validation preserves its original
 pair records and uses deterministic identity geometry, without merging.
 
+The native COCO-to-448 mapping is selected globally with
+``--native_geometry {pad_square,direct_resize}``; its default is
+``pad_square`` (center padding, then nearest resize). ``direct_resize`` resizes
+the native rectangle directly to 448 square with nearest interpolation. Select
+the mode that matches the already-preprocessed GT and BF masks, after a full
+coordinate audit. This option changes only COCO region/text rendering; it does
+not rewrite GT images, BF NPY files, or coordinate acceptance thresholds, and
+does not select a different mode for individual images. ``native_geometry``
+is recorded in cache metadata, every JT entry, and the partition audit.
+Dataset construction and cached-target loading require the entry and metadata
+modes to agree; new v2 caches must contain the field. Old v1 caches without it
+are interpreted as ``pad_square``.
+
 Fresh caches use ``schema=dual-target-cache-v2`` and
 ``source_seal=all-record-inputs-v1``. ``source_inputs`` records each train,
 validation, and fixed-reference row's role-to-path mapping; ``source_sha256``
