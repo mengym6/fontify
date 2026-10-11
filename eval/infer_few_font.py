@@ -34,11 +34,10 @@ def get_args_parser():
 
 
 def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_sl1'):
-    model = getattr(models_eval, arch)()
-    checkpoint = torch.load(chkpt_dir, map_location='cuda:0')
-    from util.checkpoint import load_baseline_checkpoint
+    checkpoint = torch.load(chkpt_dir, map_location='cuda:0', weights_only=False)
+    from util.checkpoint import build_checkpoint_model
 
-    load_baseline_checkpoint(model, checkpoint)
+    model = build_checkpoint_model(checkpoint, arch, models_eval)
     return model
 
 
@@ -66,10 +65,10 @@ def run_one_image(img, tgt, size, model, device):
     bool_masked_pos[model.patch_embed.num_patches // 2:] = 1
     bool_masked_pos = bool_masked_pos.unsqueeze(dim=0)
 
-    valid = torch.ones_like(tgt)
-    y, mask, pred = model(x.float().to(device), tgt.float().to(device), bool_masked_pos.to(device),
-                                               valid.float().to(device))
-    y = model.unpatchify(y)
+    with torch.inference_mode():
+        y = model.predict_full(
+            x.float().to(device), tgt.float().to(device), bool_masked_pos.to(device)
+        )
     y = torch.einsum('nchw->nhwc', y).detach().cpu()
     x = torch.einsum('nchw->nhwc', x).detach().cpu()
 

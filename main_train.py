@@ -119,6 +119,21 @@ def get_args_parser():
                         help='结体三项相对系数：形状描述子（标定得到的固定常数）')
     parser.add_argument('--fusion_lambda', default=0.5, type=float,
                         help='encoder 双流融合权重 λ∈(0,1)：(1-λ)·电脑字路 + λ·风格字路；0.5 即原式')
+    parser.add_argument('--dual_view', action='store_true',
+                        help='启用双视图 run B；默认沿用原模型和数据路径')
+    parser.add_argument('--dual_target_cache', default=None,
+                        help='448 JT 实例/text 层缓存目录')
+    parser.add_argument('--dual_calibration_json', default=None,
+                        help='预热后固定训练权重及训练 J 系数')
+    parser.add_argument('--dual_eval_calibration_json', default=None,
+                        help='ctrl_g12 best 上固定的新 J 评测系数')
+    parser.add_argument('--dual_parent_checkpoint',
+                        default='models/vit_base_font/checkpoint-14.pth',
+                        help='预热主干来源；用于校验训练标定哈希')
+    parser.add_argument('--dual_sample_manifest', default=None,
+                        help='固定标定/离线探针样本与增强种子清单')
+    parser.add_argument('--dual_blind_manifest', default=None,
+                        help='训练前固定的人工盲评样本和左右随机顺序')
     parser.add_argument('--fixed_pair_path', default=None, type=str,
                         help='val 固定配对 json（target_path→pair2 index），所有组与 baseline 共用')
     parser.add_argument('--save_best', action='store_true',
@@ -246,7 +261,6 @@ def get_args_parser():
     if known_args.enable_deepspeed:
         try:
             import deepspeed
-            from deepspeed import DeepSpeedConfig
             parser = deepspeed.add_config_arguments(parser)
             ds_init = deepspeed.initialize
         except:
@@ -379,11 +393,35 @@ def main(args, ds_init):
     seed = args.seed + misc.get_rank()
     torch.manual_seed(seed)
     np.random.seed(seed)
+    if args.dual_view:
+        import random
+        random.seed(seed)
 
     cudnn.benchmark = True
 
     # define the model
-    model = models_train.__dict__[args.model]()
+    if args.dual_view:
+        from tools.dual_view_protocol import validate_training_inputs
+        validate_training_inputs(args)
+        model = models_train.__dict__[args.model](dual_view=True)
+        calibration = json.loads(Path(args.dual_calibration_json).read_text())
+        coefficients = calibration['coef']
+        args.dual_lambda_full = calibration['lambda_full']
+        args.jieti_w = calibration['w_j']
+        args.dual_head_weight = calibration['w_h']
+        args.jieti_w_centroid = coefficients['centroid']
+        args.jieti_w_logsigma = coefficients['logsigma']
+        args.jieti_w_shape = coefficients['shape']
+        model.enable_dual_losses(
+            lambda_full=args.dual_lambda_full,
+            jieti_weight=args.jieti_w, head_weight=args.dual_head_weight,
+            pool=args.jieti_pool, soft_fg=args.jieti_soft_fg,
+            pred_mass_ratio=args.jieti_pred_mass_ratio,
+            w_centroid=args.jieti_w_centroid,
+            w_logsigma=args.jieti_w_logsigma, w_shape=args.jieti_w_shape,
+        )
+    else:
+        model = models_train.__dict__[args.model]()
     if min(args.adv_warmup_epochs, args.edge_warmup_epochs, args.loss_warmup_duration) < 0:
         raise ValueError('loss warmup epochs and duration must be non-negative')
     if min(args.adv_weight_final, args.edge_weight_final) < 0:
@@ -401,7 +439,7 @@ def main(args, ds_init):
 
     if args.grad_log_interval < 0:
         raise ValueError('grad_log_interval must be non-negative')
-    if args.jieti_loss:
+    if args.jieti_loss and not args.dual_view:
         if not args.jieti_alpha_jt > 0.0:
             raise ValueError('jieti_alpha_jt must be > 0')
         model.enable_jieti(
@@ -437,7 +475,7 @@ def main(args, ds_init):
             interpolate_pos_embed(model, checkpoint_model)
 
         # load pre-trained model
-        msg = model.load_state_dict(checkpoint_model, strict=False)
+        msg = model.load_state_dict(checkpoint_model, strict=args.dual_view)
         print(msg)
 
     patch_size = model.patch_size
@@ -482,17 +520,37 @@ def main(args, ds_init):
     )
     if args.mask_mix_probs is not None:
         dataset_train_kwargs["mask_mix_probs"] = args.mask_mix_probs
-    dataset_train = PairDataset(args.data_path, args.json_path, **dataset_train_kwargs)
-    dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
-                              transform3=None, masked_position_generator=masked_position_generator,
-                              use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0,
-                              strict_style_pairing=args.strict_style_pairing,
-                              return_jieti=args.jieti_loss,
-                              jieti_k_max=args.jieti_k_max,
-                              jieti_pool=args.jieti_pool,
-                              jieti_valid_ink=args.jieti_valid_ink,
-                              jieti_struct_pair_prob=args.jieti_struct_pair_prob,
-                              fixed_pair_path=args.fixed_pair_path)
+    if args.dual_view:
+        from data.dual_dataset import DualDataset
+        dual_kwargs = dict(
+            target_cache_dir=args.dual_target_cache,
+            masked_position_generator=masked_position_generator,
+            image_size=args.input_size[1], patch_size=patch_size,
+            num_mask_annotations_bf=args.num_mask_annotations_bf,
+            mask_coverage_threshold=args.mask_coverage_threshold,
+            jieti_pool=args.jieti_pool, jieti_valid_ink=args.jieti_valid_ink,
+        )
+        dataset_train = DualDataset(
+            args.data_path, args.json_path, is_train=True, **dual_kwargs,
+        )
+        dataset_val = DualDataset(
+            args.data_path, args.val_json_path, is_train=False,
+            fixed_pair_path=args.fixed_pair_path, **dual_kwargs,
+        )
+    else:
+        dataset_train = PairDataset(
+            args.data_path, args.json_path, **dataset_train_kwargs,
+        )
+        dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
+                                  transform3=None, masked_position_generator=masked_position_generator,
+                                  use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0,
+                                  strict_style_pairing=args.strict_style_pairing,
+                                  return_jieti=args.jieti_loss,
+                                  jieti_k_max=args.jieti_k_max,
+                                  jieti_pool=args.jieti_pool,
+                                  jieti_valid_ink=args.jieti_valid_ink,
+                                  jieti_struct_pair_prob=args.jieti_struct_pair_prob,
+                                  fixed_pair_path=args.fixed_pair_path)
 
     print(dataset_train)
     print(dataset_val)
@@ -508,6 +566,9 @@ def main(args, ds_init):
         print("Sampler_train = %s" % str(sampler_train))
         sampler_val = torch.utils.data.DistributedSampler(
             dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+        if args.dual_view:
+            # No padding or duplicate images in the fixed evaluation set.
+            sampler_val = list(range(global_rank, len(dataset_val), num_tasks))
     else:
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
@@ -537,7 +598,7 @@ def main(args, ds_init):
         batch_size=int(1.5 * args.batch_size),
         num_workers=args.num_workers,
         pin_memory=args.pin_mem,
-        drop_last=True,
+        drop_last=not args.dual_view,
     )
 
     model.to(device)
@@ -672,15 +733,26 @@ def main(args, ds_init):
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, optimizer_d=optimizer_d,
                 loss_scaler=loss_scaler, epoch=epoch)
 
-        test_stats = evaluate_pt(data_loader_val, model, device, epoch=epoch, global_rank=global_rank, args=args,
-                                 log_writer=log_writer)
+        if args.dual_view:
+            from util.dual_training import evaluate_dual, save_probe_snapshot
+            save_probe_snapshot(model, args, epoch)
+            test_stats = evaluate_dual(
+                data_loader_val, model, device, epoch, args, log_writer,
+            )
+        else:
+            test_stats = evaluate_pt(data_loader_val, model, device, epoch=epoch, global_rank=global_rank, args=args,
+                                     log_writer=log_writer)
         print(f"Val loss of the network on the {len(dataset_val)} test images: {test_stats['loss']:.3f}")
 
         # C1：按排序指标 S 选最优 epoch（S 最低），额外存 checkpoint-best.pth。
         cur_s = compute_s(test_stats)
+        if args.dual_view and (cur_s is None or not np.isfinite(cur_s)):
+            raise FloatingPointError('run B requires a finite new S value')
         if cur_s is not None:
             test_stats["S"] = cur_s
         if args.save_best:
+            if args.dual_view and cur_s is None:
+                raise ValueError('run B best selection requires the new S')
             select = cur_s if cur_s is not None else test_stats["loss"]
             if select < best_s:
                 best_s = select

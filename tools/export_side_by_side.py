@@ -201,34 +201,24 @@ def run_models(args):
     """逐条产出 (rec, [ref, gt, base_pred, model_pred], glyph)，图都是 (448,448,3) uint8。"""
     import torch
 
-    from data.pairdataset import PairDataset
-    from tools.eval_s_baseline import build_val_transform, load_model
-    from util.masking_generator import MaskingGenerator
+    from tools.eval_s_baseline import build_dataset, load_model, unpack_sample
 
     torch.manual_seed(args.seed)
     # 构造参数与 eval_s_baseline / export_jieti_ab / eval_band_error 逐项相同
-    dataset = PairDataset(
-        args.data_path, args.val_json_path, transform=build_val_transform(),
-        masked_position_generator=MaskingGenerator(
-            (56, 28), num_masking_patches=784, max_num_patches=392),
-        use_two_pairs=True, half_mask_ratio=1.0,
-        semantic_mask_dir=args.semantic_mask_dir,
-        num_mask_annotations_jt=1, num_mask_annotations_bf=11,
-        mask_coverage_threshold=0.1, return_jieti=True,
-        fixed_pair_path=args.fixed_pair_path,
-    )
+    dataset = build_dataset(args)
     models = [load_model(args.baseline_ckpt).to(args.device).eval(),
               load_model(args.model_ckpt).to(args.device).eval()]
 
     with torch.no_grad():
         for idx in range(len(dataset)):
-            image, target, mask, _valid, _voro, _vp, is_jt = dataset[idx]
-            kind = "JT" if bool(is_jt.item()) else "BF"
+            image, target, mask, _valid, _voro, _vp, is_jt = unpack_sample(dataset[idx])
+            kind = "JT" if bool(torch.as_tensor(is_jt).item()) else "BF"
+            mask = torch.as_tensor(mask).bool()
             if not mask[mask.shape[0] // 2:].all() or mask[:mask.shape[0] // 2].any():
                 raise RuntimeError(f"sample {idx}: val mask 不是下半整字全遮")
             images = image.unsqueeze(0).to(args.device)
             targets = target.unsqueeze(0).to(args.device)
-            bmp = torch.from_numpy(mask).bool().flatten()[None].to(args.device)
+            bmp = mask.flatten()[None].to(args.device)
             hp = mask.shape[0] // 2 * 16  # 下半 query 起始行（像素）
 
             # target_path 是上半参考字（固定配对的 key），被评测的字是下半 query
@@ -241,7 +231,7 @@ def run_models(args):
             tgt = target.double().numpy()
             panels = [to_rgb_u8(tgt[:, :hp, :]), to_rgb_u8(tgt[:, hp:, :])]
             for model in models:
-                pred = model.forward_decoder(model.forward_encoder(images, targets, bmp))
+                pred = model.predict_full(images, targets, bmp)
                 panels.append(to_rgb_u8(pred[0].double().cpu().numpy()[:, hp:, :]))
             glyph = to_rgb_u8(image.double().numpy()[:, hp:, :])
             yield rec, panels, glyph
@@ -259,6 +249,9 @@ def main():
     parser.add_argument("--val_json_path", nargs="+", required=True)
     parser.add_argument("--semantic_mask_dir", default=None)
     parser.add_argument("--fixed_pair_path", required=True)
+    parser.add_argument("--j_definition", default="legacy",
+                        choices=["legacy", "instance-lower-full-v1"])
+    parser.add_argument("--dual_target_cache")
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--rows_per_page", type=int, default=15)
     parser.add_argument("--grid_cell", type=int, default=256, help="拼图里每个面板的边长（像素）")

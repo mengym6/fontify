@@ -64,10 +64,12 @@ def set_seed(seed, rank):
 
 
 def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_sl1', rank=0):
-    model = getattr(models_eval, arch)()
-    checkpoint = torch.load(chkpt_dir, map_location='cuda:{}'.format(rank))
-    msg = model.load_state_dict(checkpoint['model'], strict=False)
-    print(msg)
+    checkpoint = torch.load(
+        chkpt_dir, map_location='cuda:{}'.format(rank), weights_only=False
+    )
+    from util.checkpoint import build_checkpoint_model
+
+    model = build_checkpoint_model(checkpoint, arch, models_eval)
 
     device = torch.device("cuda:{}".format(rank))
     model.to(device)
@@ -87,11 +89,8 @@ def run_batch_images(imgs, tgts, sizes, model, device):
     bool_masked_pos[model.module.patch_embed.num_patches // 2:] = 1
     bool_masked_pos = bool_masked_pos.unsqueeze(dim=0).repeat(len(imgs), 1)
 
-    valid = torch.ones_like(tgt)
-    with torch.cuda.amp.autocast():
-        y, mask, pred = model(x.float().to(device), tgt.float().to(device),
-                               bool_masked_pos.to(device), valid.float().to(device))
-    y = model.module.unpatchify(y)
+    with torch.inference_mode(), torch.cuda.amp.autocast():
+        y = model.module.predict_full(x, tgt, bool_masked_pos.to(device))
     y = torch.einsum('nchw->nhwc', y).detach().cpu().numpy()
 
     outputs = []
@@ -213,6 +212,11 @@ def main(rank, world_size):
         img2 = img2 - imagenet_mean
         img2 = img2 / imagenet_std
 
+        if getattr(model_fontify.module, "dual_view", False):
+            from util.stage3_data import image_tensor
+
+            tgt2 = image_tensor(prompt_path).permute(1, 2, 0).numpy()
+            img2 = image_tensor(img2_path).permute(1, 2, 0).numpy()
         tgt = np.concatenate((tgt2, tgt2), axis=0)
 
         tgt_img_names = [os.path.basename(path) for path in glob.glob(os.path.join(font_folder, "*.*"))]
@@ -236,6 +240,8 @@ def main(rank, world_size):
                     img = np.array(img) / 255.
                     img = img - imagenet_mean
                     img = img / imagenet_std
+                    if getattr(model_fontify.module, "dual_view", False):
+                        img = image_tensor(img_path).permute(1, 2, 0).numpy()
                     img = np.concatenate((img2, img), axis=0)
 
                     imgs.append(img)

@@ -33,10 +33,10 @@ def get_args_parser():
 
 
 def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_sl1'):
-    model = getattr(models_eval, arch)()
-    checkpoint = torch.load(chkpt_dir, map_location='cuda:0')
-    msg = model.load_state_dict(checkpoint['model'], strict=False)
-    print(msg)
+    checkpoint = torch.load(chkpt_dir, map_location='cuda:0', weights_only=False)
+    from util.checkpoint import build_checkpoint_model
+
+    model = build_checkpoint_model(checkpoint, arch, models_eval)
     return model
 
 
@@ -64,10 +64,10 @@ def run_one_image(img, tgt, size, model, device):
     bool_masked_pos[model.patch_embed.num_patches // 2:] = 1
     bool_masked_pos = bool_masked_pos.unsqueeze(dim=0)
 
-    valid = torch.ones_like(tgt)
-    y, mask, pred = model(x.float().to(device), tgt.float().to(device), bool_masked_pos.to(device),
-                                               valid.float().to(device))
-    y = model.unpatchify(y)
+    with torch.inference_mode():
+        y = model.predict_full(
+            x.float().to(device), tgt.float().to(device), bool_masked_pos.to(device)
+        )
     y = torch.einsum('nchw->nhwc', y).detach().cpu()
     x = torch.einsum('nchw->nhwc', x).detach().cpu()
 
@@ -105,6 +105,13 @@ def run_single_character(char, reference_path, model, device, img_src_dir, outpu
     tgt2 = tgt2 - imagenet_mean
     tgt2 = tgt2 / imagenet_std
 
+    if getattr(model, "dual_view", False):
+        from util.stage3_data import image_tensor
+
+        img2 = image_tensor(img2_path).permute(1, 2, 0).numpy()
+        query = image_tensor(img_path).permute(1, 2, 0).numpy()
+        img = np.concatenate((img2, query), axis=0)
+        tgt2 = image_tensor(reference_path).permute(1, 2, 0).numpy()
     tgt = np.concatenate((tgt2, tgt2), axis=0)
 
     output = run_one_image(img, tgt, size, model, device)

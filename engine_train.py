@@ -1,19 +1,19 @@
+import csv
+import json
 import math
 import os
 import sys
-import csv
+import time
 from collections import defaultdict
+from pathlib import Path
 from typing import Iterable
 
+import numpy as np
 import torch
 import torch.nn.functional as F
-import util.misc as misc
+
 import util.lr_sched as lr_sched
-
-import numpy as np
-#import wandb
-
-import time
+import util.misc as misc
 
 
 _GRADIENT_GROUP_PREFIXES = (
@@ -225,6 +225,36 @@ def get_loss_scale_for_deepspeed(model):
     # return optimizer.loss_scale if hasattr(optimizer, "loss_scale") else optimizer.cur_scale
 
 
+def _write_dual_diagnostics(args, epoch, step, extra, pre_clip, post_clip):
+    """Preserve per-batch matching/slot values and per-update clipping data."""
+    if not args.output_dir or not misc.is_main_process():
+        return
+    row = {"epoch": epoch, "micro_batch": step}
+    for key in (
+        "L_pen", "L_full", "L_H", "J", "assignments", "slot_existence",
+        "slot_occupancy", "matched_count", "has_jt", "head_bce",
+        "head_dice", "head_existence", "head_class",
+        "sample_key", "query_target_path", "reference_target_path",
+        "geometry_seed", "geometry_crop",
+        "j_downsample_lost", "j_partition_lost",
+    ):
+        if key in extra:
+            value = extra[key]
+            if torch.is_tensor(value):
+                value = value.detach().cpu().tolist()
+            row[key] = value
+    if pre_clip is not None and (step + 1) % args.accum_iter == 0:
+        row["pre_clip_grad_norm"] = float(pre_clip)
+        row["post_clip_grad_norm"] = float(post_clip)
+        row["clip_ratio"] = (
+            float(post_clip) / float(pre_clip) if pre_clip > 0 else 1.0
+        )
+        row["clip_triggered"] = row["clip_ratio"] < 1.0 - 1e-6
+    with open(Path(args.output_dir) / "dual_diagnostics.jsonl", "a",
+              encoding="utf-8") as stream:
+        stream.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
 def train_one_epoch(model: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler,
@@ -240,6 +270,13 @@ def train_one_epoch(model: torch.nn.Module,
     print_freq = 20
 
     accum_iter = args.accum_iter
+    micro_batches = len(data_loader)
+    if getattr(args, 'dual_view', False):
+        from util.dual_training import complete_accumulation_steps
+        micro_batches = complete_accumulation_steps(micro_batches, accum_iter)
+        skipped = len(data_loader) - micro_batches
+        print(f'Run B accumulation: {micro_batches} micro-batches, '
+              f'{skipped} tail micro-batches skipped per rank')
     num_updates = 0
     raw_model = model.module if hasattr(model, "module") else model
     adv_weight, edge_weight = raw_model.get_dynamic_loss_weights(epoch)
@@ -251,19 +288,20 @@ def train_one_epoch(model: torch.nn.Module,
         print('log_dir: {}'.format(log_writer.log_dir))
 
     # wandb_images = []
-    tensorboard_images = []
     for data_iter_step, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
-        samples, targets, bool_masked_pos, valid = batch[:4]
-        jieti_kwargs = {}
-        if len(batch) > 4:
-            jieti_kwargs = {
-                "voro": batch[4].to(device, non_blocking=True),
-                "valid_parts": batch[5].to(device, non_blocking=True),
-                "is_jt": batch[6].to(device, non_blocking=True),
-            }
+        if data_iter_step >= micro_batches:
+            break
+        from util.dual_training import unpack_batch
+        samples, targets, bool_masked_pos, valid, jieti_kwargs = unpack_batch(
+            batch, device,
+        )
+        if bool_masked_pos.ndim == 3:
+            bool_masked_pos = bool_masked_pos.flatten(1)
         # we use a per iteration (instead of per epoch) lr scheduler
         if data_iter_step % accum_iter == 0:
-            lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
+            lr_sched.adjust_learning_rate(
+                optimizer, data_iter_step / micro_batches + epoch, args,
+            )
 
         samples = samples.to(device, non_blocking=True, dtype=torch.bfloat16)
         targets = targets.to(device, non_blocking=True, dtype=torch.bfloat16)
@@ -393,6 +431,24 @@ def train_one_epoch(model: torch.nn.Module,
             }
             metric_logger.update(jieti_J=jieti_reduce["J"])
             metric_logger.update(jieti_shield=jieti_reduce["shield"])
+            if getattr(args, "dual_view", False):
+                for key in ("L_pen", "L_full", "L_H"):
+                    metric_logger.update(**{
+                        f"dual_{key}": misc.all_reduce_mean(
+                            jieti_extra[key].detach().item(),
+                        ),
+                    })
+                for key in (
+                    "sample_key", "query_target_path", "reference_target_path",
+                    "geometry_seed", "geometry_crop",
+                    "j_downsample_lost", "j_partition_lost",
+                ):
+                    if key in batch:
+                        jieti_extra[key] = batch[key]
+                _write_dual_diagnostics(
+                    args, epoch, data_iter_step, jieti_extra,
+                    pre_clip_grad_norm, post_clip_grad_norm,
+                )
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
                 f.write(
@@ -432,7 +488,9 @@ def train_one_epoch(model: torch.nn.Module,
                 'loss_adv_weighted': loss_adv_reduce,
             }
             if jieti_extra is not None:
-                _jw = (model.module if hasattr(model, "module") else model).jieti_w
+                raw = model.module if hasattr(model, "module") else model
+                _jw = (raw.jieti_loss_weight if getattr(args, "dual_view", False)
+                       else raw.jieti_w)
                 detail.update({
                     'jieti_J_weighted': jieti_reduce["J"] * _jw,
                     'jieti_centroid': jieti_reduce["centroid"],
@@ -440,6 +498,18 @@ def train_one_epoch(model: torch.nn.Module,
                     'jieti_shape': jieti_reduce["shape"],
                     'jieti_shield': jieti_reduce["shield"],
                 })
+                if getattr(args, "dual_view", False):
+                    detail.update({
+                        "dual_L_pen": jieti_extra["L_pen"].detach().item(),
+                        "dual_L_full_weighted": (
+                            raw.dual_lambda_full
+                            * jieti_extra["L_full"].detach().item()
+                        ),
+                        "dual_L_H_weighted": (
+                            raw.dual_head_weight
+                            * jieti_extra["L_H"].detach().item()
+                        ),
+                    })
             log_writer.add_scalars('train_loss_detail', detail, epoch_1000x)
 
 
@@ -447,12 +517,13 @@ def train_one_epoch(model: torch.nn.Module,
                 imagenet_mean = np.array([0.485, 0.456, 0.406])
                 imagenet_std = np.array([0.229, 0.224, 0.225])
                 y = y[[0]]
-                y = model.module.unpatchify(y)
+                raw = model.module if hasattr(model, "module") else model
+                y = raw.unpatchify(y)
                 y = torch.einsum('nchw->nhwc', y).detach().cpu()
                 mask = mask[[0]]
                 mask = mask.detach().float().cpu()
-                mask = mask.unsqueeze(-1).repeat(1, 1, model.module.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
-                mask = model.module.unpatchify(mask)  # 1 is removing, 0 is keeping
+                mask = mask.unsqueeze(-1).repeat(1, 1, raw.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
+                mask = raw.unpatchify(mask)  # 1 is removing, 0 is keeping
                 mask = torch.einsum('nchw->nhwc', mask).detach().cpu()
                 x = samples[[0]]
                 x = x.detach().float().cpu()
@@ -467,7 +538,7 @@ def train_one_epoch(model: torch.nn.Module,
                 # print(frame.shape)
                 frame = torch.clip((frame * imagenet_std + imagenet_mean) * 255, 0, 255).to(torch.uint8)
                 #frame = frame[:, :, [2, 1, 0]]
-                log_writer.add_image(f'x; im_masked; y; tgt', frame.numpy(), epoch_1000x, dataformats='HWC')
+                log_writer.add_image('x; im_masked; y; tgt', frame.numpy(), epoch_1000x, dataformats='HWC')
 
             # if global_rank == 0 and args.log_wandb:
             #     wandb.log({'train_loss': loss_value_reduce, 'lr': lr, 'train_loss_scale': loss_scale_value, 'grad_norm': grad_norm})

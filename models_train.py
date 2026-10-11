@@ -317,6 +317,7 @@ class Fontify(nn.Module):
              out_feature="last_feat",
              decoder_embed_dim=128,
              loss_func="smoothl1",
+             dual_view=False,
              ):
         super().__init__()
 
@@ -399,6 +400,32 @@ class Fontify(nn.Module):
         self.vgg_loss = VGGPerceptualLoss()
         
         self.apply(self._init_weights)
+
+        # Build the new modules only after the legacy initialization. Off mode
+        # consumes no additional RNG values and preserves the old key set.
+        self.dual_view = bool(dual_view)
+        if self.dual_view:
+            if depth != 12:
+                raise ValueError("Run B requires the four ViT-Base taps")
+            grid_height = img_size[0] // patch_size
+            grid_width = img_size[1] // patch_size
+            if grid_height != 2 * grid_width:
+                raise ValueError("Run B requires two vertically stacked squares")
+            from util.dual_loss import DualJietiLoss, InstanceHeadLoss
+            from util.dual_view import DualViewFusion, DualViewHead
+
+            self.dual_head = DualViewHead(
+                encoder_width=embed_dim, grid_size=grid_width,
+            )
+            self.dual_fusion = DualViewFusion(encoder_width=embed_dim)
+            self.dual_jieti_loss = DualJietiLoss()
+            self.dual_head_loss = InstanceHeadLoss()
+            self.dual_lambda_full = 0.5
+            self.jieti_loss_weight = 1.0
+            self.dual_head_weight = 1.0
+            self.jieti_w_centroid = 1.0
+            self.jieti_w_logsigma = 1.0
+            self.jieti_w_shape = 1.0
 
     def get_dynamic_loss_weights(self, epoch):
         """
@@ -528,7 +555,8 @@ class Fontify(nn.Module):
         imgs = x.reshape(shape=(x.shape[0], 3, h * p, w * p))
         return imgs
 
-    def forward_encoder(self, imgs, tgts, bool_masked_pos):
+    def forward_encoder(self, imgs, tgts, bool_masked_pos,
+                        return_quadrants=False):
         x = self.patch_embed(imgs)
         y = self.patch_embed(tgts)
         batch_size, Hp, Wp, _ = x.size()
@@ -554,12 +582,25 @@ class Fontify(nn.Module):
         x = torch.cat((x, y), dim=0)  # (B*2,Hp,Wp,E)
         # apply Transformer blocks
         out = []
+        quadrants = None
         for idx, blk in enumerate(self.blocks):
             x = blk(x) # (B*2,Hp,Wp,E)
             if idx == merge_idx:
+                if return_quadrants:
+                    half = Hp // 2
+                    if Hp != 2 * Wp:
+                        raise ValueError("Dual encoder requires stacked squares")
+                    x_stream, y_stream = x.chunk(2, dim=0)
+                    quadrants = (
+                        x_stream[:, :half], y_stream[:, :half],
+                        x_stream[:, half:], y_stream[:, half:],
+                    )
                 # 局部导入：tests/test_baseline.py 用 AST 单独执行本方法，命名空间里只有 torch
                 from util.fusion import fuse_streams
                 # fusion_lambda 是推理诊断用的普通属性，不进 state_dict；默认 0.5 即原式
+                fusion_lambda = getattr(self, "fusion_lambda", 0.5)
+                if return_quadrants and fusion_lambda != 0.5:
+                    raise ValueError("Run B fixes fusion_lambda at 0.5")
                 x = fuse_streams(x, getattr(self, "fusion_lambda", 0.5))
 
             if self.depth == 24:
@@ -568,12 +609,19 @@ class Fontify(nn.Module):
             else:
                 if idx in [2, 5, 8, 11]:
                     out.append(self.norm(x))
+        if return_quadrants:
+            return out, quadrants
         return out
     # (B*2,Hp,Wp,E,4)
 
-    def forward_decoder(self, x):
+    def forward_decoder(self, x, lower_residual=None):
         # predictor projection (B*2,Hp,Wp,E,4)
         x = torch.cat(x, dim=-1)  # (B*2,Hp,Wp,E*4)
+        if lower_residual is not None:
+            half = x.shape[1] // 2
+            if lower_residual.shape != x[:, half:].shape:
+                raise ValueError("Dual fusion residual must match lower taps")
+            x = torch.cat((x[:, :half], x[:, half:] + lower_residual), 1)
         x = self.decoder_embed(x)  # (B*2,Hp,Wp,E*4)——>(B*2,Hp,Wp,P^2*64)
         p = self.patch_size
         h, w = x.shape[1], x.shape[2]
@@ -754,14 +802,169 @@ class Fontify(nn.Module):
             w_logsigma=w_logsigma, w_shape=w_shape,
         )
 
+    def enable_dual_losses(self, lambda_full=0.5, jieti_weight=1.0,
+                           head_weight=1.0, w_centroid=1.0,
+                           w_logsigma=1.0, w_shape=1.0, pool=224,
+                           soft_fg="linear", pred_mass_ratio=0.1):
+        """Apply run B calibration constants; formal entrypoints validate them."""
+        if not getattr(self, "dual_view", False):
+            raise ValueError("Dual-view losses require dual_view=True")
+        from util.dual_loss import DualJietiLoss
+
+        values = (lambda_full, jieti_weight, head_weight,
+                  w_centroid, w_logsigma, w_shape)
+        if any(not torch.isfinite(torch.tensor(value)) or value < 0
+               for value in values):
+            raise ValueError("Dual loss coefficients must be finite/nonnegative")
+        self.dual_lambda_full = float(lambda_full)
+        self.jieti_loss_weight = float(jieti_weight)
+        self.dual_head_weight = float(head_weight)
+        self.jieti_w_centroid = float(w_centroid)
+        self.jieti_w_logsigma = float(w_logsigma)
+        self.jieti_w_shape = float(w_shape)
+        device = next(self.parameters()).device
+        self.dual_jieti_loss = DualJietiLoss(
+            pool=pool, soft_fg=soft_fg, pred_mass_ratio=pred_mass_ratio,
+            w_centroid=w_centroid, w_logsigma=w_logsigma, w_shape=w_shape,
+        ).to(device)
+
+    def full_target_mask(self, imgs):
+        """Upper target visible, lower target completely masked (B, 1568)."""
+        height = imgs.shape[-2] // self.patch_size
+        width = imgs.shape[-1] // self.patch_size
+        if height != 2 * width:
+            raise ValueError("Full-mask inference requires stacked squares")
+        mask = torch.zeros(
+            imgs.shape[0], height, width, dtype=torch.bool, device=imgs.device
+        )
+        mask[:, height // 2:] = True
+        return mask.flatten(1)
+
+    def _dual_full_prediction(self, imgs, tgts, has_jt=None):
+        mask = self.full_target_mask(imgs)
+        taps, quadrants = self.forward_encoder(
+            imgs, tgts, mask, return_quadrants=True,
+        )
+        features = torch.cat(taps, dim=-1)
+        lower = features[:, features.shape[1] // 2:]
+        head_outputs = self.dual_head(quadrants, lower)
+        residual = self.dual_fusion(head_outputs["layout"], has_jt)
+        prediction = self.forward_decoder(taps, lower_residual=residual)
+        return prediction, mask, head_outputs
+
+    def predict_full(self, imgs, tgts, mask=None):
+        """Infer P_full without any JT labels or instance-matching targets."""
+        full_mask = self.full_target_mask(imgs)
+        if mask is not None:
+            supplied = mask.flatten(1).to(device=imgs.device, dtype=torch.bool)
+            if not torch.equal(supplied, full_mask):
+                raise ValueError("Full inference mask must cover the lower half")
+        if not getattr(self, "dual_view", False):
+            return self.forward_decoder(
+                self.forward_encoder(imgs, tgts, full_mask)
+            )
+        prediction, _, _ = self._dual_full_prediction(imgs, tgts)
+        return prediction
+
+    def forward_dual(self, imgs, tgts, mask, valid, epoch, no_gan,
+                     dual_targets):
+        """Two shared forwards and four losses with static parameter routing."""
+        if not no_gan:
+            raise ValueError("Run B requires no_gan=True")
+        required = {
+            "has_jt", "instance_occupancy", "instance_valid",
+            "instance_classes", "voro", "valid_parts",
+        }
+        if dual_targets is None or required.difference(dual_targets):
+            raise ValueError("Dual-view forward requires all instance targets")
+        has_jt = dual_targets["has_jt"].to(
+            device=imgs.device, dtype=torch.bool
+        )
+        if has_jt.shape != (imgs.shape[0],):
+            raise ValueError("has_jt must have shape (B,)")
+        if valid is None:
+            valid = torch.ones_like(tgts)
+        pen_taps = self.forward_encoder(imgs, tgts, mask)
+        pen_prediction = self.forward_decoder(pen_taps)
+        full_prediction, full_mask, head = self._dual_full_prediction(
+            imgs, tgts, has_jt,
+        )
+        # The legacy loss changes its valid argument in place for ignored
+        # samples. Independent copies keep both views' loss masks consistent.
+        pen_valid, full_valid = valid.clone(), valid.clone()
+        pen = self.forward_loss(
+            imgs, pen_prediction, tgts, mask, pen_valid,
+            epoch=epoch, no_gan=True,
+        )
+        full = self.forward_loss(
+            imgs, full_prediction, tgts, full_mask, full_valid,
+            epoch=epoch, no_gan=True,
+        )
+        jieti, jparts, shield = self.dual_jieti_loss(
+            full_prediction, tgts, dual_targets["voro"],
+            dual_targets["valid_parts"], has_jt,
+        )
+        head_loss, head_parts = self.dual_head_loss(
+            head, dual_targets["instance_occupancy"],
+            dual_targets["instance_valid"], dual_targets["instance_classes"],
+            has_jt,
+        )
+        loss = (pen[0] + self.dual_lambda_full * full[0]
+                + self.jieti_loss_weight * jieti
+                + self.dual_head_weight * head_loss)
+        pixel_mask = self.unpatchify(
+            full_mask[:, :, None].repeat(1, 1, self.patch_size ** 2 * 3)
+        ).to(full_prediction.dtype) * full_valid
+        l1 = ((full_prediction - tgts).abs() * pixel_mask).sum((1, 2, 3))
+        l1 = l1 / (pixel_mask.sum((1, 2, 3)) + 1e-2)
+        extra = {
+            "L_pen": pen[0], "L_full": full[0], "J": jieti,
+            "L_H": head_loss, "H": head_loss,
+            "centroid": jparts["centroid"],
+            "logsigma": jparts["logsigma"], "shape": jparts["shape"],
+            "j_centroid": jparts["centroid"],
+            "j_logsigma": jparts["logsigma"],
+            "j_shape": jparts["shape"], "shield": shield,
+            "l1_per_sample": l1,
+            "head_occupancy_loss": head_parts["occupancy"],
+            "head_existence_loss": head_parts["existence"],
+            "head_class_loss": head_parts["classification"],
+            "head_assignment": head_parts["assignment"],
+            "head_matched_slots": head_parts["matched_slots"],
+            "head_occupancy_logits": head["occupancy_logits"],
+            "head_existence_logits": head["existence_logits"],
+            "head_class_logits": head["class_logits"],
+            "assignments": head_parts["assignment"].masked_fill(
+                ~head_parts["matched_slots"], -1
+            ),
+            "slot_existence": head["existence_logits"].sigmoid(),
+            "slot_occupancy": head["occupancy_logits"].sigmoid().mean((-1, -2)),
+            "has_jt": has_jt,
+            "matched_count": head_parts["matched_slots"].sum(-1),
+            "head_bce": head_parts["bce"],
+            "head_dice": head_parts["dice"],
+            "head_existence": head_parts["existence"],
+            "head_class": head_parts["classification"],
+        }
+        return (
+            loss, pen[1] + self.dual_lambda_full * full[1],
+            pen[2] + self.dual_lambda_full * full[2],
+            pen[3] + self.dual_lambda_full * full[3], pen[4],
+            self.patchify(full_prediction), full_mask, full_prediction, extra,
+        )
+
     def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False,
-                voro=None, valid_parts=None, is_jt=None):
+                voro=None, valid_parts=None, is_jt=None, dual_targets=None):
         #imgs = self.tps(imgs)
         #tgts = self.tps(tgts)
         if bool_masked_pos is None:
             bool_masked_pos = torch.zeros((imgs.shape[0], self.patch_embed.num_patches), dtype=torch.bool).to(imgs.device)
         else:
             bool_masked_pos = bool_masked_pos.flatten(1).to(torch.bool)
+        if getattr(self, "dual_view", False):
+            return self.forward_dual(
+                imgs, tgts, bool_masked_pos, valid, epoch, no_gan, dual_targets,
+            )
         latent = self.forward_encoder(imgs, tgts, bool_masked_pos)
         pred = self.forward_decoder(latent)  # [N, L, p*p*3]
         loss, loss_l1l2, loss_vgg, loss_edge, adv_loss, jieti_extra = self.forward_loss(

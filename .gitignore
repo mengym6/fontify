@@ -38,6 +38,8 @@ fontdata_example/train_json/
 fontdata_example/train_json_new/
 fontdata_example/val_json/
 fontdata_example/val_json_new/
+fontdata_example/train_json_dual_v1/
+fontdata_example/dual_targets_v1/
 figures
 # Large generated files
 *.zip

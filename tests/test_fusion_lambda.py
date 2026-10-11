@@ -13,6 +13,7 @@ import difflib
 import re
 import sys
 import types
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,22 +74,26 @@ def test_main_train_sets_model_attr_and_validates():
 # ---------------------------------------------------------------------------
 
 class _Model:
-    def __init__(self):
+    def __init__(self, dual_view=False):
         self.loaded = None
+        self.dual_view = dual_view
 
     def state_dict(self):
         return {}
 
     def load_state_dict(self, sd, strict=True):
+        assert strict is True
         self.loaded = sd
 
 
 def _load_model_with(ckpt):
-    fake_torch = types.SimpleNamespace(load=lambda path, map_location=None: ckpt)
+    fake_torch = types.SimpleNamespace(load=lambda path, **kwargs: ckpt)
     fake_mt = types.SimpleNamespace(vit_base_patch16_input896x448_win_dec64_8glb_sl1=_Model)
-    load_model = _exec_func("tools/eval_s_baseline.py", "load_model",
-                            {"torch": fake_torch, "models_train": fake_mt})
-    return load_model("x.pth")
+    load_model = _exec_func("tools/eval_s_baseline.py", "load_model", {
+        "file_sha256": lambda path: "0" * 64,
+    })
+    with mock.patch.dict(sys.modules, {"torch": fake_torch, "models_train": fake_mt}):
+        return load_model("x.pth")
 
 
 def test_load_model_reads_lambda_from_ckpt_args():
