@@ -538,3 +538,45 @@ def test_forward_probe_matches_engine_bfloat16_inputs_labels_untouched():
         "instance_classes": torch.zeros(2, 4, dtype=torch.long),
     }
     assert set(forward_terms(Model(), batch)) == set(TERMS)
+
+
+@pytest.mark.parametrize('ratio', [0.5, 0.5001025512, 0.4996875285])
+def test_ratio_accepts_measured_bfloat16_backward_variation(ratio):
+    from tools.dual_view_protocol import check_gradient_ratio
+
+    check_gradient_ratio(ratio, 0.5, 'j_base_ratio')
+
+
+@pytest.mark.parametrize('ratio', [None, 0, float('nan'), float('inf'),
+                                  0.49, 0.502, True])
+def test_ratio_still_rejects_missing_degenerate_or_wrong_balance(ratio):
+    from tools.dual_view_protocol import check_gradient_ratio
+
+    with pytest.raises(ValueError):
+        check_gradient_ratio(ratio, 0.5, 'j_base_ratio')
+
+
+def test_minimum_ratio_preserves_full_branch_lower_bound():
+    from tools.dual_view_protocol import check_gradient_ratio
+
+    check_gradient_ratio(0.7, 0.5, 'full_pen', minimum=True)
+    check_gradient_ratio(0.4996875285, 0.5, 'full_pen', minimum=True)
+    with pytest.raises(ValueError):
+        check_gradient_ratio(0.49, 0.5, 'full_pen', minimum=True)
+
+
+def test_measurement_stage_is_preserved_without_validated_output(tmp_path):
+    from tools.dual_view_protocol import save_calibration_stage
+
+    output = str(tmp_path / 'train_coef.json')
+    records = [{'grams': {'vit': [[1, 0], [0, 1]]}}]
+    path = save_calibration_stage(output, 'final', records,
+                                  {'sample_manifest_sha256': 'a' * 64},
+                                  {'w_j': 0.2})
+    saved = json.loads((tmp_path / 'train_coef.json.final.json').read_text())
+    assert saved['status'] == 'measured'
+    assert saved['measurements'] == records
+    assert not (tmp_path / 'train_coef.json').exists()
+    with pytest.raises(FileExistsError):
+        save_calibration_stage(output, 'final', records, {}, {})
+    assert path.endswith('.final.json')

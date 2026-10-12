@@ -18,6 +18,37 @@ SCHEMA = "instance-lower-full-v1"
 TERMS = ("L_pen", "L_full", "centroid", "logsigma", "shape", "L_H")
 MODULES = ("vit", "decoder", "fusion", "head")
 COEF_NAMES = ("centroid", "logsigma", "shape")
+# Fixed-seed CUDA bf16 repeats had identical four-loss forward values but
+# ratio drift up to 6.25e-4 relative. A 1e-4 check rejected numerical noise.
+# The protocol target remains 0.5; only its finite remeasurement band changes.
+RATIO_RTOL = 1e-3
+RATIO_ATOL = 1e-6
+
+
+def check_gradient_ratio(actual, target, name, minimum=False):
+    """Validate the target at the observed CUDA/bf16 numerical precision."""
+    if actual is None:
+        raise ValueError(f"missing gradient ratio: {name}")
+    _positive(actual, name)
+    if minimum and actual >= target:
+        return
+    if not math.isclose(actual, target, rel_tol=RATIO_RTOL,
+                        abs_tol=RATIO_ATOL):
+        raise ValueError(
+            f"remeasured {name} does not match {target}: {actual}"
+        )
+
+
+def save_calibration_stage(output, stage, records, hashes, weights=None):
+    """Persist measured matrices before any final acceptance can fail."""
+    path = f"{output}.{stage}.json"
+    write_new_json(path, {
+        "schema": SCHEMA, "purpose": "training_calibration_measurements",
+        "stage": stage, "status": "measured" if records else "not_needed",
+        "train_mode": True, "autocast": "bfloat16", **hashes,
+        "weights": weights, "measurements": records,
+    })
+    return path
 
 
 def sha256_file(path):
@@ -773,6 +804,10 @@ def check_eval_inputs(args, hashes):
 def calibrate(args):
     from tools.dual_gradient_probe import measure_batches
 
+    stages = ("initial", "lambda", "inner_j", "final")
+    destinations = [args.output] + [f"{args.output}.{s}.json" for s in stages]
+    if any(Path(path).exists() for path in destinations):
+        raise FileExistsError("calibration output/stages must be new files")
     dataset = build_dataset(args)
     samples = check_samples(args.samples, args)
     hashes = current_hashes(args)
@@ -797,6 +832,11 @@ def calibrate(args):
         if warm.get(name) != hashes[name]:
             raise ValueError(f"warm-up used different inputs: {name}")
     first = measure_batches(model, dataset, samples, args.device, epoch=0)
+    stage_paths = {
+        "initial": save_calibration_stage(
+            args.output, "initial", first, hashes,
+        ),
+    }
     weights = derive_weights(first)
     lambda_measurements = []
     if weights["lambda_full"] > 0.5:
@@ -816,14 +856,23 @@ def calibrate(args):
             decoder_norms["weighted_full"]["mean"]
             / decoder_norms["pen"]["mean"]
         )
-        if not math.isclose(measured_ratio, 0.5, rel_tol=1e-4):
-            raise ValueError("lambda-only decoder remeasurement failed")
+        stage_paths["lambda"] = save_calibration_stage(
+            args.output, "lambda", lambda_measurements, hashes, lambda_stage,
+        )
+        check_gradient_ratio(measured_ratio, 0.5, "lambda_decoder_ratio")
+    else:
+        stage_paths["lambda"] = save_calibration_stage(
+            args.output, "lambda", [], hashes, weights,
+        )
     # Set freshly derived inner coefficients before measuring the actual J
     # gradient for the outer weights. This also tests the composed loss graph.
     inner_stage = {**weights, "w_j": 1, "w_h": 1}
     apply_weights(model, inner_stage)
     j_measurements = measure_batches(
         model, dataset, samples, args.device, epoch=0, groups=("jt",)
+    )
+    stage_paths["inner_j"] = save_calibration_stage(
+        args.output, "inner_j", j_measurements, hashes, inner_stage,
     )
     actual = weight_summary(j_measurements, inner_stage)["jt"]["vit"]["norms"]
     for name in ("base", "weighted_j", "weighted_h"):
@@ -840,21 +889,18 @@ def calibrate(args):
     # Independently remeasure the final fixed outer and inner weights.
     apply_weights(model, weights)
     second = measure_batches(model, dataset, samples, args.device, epoch=0)
+    stage_paths["final"] = save_calibration_stage(
+        args.output, "final", second, hashes, weights,
+    )
     summaries = weight_summary(second, weights)
     ratio = (
         summaries["jt"]["decoder"]["norms"]["weighted_full"]["mean"]
         / summaries["jt"]["decoder"]["norms"]["pen"]["mean"]
     )
-    if ratio < 0.5 - 1e-5:
-        raise ValueError("remeasured decoder full/pen ratio is below 0.5")
+    check_gradient_ratio(ratio, 0.5, "decoder_full_pen_ratio", minimum=True)
     for ratio_name, target in (("j_base_ratio", 0.5), ("h_j_ratio", 0.5)):
         actual = summaries["jt"]["vit"][ratio_name]
-        if actual is None or not math.isclose(
-            actual, target, rel_tol=1e-4, abs_tol=1e-6
-        ):
-            raise ValueError(
-                f"remeasured {ratio_name} does not match 0.5: {actual}"
-            )
+        check_gradient_ratio(actual, target, ratio_name)
     result = {
         "schema": SCHEMA,
         "purpose": "training",
@@ -865,6 +911,13 @@ def calibrate(args):
         "norm_rule": "ratio_of_mean_batch_norms",
         "j_calibration_space": "shared_vit_parameters",
         "j_coef_rule": "shape_mean_norm_reference",
+        "remeasurement_precision": {
+            "relative_tolerance": RATIO_RTOL,
+            "absolute_tolerance": RATIO_ATOL,
+            "target_j_base_ratio": 0.5, "target_h_j_ratio": 0.5,
+            "evidence": "fixed-seed CUDA/bf16 backward repeats; forward exact",
+        },
+        "measurement_stage_files": stage_paths,
         **weights,
         **hashes,
         "summary": summaries,
