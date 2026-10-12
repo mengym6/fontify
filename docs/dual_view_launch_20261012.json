@@ -1,0 +1,121 @@
+{
+  "schema": "runb-launch-receipt-v1",
+  "observed_at": "2026-10-12T14:26:50.909880+08:00",
+  "status": "training_running",
+  "git_commit": "407fddd63f6d53d58bb3641b1918ced975ebd239",
+  "root": "/root/autodl-tmp/fontify_dual_runb",
+  "output_dir": "/root/autodl-tmp/fontify_dual_runb/models/finetune_dual_view_runb",
+  "pipeline": {
+    "time": "2026-10-12T14:21:44.046607+08:00",
+    "stage": "training",
+    "status": "running",
+    "script_pid": 45177,
+    "effective_batch": 64
+  },
+  "hparams_checked": {
+    "dual_view": true,
+    "world_size": 4,
+    "batch_size": 2,
+    "accum_iter": 8,
+    "epochs": 51,
+    "seed": 0,
+    "lr": 0.00195699,
+    "warmup_epochs": 10,
+    "style_weight": 14.73,
+    "layer_decay": 0.8,
+    "drop_path": 0.1,
+    "clip_grad": 3.0,
+    "no_gan": true,
+    "freeze_encoder": false,
+    "half_mask_ratio": 0.0
+  },
+  "fixed_weights": {
+    "lambda_full": 0.5352981960748198,
+    "w_j": 0.45699876676596235,
+    "w_h": 0.5265069904544747,
+    "coef": {
+      "centroid": 1.4153295255171303,
+      "logsigma": 0.6572871637779003,
+      "shape": 1.0
+    }
+  },
+  "smoke": {
+    "status": "passed",
+    "effective_batch": 64,
+    "ranks": 4,
+    "updates_per_rank": 8,
+    "peak_allocated_gib": 18.108654499053955,
+    "seconds_per_update_range": [
+      3.746865600347519,
+      3.9665962532162666
+    ],
+    "head_full_and_j_gradient_positive_after_fusion_open": true,
+    "bf_head_detached_fusion_trainable": true
+  },
+  "observed_training": {
+    "last_completed_epoch": 2,
+    "completed_epochs": 3,
+    "logged_optimizer_updates": 63,
+    "microbatch_rows": 504,
+    "latest_microbatch_epoch": 3,
+    "last_completed_epoch_stats": {
+      "train_lr": 0.0004834916470588235,
+      "train_loss": 1.7487772519097609,
+      "train_loss_scale": 65536.0,
+      "train_jieti_J": 0.443813323700691,
+      "train_jieti_shield": 0.0,
+      "train_dual_L_pen": 0.7035314322394484,
+      "train_dual_L_full": 0.9993974163251764,
+      "train_dual_L_H": 0.5839391680543914,
+      "train_grad_norm": 2.935877561569214,
+      "train_grad_norm_pre_clip": 2.9358774844337914,
+      "train_grad_norm_post_clip": 2.710421358837801,
+      "train_grad_clip_ratio": 0.9404310639452738,
+      "test_loss": 0.7799290075898171,
+      "test_L1_JT": 0.8246766110457996,
+      "test_L1_BF": 0.7474145619131678,
+      "test_jieti_J": 0.5363146571239622,
+      "test_n_jt": 101.0,
+      "test_n_bf": 139.0,
+      "test_S": 3.1981265401842736,
+      "epoch": 2
+    },
+    "all_logged_losses_finite": true,
+    "all_gradient_csv_nonfinite_counts_zero": true,
+    "latest_clip": {
+      "pre_clip_grad_norm": 3.769425630569458,
+      "post_clip_grad_norm": 2.9999990463256836,
+      "clip_ratio": 0.7958769691584192
+    },
+    "checkpoint_files": [
+      "checkpoint-0.pth",
+      "checkpoint-best.pth",
+      "checkpoint-probe-2.pth"
+    ]
+  },
+  "artifact_sha256": {
+    "train_coef.json": "a272379ff4935d614d07daa2a9c38eb4a834917ad5ee381c5b44fa5eda56274e",
+    "eval_coef.json": "c7dd412c4f188191e0439f857cce855994e849c6a708ab8fa2e914aa9de4316c",
+    "s_baseline_dual.json": "2fe8aab7d222f60c2e1da1654f02eb482f2e44a1fbdf82d4325691043c693b14",
+    "probe_samples.json": "ec455cb357a7cb7c2807993880c0d190f9f5b049db39697e3a3982bb36eb9f3d",
+    "probe_warm_end.json": "9adc309643d8ec7f81b105e64ec9b43167d65c290f5250658f670b7f9d4a59de",
+    "smoke.json": "eb3158fcd74c31aab9b71598d3fac411004ff4bb486583926e826475267740f5",
+    "blind_manifest.json": "9920de953e437f26ed64dbfea4b3deeaba5d802dfe20790f1d6851f831b02184"
+  },
+  "gpu_state": [
+    "0, NVIDIA GeForce RTX 4090, 21615 MiB, 95 %",
+    "1, NVIDIA GeForce RTX 4090, 21615 MiB, 100 %",
+    "2, NVIDIA GeForce RTX 4090, 21421 MiB, 99 %",
+    "3, NVIDIA GeForce RTX 4090, 21421 MiB, 100 %"
+  ],
+  "disk_free_bytes": 157175316480,
+  "remaining": [
+    "51 epochs completion",
+    "ep2/25/50 offline probes",
+    "best and ep50 new S evaluation",
+    "paired bootstrap",
+    "blind images export",
+    "human blind ratings"
+  ],
+  "effect_validated": false
+}
