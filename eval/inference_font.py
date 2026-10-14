@@ -55,11 +55,10 @@ def set_seed(seed, rank):
 def prepare_model(chkpt_dir, arch='vit_base_patch16_input896x448_win_dec64_8glb_sl1', rank=0):
     torch.cuda.set_device(rank)
     device = torch.device("cuda:{}".format(rank))
-    model = getattr(models_eval, arch)()
-    checkpoint = torch.load(chkpt_dir, map_location=device)
-    from util.checkpoint import load_baseline_checkpoint
+    checkpoint = torch.load(chkpt_dir, map_location=device, weights_only=False)
+    from util.checkpoint import build_checkpoint_model
 
-    load_baseline_checkpoint(model, checkpoint)
+    model = build_checkpoint_model(checkpoint, arch, models_eval)
     model.to(device)
     return model
 
@@ -76,12 +75,9 @@ def run_batch_images(imgs, tgts, sizes, model, device):
     bool_masked_pos[model_without_ddp.patch_embed.num_patches // 2:] = 1
     bool_masked_pos = bool_masked_pos.unsqueeze(dim=0).repeat(len(imgs), 1)
 
-    valid = torch.ones_like(tgt)
     with torch.inference_mode():
         with torch.cuda.amp.autocast():
-            y, mask, pred = model(x.float().to(device), tgt.float().to(device),
-                                   bool_masked_pos.to(device), valid.float().to(device))
-    y = model_without_ddp.unpatchify(y)
+            y = model_without_ddp.predict_full(x, tgt, bool_masked_pos)
     y = torch.einsum('nchw->nhwc', y).detach().cpu().numpy()
 
     outputs = []

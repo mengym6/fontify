@@ -524,7 +524,9 @@ class Fontify(nn.Module):
         for idx, blk in enumerate(self.blocks):
             x = blk(x) # (B*2,Hp,Wp,E)
             if idx == merge_idx:
-                x = (x[:x.shape[0]//2] + x[x.shape[0]//2:]) * 0.5
+                from util.fusion import fuse_streams
+
+                x = fuse_streams(x, getattr(self, "fusion_lambda", 0.5))
 
             if self.depth == 24:
                 if idx in [5, 11, 17, 23]:
@@ -603,6 +605,23 @@ class Fontify(nn.Module):
         loss = loss_l1l2 + loss_vgg  + 0.1 * adv_loss +0.8*loss_edge
         return loss, loss_l1l2, loss_vgg
 
+    def enable_jieti(self, *args, **kwargs):
+        """Recreate legacy loss buffers for strict checkpoint compatibility."""
+        from models_train import Fontify as TrainingFontify
+
+        return TrainingFontify.enable_jieti(self, *args, **kwargs)
+
+    def predict_full(self, imgs, tgts, mask=None):
+        """Infer a fully hidden lower glyph without any annotation conditions."""
+        full_mask = torch.zeros(
+            (imgs.shape[0], self.patch_embed.num_patches),
+            dtype=torch.bool, device=imgs.device,
+        )
+        full_mask[:, self.patch_embed.num_patches // 2:] = True
+        if mask is not None and not torch.equal(mask.flatten(1).bool(), full_mask):
+            raise ValueError("predict_full requires a fully masked lower glyph")
+        return self.forward_decoder(self.forward_encoder(imgs, tgts, full_mask))
+
     def forward(self, imgs, tgts, bool_masked_pos=None, valid=None):
         #imgs = self.tps(imgs)
         #tgts = self.tps(tgts)
@@ -618,6 +637,8 @@ class Fontify(nn.Module):
 
 
 def vit_large_patch16_input896x448_win_dec64_8glb_sl1(**kwargs):
+    if kwargs.pop("dual_view", False):
+        raise ValueError("run B requires the 12-block ViT-Base architecture")
     model = Fontify(
         img_size=(896, 448), patch_size=16, embed_dim=1024, depth=24, num_heads=16,
         drop_path_rate=0.1, window_size=14, qkv_bias=True,
@@ -631,6 +652,14 @@ def vit_large_patch16_input896x448_win_dec64_8glb_sl1(**kwargs):
     return model
 
 def vit_base_patch16_input896x448_win_dec64_8glb_sl1(**kwargs):
+    if kwargs.pop("dual_view", False):
+        # Share the trained dual branch exactly, including its zero-initialized
+        # residual and prediction-only full-mask path.
+        from models_train import vit_base_patch16_input896x448_win_dec64_8glb_sl1
+
+        return vit_base_patch16_input896x448_win_dec64_8glb_sl1(
+            dual_view=True, **kwargs
+        )
     model = Fontify(
         img_size=(896, 448), patch_size=16, embed_dim=768, depth=12, num_heads=12,
         drop_path_rate=0.1, window_size=14, qkv_bias=True,

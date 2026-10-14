@@ -1,19 +1,19 @@
+import csv
+import json
 import math
 import os
 import sys
-import csv
+import time
 from collections import defaultdict
+from pathlib import Path
 from typing import Iterable
 
+import numpy as np
 import torch
 import torch.nn.functional as F
-import util.misc as misc
+
 import util.lr_sched as lr_sched
-
-import numpy as np
-#import wandb
-
-import time
+import util.misc as misc
 
 
 _GRADIENT_GROUP_PREFIXES = (
@@ -27,7 +27,6 @@ _GRADIENT_GROUP_PREFIXES = (
     "decoder_pred",
     "discriminator",
     "vgg_loss",
-    "label_head",
 )
 
 
@@ -226,6 +225,36 @@ def get_loss_scale_for_deepspeed(model):
     # return optimizer.loss_scale if hasattr(optimizer, "loss_scale") else optimizer.cur_scale
 
 
+def _write_dual_diagnostics(args, epoch, step, extra, pre_clip, post_clip):
+    """Preserve per-batch matching/slot values and per-update clipping data."""
+    if not args.output_dir or not misc.is_main_process():
+        return
+    row = {"epoch": epoch, "micro_batch": step}
+    for key in (
+        "L_pen", "L_full", "L_H", "J", "assignments", "slot_existence",
+        "slot_occupancy", "matched_count", "has_jt", "head_bce",
+        "head_dice", "head_existence", "head_class",
+        "sample_key", "query_target_path", "reference_target_path",
+        "geometry_seed", "geometry_crop",
+        "j_downsample_lost", "j_partition_lost",
+    ):
+        if key in extra:
+            value = extra[key]
+            if torch.is_tensor(value):
+                value = value.detach().cpu().tolist()
+            row[key] = value
+    if pre_clip is not None and (step + 1) % args.accum_iter == 0:
+        row["pre_clip_grad_norm"] = float(pre_clip)
+        row["post_clip_grad_norm"] = float(post_clip)
+        row["clip_ratio"] = (
+            float(post_clip) / float(pre_clip) if pre_clip > 0 else 1.0
+        )
+        row["clip_triggered"] = row["clip_ratio"] < 1.0 - 1e-6
+    with open(Path(args.output_dir) / "dual_diagnostics.jsonl", "a",
+              encoding="utf-8") as stream:
+        stream.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
 def train_one_epoch(model: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler,
@@ -241,6 +270,13 @@ def train_one_epoch(model: torch.nn.Module,
     print_freq = 20
 
     accum_iter = args.accum_iter
+    micro_batches = len(data_loader)
+    if getattr(args, 'dual_view', False):
+        from util.dual_training import complete_accumulation_steps
+        micro_batches = complete_accumulation_steps(micro_batches, accum_iter)
+        skipped = len(data_loader) - micro_batches
+        print(f'Run B accumulation: {micro_batches} micro-batches, '
+              f'{skipped} tail micro-batches skipped per rank')
     num_updates = 0
     raw_model = model.module if hasattr(model, "module") else model
     adv_weight, edge_weight = raw_model.get_dynamic_loss_weights(epoch)
@@ -252,18 +288,20 @@ def train_one_epoch(model: torch.nn.Module,
         print('log_dir: {}'.format(log_writer.log_dir))
 
     # wandb_images = []
-    tensorboard_images = []
     for data_iter_step, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
-        samples, targets, bool_masked_pos, valid = batch[:4]
-        label_kwargs = {}
-        if len(batch) > 4:
-            label_kwargs = {
-                "label_targets": batch[4].to(device, non_blocking=True),
-                "label_kinds": batch[5].to(device, non_blocking=True),
-            }
+        if data_iter_step >= micro_batches:
+            break
+        from util.dual_training import unpack_batch
+        samples, targets, bool_masked_pos, valid, jieti_kwargs = unpack_batch(
+            batch, device,
+        )
+        if bool_masked_pos.ndim == 3:
+            bool_masked_pos = bool_masked_pos.flatten(1)
         # we use a per iteration (instead of per epoch) lr scheduler
         if data_iter_step % accum_iter == 0:
-            lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
+            lr_sched.adjust_learning_rate(
+                optimizer, data_iter_step / micro_batches + epoch, args,
+            )
 
         samples = samples.to(device, non_blocking=True, dtype=torch.bfloat16)
         targets = targets.to(device, non_blocking=True, dtype=torch.bfloat16)
@@ -280,10 +318,10 @@ def train_one_epoch(model: torch.nn.Module,
                 y,
                 mask,
                 pred,
-                loss_label,
+                jieti_extra,
             ) = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
-                valid=valid, epoch=epoch, no_gan=args.no_gan, **label_kwargs
+                valid=valid, epoch=epoch, no_gan=args.no_gan, **jieti_kwargs
             )
 
         if not args.no_gan:
@@ -385,9 +423,32 @@ def train_one_epoch(model: torch.nn.Module,
         # Match the contributions actually added to the generator loss.
         loss_edge_reduce = misc.all_reduce_mean(loss_edge * edge_weight)
         loss_adv_reduce = misc.all_reduce_mean(adv_loss * adv_weight)
-        loss_label_reduce = misc.all_reduce_mean(loss_label.item())
-        if label_kwargs:
-            metric_logger.update(loss_label=loss_label_reduce)
+        if jieti_extra is not None:
+            # 结体项写进 TensorBoard：J 及三分项、屏蔽次数。
+            jieti_reduce = {
+                k: misc.all_reduce_mean(jieti_extra[k].item())
+                for k in ("J", "centroid", "logsigma", "shape", "shield")
+            }
+            metric_logger.update(jieti_J=jieti_reduce["J"])
+            metric_logger.update(jieti_shield=jieti_reduce["shield"])
+            if getattr(args, "dual_view", False):
+                for key in ("L_pen", "L_full", "L_H"):
+                    metric_logger.update(**{
+                        f"dual_{key}": misc.all_reduce_mean(
+                            jieti_extra[key].detach().item(),
+                        ),
+                    })
+                for key in (
+                    "sample_key", "query_target_path", "reference_target_path",
+                    "geometry_seed", "geometry_crop",
+                    "j_downsample_lost", "j_partition_lost",
+                ):
+                    if key in batch:
+                        jieti_extra[key] = batch[key]
+                _write_dual_diagnostics(
+                    args, epoch, data_iter_step, jieti_extra,
+                    pre_clip_grad_norm, post_clip_grad_norm,
+                )
         if log_writer is not None and grad_norm is not None:
             with open(os.path.join(args.output_dir, "log_detail.txt"), mode="a", encoding="utf-8") as f:
                 f.write(
@@ -420,25 +481,49 @@ def train_one_epoch(model: torch.nn.Module,
                     ),
                     epoch_1000x,
                 )
-            log_writer.add_scalars('train_loss_detail', {
+            detail = {
                 'loss_l1l2': loss_l1l2_reduce,
                 'loss_vgg': loss_vgg_reduce,
                 'loss_edge_weighted': loss_edge_reduce,
                 'loss_adv_weighted': loss_adv_reduce,
-                'loss_label_raw': loss_label_reduce,
-            }, epoch_1000x)
+            }
+            if jieti_extra is not None:
+                raw = model.module if hasattr(model, "module") else model
+                _jw = (raw.jieti_loss_weight if getattr(args, "dual_view", False)
+                       else raw.jieti_w)
+                detail.update({
+                    'jieti_J_weighted': jieti_reduce["J"] * _jw,
+                    'jieti_centroid': jieti_reduce["centroid"],
+                    'jieti_logsigma': jieti_reduce["logsigma"],
+                    'jieti_shape': jieti_reduce["shape"],
+                    'jieti_shield': jieti_reduce["shield"],
+                })
+                if getattr(args, "dual_view", False):
+                    detail.update({
+                        "dual_L_pen": jieti_extra["L_pen"].detach().item(),
+                        "dual_L_full_weighted": (
+                            raw.dual_lambda_full
+                            * jieti_extra["L_full"].detach().item()
+                        ),
+                        "dual_L_H_weighted": (
+                            raw.dual_head_weight
+                            * jieti_extra["L_H"].detach().item()
+                        ),
+                    })
+            log_writer.add_scalars('train_loss_detail', detail, epoch_1000x)
 
 
             with torch.no_grad():
                 imagenet_mean = np.array([0.485, 0.456, 0.406])
                 imagenet_std = np.array([0.229, 0.224, 0.225])
                 y = y[[0]]
-                y = model.module.unpatchify(y)
+                raw = model.module if hasattr(model, "module") else model
+                y = raw.unpatchify(y)
                 y = torch.einsum('nchw->nhwc', y).detach().cpu()
                 mask = mask[[0]]
                 mask = mask.detach().float().cpu()
-                mask = mask.unsqueeze(-1).repeat(1, 1, model.module.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
-                mask = model.module.unpatchify(mask)  # 1 is removing, 0 is keeping
+                mask = mask.unsqueeze(-1).repeat(1, 1, raw.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
+                mask = raw.unpatchify(mask)  # 1 is removing, 0 is keeping
                 mask = torch.einsum('nchw->nhwc', mask).detach().cpu()
                 x = samples[[0]]
                 x = x.detach().float().cpu()
@@ -453,7 +538,7 @@ def train_one_epoch(model: torch.nn.Module,
                 # print(frame.shape)
                 frame = torch.clip((frame * imagenet_std + imagenet_mean) * 255, 0, 255).to(torch.uint8)
                 #frame = frame[:, :, [2, 1, 0]]
-                log_writer.add_image(f'x; im_masked; y; tgt', frame.numpy(), epoch_1000x, dataformats='HWC')
+                log_writer.add_image('x; im_masked; y; tgt', frame.numpy(), epoch_1000x, dataformats='HWC')
 
             # if global_rank == 0 and args.log_wandb:
             #     wandb.log({'train_loss': loss_value_reduce, 'lr': lr, 'train_loss_scale': loss_scale_value, 'grad_norm': grad_norm})
@@ -512,12 +597,28 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
         total_epochs = getattr(args, "epochs", None) if args is not None else None
         if total_epochs is not None:
             write_tb_image_this_epoch = write_tb_image_this_epoch or (epoch + 1 == total_epochs)
+    # U4：每 epoch 导出 4 张固定 val 视觉图。val 顺序固定（shuffle=False）+ 固定配对，
+    # 所以取前 4 张即固定样本。
+    vis_every = bool(getattr(args, "vis_every_epoch", False)) if args is not None else False
+    vis_frames = []
+    # 排序指标 S 的 val 分项用本地累加器（sum,count），循环后以固定顺序手动 all_reduce，
+    # 不走 MetricLogger：避免 defaultdict 惰性建 meter 在各 rank 顺序不一致导致 all_reduce
+    # 跨类错配/死锁，也避免 count=0 的 meter 触发 global_avg 的 0/0。
+    jieti_val = bool(getattr(args, "jieti_loss", False)) if args is not None else False
+    jieti_acc = {"L1_JT": [0.0, 0], "L1_BF": [0.0, 0], "jieti_J": [0.0, 0]}
     for batch in metric_logger.log_every(data_loader, 10, header):
 
         samples = batch[0]
         targets = batch[1]
         bool_masked_pos = batch[2]
         valid = batch[3]
+        jieti_kwargs = {}
+        if len(batch) > 4:
+            jieti_kwargs = {
+                "voro": batch[4].to(device, non_blocking=True),
+                "valid_parts": batch[5].to(device, non_blocking=True),
+                "is_jt": batch[6].to(device, non_blocking=True),
+            }
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True)
@@ -534,15 +635,29 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                 y,
                 mask,
                 pred,
-                _loss_label,
+                jieti_extra,
             ) = model(
                 samples, targets, bool_masked_pos=bool_masked_pos,
-                valid=valid, epoch=epoch, no_gan=args.no_gan
+                valid=valid, epoch=epoch, no_gan=args.no_gan, **jieti_kwargs
             )
 
         metric_logger.update(loss=loss.item())
         metric_logger.update(loss_l1l2=loss_l1l2)
         metric_logger.update(loss_vgg=loss_vgg)
+        if jieti_extra is not None:
+            # 排序指标 S 的 val 分项累计到本地 [sum, count]（按样本数加权）。
+            is_jt_b = jieti_kwargs["is_jt"].to(torch.bool)
+            l1ps = jieti_extra["l1_per_sample"].float()
+            n_jt = int(is_jt_b.sum())
+            n_bf = int((~is_jt_b).sum())
+            if n_jt:
+                jieti_acc["L1_JT"][0] += float(l1ps[is_jt_b].sum().item())
+                jieti_acc["L1_JT"][1] += n_jt
+                jieti_acc["jieti_J"][0] += float(jieti_extra["J"].item()) * n_jt
+                jieti_acc["jieti_J"][1] += n_jt
+            if n_bf:
+                jieti_acc["L1_BF"][0] += float(l1ps[~is_jt_b].sum().item())
+                jieti_acc["L1_BF"][1] += n_bf
         """
             在tensorboard内展示图片nchw->nhwc
         """
@@ -592,6 +707,22 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
                     dataformats='HWC',
                 )
                 num_tb_images += 1
+        if vis_every and misc.is_main_process() and len(vis_frames) < 4:
+            raw = model.module if hasattr(model, "module") else model
+            imagenet_mean = np.array([0.485, 0.456, 0.406])
+            imagenet_std = np.array([0.229, 0.224, 0.225])
+            take = min(4 - len(vis_frames), samples.shape[0])
+            for image_idx in range(take):
+                y_show = torch.einsum(
+                    'nchw->nhwc', raw.unpatchify(y[[image_idx]])).detach().float().cpu()
+                m_show = mask[[image_idx]].detach().float().cpu().unsqueeze(-1).repeat(
+                    1, 1, raw.patch_size ** 2 * 3)
+                m_show = torch.einsum('nchw->nhwc', raw.unpatchify(m_show)).detach().cpu()
+                x_show = torch.einsum('nchw->nhwc', samples[[image_idx]].detach().float().cpu())
+                tgt_show = torch.einsum('nchw->nhwc', targets[[image_idx]].detach().float().cpu())
+                frame = torch.cat((x_show, tgt_show * (1 - m_show), y_show, tgt_show), dim=2)[0]
+                frame = torch.clip((frame * imagenet_std + imagenet_mean) * 255, 0, 255).to(torch.uint8)
+                vis_frames.append(frame.numpy())
         num_batch += 1
 
         # if global_rank == 0 and args.log_wandb:
@@ -622,6 +753,24 @@ def evaluate_pt(data_loader, model, device, epoch=None, global_rank=None, args=N
     print('Val loss {losses.global_avg:.3f}'.format(losses=metric_logger.loss))
 
     out = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+
+    if jieti_val:
+        # 固定顺序手动跨 rank 规约 [sum,count]，再取加权均值写进 out（→ log.txt 的 test_*）。
+        for key in ("L1_JT", "L1_BF", "jieti_J"):
+            s, c = jieti_acc[key]
+            t = torch.tensor([s, c], dtype=torch.float64, device=device)
+            if misc.is_dist_avail_and_initialized():
+                torch.distributed.all_reduce(t)
+            if t[1].item() > 0:
+                out[key] = (t[0] / t[1]).item()
+
+    if vis_every and misc.is_main_process() and vis_frames:
+        # 4 张固定样本竖向拼成一张，存 vis/epoch_XXX.png（按 epoch 命名）。
+        from PIL import Image as _Image
+        grid = np.concatenate(vis_frames, axis=0)
+        vis_dir = os.path.join(args.output_dir, "vis")
+        os.makedirs(vis_dir, exist_ok=True)
+        _Image.fromarray(grid).save(os.path.join(vis_dir, f"epoch_{epoch:03d}.png"))
 
     # if global_rank == 0 and args.log_wandb:
     #     wandb.log({**{f'test_{k}': v for k, v in out.items()},'epoch': epoch})

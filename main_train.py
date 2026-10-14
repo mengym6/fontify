@@ -87,15 +87,64 @@ def get_args_parser():
     parser.add_argument('--mask_mix_probs', default=None, type=float, nargs=3,
                         help='训练遮盖比例: random JT-semantic BF-semantic，例如 0.7 0.2 0.1。'
                              '不设置则沿用原数据集遮盖逻辑')
-    parser.add_argument('--label_head', action='store_true',
-                        help='加线性语义标签头（BF 50 + JT 20 类 patch 区域），读下半全遮的 C+g')
-    parser.add_argument('--label_loss_weight', default=0.1, type=float,
-                        help='标签损失（BCE+Dice）权重')
     parser.add_argument('--no_jt', action='store_true',
                         help=(
                             '训练时 JT（结体）样本使用随机遮盖，'
                             '不使用 JT 语义遮盖'
                         ))
+    # === 结体（Jieti）结构 loss（T1）===
+    parser.add_argument('--jieti_loss', action='store_true',
+                        help='开启结体结构 loss（相对质心/log σ/形状描述子），只在 JT 样本生效')
+    parser.add_argument('--jieti_alpha_jt', default=0.5, type=float,
+                        help='JT 样本上原 loss 的权重系数 α_jt（>0；<1 降权，>1 升权）')
+    parser.add_argument('--jieti_w', default=1.0, type=float,
+                        help='结体项总权重 w（标定值乘搜索倍率后的绝对值）')
+    parser.add_argument('--jieti_struct_pair_prob', default=1.0, type=float,
+                        help='JT 走"同结构异字"配对的概率 p，否则随机同 type')
+    parser.add_argument('--jieti_soft_fg', default='linear', choices=['linear', 'sigmoid'],
+                        help='软前景映射：linear=clamp(1-g) 或 sigmoid')
+    parser.add_argument('--jieti_sigmoid_scale', default=10.0, type=float,
+                        help='sigmoid 软前景的尺度')
+    parser.add_argument('--jieti_k_max', default=4, type=int, help='最大部件数')
+    parser.add_argument('--jieti_pool', default=224, type=int, help='结体计算分辨率')
+    parser.add_argument('--jieti_valid_ink', default=200, type=int,
+                        help='GT 部件增强后墨量(448)达此阈值才算有效部件')
+    parser.add_argument('--jieti_pred_mass_ratio', default=0.1, type=float,
+                        help='预测部件墨量低于 GT 的此比例则屏蔽该部件')
+    parser.add_argument('--jieti_w_centroid', default=1.0, type=float,
+                        help='结体三项相对系数：相对质心（标定得到的固定常数）')
+    parser.add_argument('--jieti_w_logsigma', default=1.0, type=float,
+                        help='结体三项相对系数：log σ（标定得到的固定常数）')
+    parser.add_argument('--jieti_w_shape', default=1.0, type=float,
+                        help='结体三项相对系数：形状描述子（标定得到的固定常数）')
+    parser.add_argument('--fusion_lambda', default=0.5, type=float,
+                        help='encoder 双流融合权重 λ∈(0,1)：(1-λ)·电脑字路 + λ·风格字路；0.5 即原式')
+    parser.add_argument('--dual_view', action='store_true',
+                        help='启用双视图 run B；默认沿用原模型和数据路径')
+    parser.add_argument('--dual_target_cache', default=None,
+                        help='448 JT 实例/text 层缓存目录')
+    parser.add_argument('--dual_calibration_json', default=None,
+                        help='预热后固定训练权重及训练 J 系数')
+    parser.add_argument('--dual_eval_calibration_json', default=None,
+                        help='ctrl_g12 best 上固定的新 J 评测系数')
+    parser.add_argument('--dual_parent_checkpoint',
+                        default='models/vit_base_font/checkpoint-14.pth',
+                        help='预热主干来源；用于校验训练标定哈希')
+    parser.add_argument('--dual_sample_manifest', default=None,
+                        help='固定标定/离线探针样本与增强种子清单')
+    parser.add_argument('--dual_blind_manifest', default=None,
+                        help='训练前固定的人工盲评样本和左右随机顺序')
+    parser.add_argument('--fixed_pair_path', default=None, type=str,
+                        help='val 固定配对 json（target_path→pair2 index），所有组与 baseline 共用')
+    parser.add_argument('--save_best', action='store_true',
+                        help='额外按排序指标 S 最低保存 checkpoint-best.pth')
+    parser.add_argument('--save_best_only', action='store_true',
+                        help='搜索组用（C3）：跳过周期保存与末轮强制保存，只留 checkpoint-best.pth')
+    parser.add_argument('--s_baseline_path', default=None, type=str,
+                        help='S 分母：baseline 在固定 val epoch50 的 {L1_JT,L1_BF,J} json；'
+                             '缺省时 best 退回按 val 总 loss 选')
+    parser.add_argument('--vis_every_epoch', action='store_true',
+                        help='每 epoch 导出 4 张固定 val 视觉图到 vis/epoch_XXX.png 并更新 val_loss_curve.png')
     parser.add_argument('--use_checkpoint', action='store_true', default=False,
                         help='use checkpoint to save GPU memory')
 
@@ -142,6 +191,8 @@ def get_args_parser():
                         help='final adversarial loss weight')
     parser.add_argument('--edge_weight_final', default=0.3, type=float,
                         help='final edge loss weight')
+    parser.add_argument('--style_weight', default=1.0, type=float,
+                        help='全局 VGG style(Gram) 损失权重；默认 1.0 等价于改动前')
     parser.add_argument(
         "--strict_style_pairing", action="store_true",
         help="require same-style, different-character reference pairs",
@@ -210,7 +261,6 @@ def get_args_parser():
     if known_args.enable_deepspeed:
         try:
             import deepspeed
-            from deepspeed import DeepSpeedConfig
             parser = deepspeed.add_config_arguments(parser)
             ds_init = deepspeed.initialize
         except:
@@ -306,6 +356,28 @@ def build_data_transforms(args):
     return transform_train, transform_train2, transform_train3, transform_train_seccrop, transform_val
 
 
+def _plot_val_curve(history, path):
+    """画 val 原始总 loss 和 S 两条曲线，每 epoch 覆盖更新（C1）。"""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    epochs = [h[0] for h in history]
+    losses = [h[1] for h in history]
+    s_vals = [h[2] for h in history]
+    fig, ax1 = plt.subplots()
+    ax1.plot(epochs, losses, "b-", label="val total loss")
+    ax1.set_xlabel("epoch")
+    ax1.set_ylabel("val total loss", color="b")
+    if any(s is not None for s in s_vals):
+        ax2 = ax1.twinx()
+        ax2.plot([e for e, s in zip(epochs, s_vals) if s is not None],
+                 [s for s in s_vals if s is not None], "r-", label="S")
+        ax2.set_ylabel("S", color="r")
+    fig.tight_layout()
+    fig.savefig(path)
+    plt.close(fig)
+
+
 def main(args, ds_init):
     misc.init_distributed_mode(args)
 
@@ -321,11 +393,35 @@ def main(args, ds_init):
     seed = args.seed + misc.get_rank()
     torch.manual_seed(seed)
     np.random.seed(seed)
+    if args.dual_view:
+        import random
+        random.seed(seed)
 
     cudnn.benchmark = True
 
     # define the model
-    model = models_train.__dict__[args.model]()
+    if args.dual_view:
+        from tools.dual_view_protocol import validate_training_inputs
+        validate_training_inputs(args)
+        model = models_train.__dict__[args.model](dual_view=True)
+        calibration = json.loads(Path(args.dual_calibration_json).read_text())
+        coefficients = calibration['coef']
+        args.dual_lambda_full = calibration['lambda_full']
+        args.jieti_w = calibration['w_j']
+        args.dual_head_weight = calibration['w_h']
+        args.jieti_w_centroid = coefficients['centroid']
+        args.jieti_w_logsigma = coefficients['logsigma']
+        args.jieti_w_shape = coefficients['shape']
+        model.enable_dual_losses(
+            lambda_full=args.dual_lambda_full,
+            jieti_weight=args.jieti_w, head_weight=args.dual_head_weight,
+            pool=args.jieti_pool, soft_fg=args.jieti_soft_fg,
+            pred_mass_ratio=args.jieti_pred_mass_ratio,
+            w_centroid=args.jieti_w_centroid,
+            w_logsigma=args.jieti_w_logsigma, w_shape=args.jieti_w_shape,
+        )
+    else:
+        model = models_train.__dict__[args.model]()
     if min(args.adv_warmup_epochs, args.edge_warmup_epochs, args.loss_warmup_duration) < 0:
         raise ValueError('loss warmup epochs and duration must be non-negative')
     if min(args.adv_weight_final, args.edge_weight_final) < 0:
@@ -335,11 +431,25 @@ def main(args, ds_init):
     model.loss_warmup_duration = args.loss_warmup_duration
     model.adv_weight_final = args.adv_weight_final
     model.edge_weight_final = args.edge_weight_final
+    model.style_weight = args.style_weight
+    if not 0.0 < args.fusion_lambda < 1.0:
+        raise ValueError('fusion_lambda must be in (0, 1)')
+    # 训练和训练中的 val 都用这个 λ；随 args 存进 ckpt，评测工具从 ckpt['args'] 读回
+    model.fusion_lambda = args.fusion_lambda
 
     if args.grad_log_interval < 0:
         raise ValueError('grad_log_interval must be non-negative')
-    if args.label_head:
-        model.enable_label_head(args.label_loss_weight)
+    if args.jieti_loss and not args.dual_view:
+        if not args.jieti_alpha_jt > 0.0:
+            raise ValueError('jieti_alpha_jt must be > 0')
+        model.enable_jieti(
+            args.jieti_alpha_jt, args.jieti_w, k_max=args.jieti_k_max,
+            pool=args.jieti_pool, soft_fg=args.jieti_soft_fg,
+            sigmoid_scale=args.jieti_sigmoid_scale,
+            pred_mass_ratio=args.jieti_pred_mass_ratio,
+            w_centroid=args.jieti_w_centroid, w_logsigma=args.jieti_w_logsigma,
+            w_shape=args.jieti_w_shape,
+        )
 
     if args.finetune:
         checkpoint = torch.load(args.finetune, map_location='cpu')
@@ -365,7 +475,7 @@ def main(args, ds_init):
             interpolate_pos_embed(model, checkpoint_model)
 
         # load pre-trained model
-        msg = model.load_state_dict(checkpoint_model, strict=False)
+        msg = model.load_state_dict(checkpoint_model, strict=args.dual_view)
         print(msg)
 
     patch_size = model.patch_size
@@ -402,15 +512,45 @@ def main(args, ds_init):
         num_mask_annotations_jt=args.num_mask_annotations_jt,
         mask_coverage_threshold=args.mask_coverage_threshold,
         no_jt=args.no_jt,
-        return_labels=args.label_head,
+        return_jieti=args.jieti_loss,
+        jieti_k_max=args.jieti_k_max,
+        jieti_pool=args.jieti_pool,
+        jieti_valid_ink=args.jieti_valid_ink,
+        jieti_struct_pair_prob=args.jieti_struct_pair_prob,
     )
     if args.mask_mix_probs is not None:
         dataset_train_kwargs["mask_mix_probs"] = args.mask_mix_probs
-    dataset_train = PairDataset(args.data_path, args.json_path, **dataset_train_kwargs)
-    dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
-                              transform3=None, masked_position_generator=masked_position_generator,
-                              use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0,
-                              strict_style_pairing=args.strict_style_pairing)
+    if args.dual_view:
+        from data.dual_dataset import DualDataset
+        dual_kwargs = dict(
+            target_cache_dir=args.dual_target_cache,
+            masked_position_generator=masked_position_generator,
+            image_size=args.input_size[1], patch_size=patch_size,
+            num_mask_annotations_bf=args.num_mask_annotations_bf,
+            mask_coverage_threshold=args.mask_coverage_threshold,
+            jieti_pool=args.jieti_pool, jieti_valid_ink=args.jieti_valid_ink,
+        )
+        dataset_train = DualDataset(
+            args.data_path, args.json_path, is_train=True, **dual_kwargs,
+        )
+        dataset_val = DualDataset(
+            args.data_path, args.val_json_path, is_train=False,
+            fixed_pair_path=args.fixed_pair_path, **dual_kwargs,
+        )
+    else:
+        dataset_train = PairDataset(
+            args.data_path, args.json_path, **dataset_train_kwargs,
+        )
+        dataset_val = PairDataset(args.data_path, args.val_json_path, transform=transform_val, transform2=None,
+                                  transform3=None, masked_position_generator=masked_position_generator,
+                                  use_two_pairs=args.use_two_pairs, half_mask_ratio=1.0,
+                                  strict_style_pairing=args.strict_style_pairing,
+                                  return_jieti=args.jieti_loss,
+                                  jieti_k_max=args.jieti_k_max,
+                                  jieti_pool=args.jieti_pool,
+                                  jieti_valid_ink=args.jieti_valid_ink,
+                                  jieti_struct_pair_prob=args.jieti_struct_pair_prob,
+                                  fixed_pair_path=args.fixed_pair_path)
 
     print(dataset_train)
     print(dataset_val)
@@ -426,6 +566,9 @@ def main(args, ds_init):
         print("Sampler_train = %s" % str(sampler_train))
         sampler_val = torch.utils.data.DistributedSampler(
             dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+        if args.dual_view:
+            # No padding or duplicate images in the fixed evaluation set.
+            sampler_val = list(range(global_rank, len(dataset_val), num_tasks))
     else:
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
@@ -455,7 +598,7 @@ def main(args, ds_init):
         batch_size=int(1.5 * args.batch_size),
         num_workers=args.num_workers,
         pin_memory=args.pin_mem,
-        drop_last=True,
+        drop_last=not args.dual_view,
     )
 
     model.to(device)
@@ -543,6 +686,33 @@ def main(args, ds_init):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     gradient_monitor = GradientMonitor(args.output_dir, args.grad_log_interval, global_rank)
+
+    # 步骤 10：每组另存完整 args 到 hparams.json（checkpoint 里只存 args 对象，
+    # 搜索编排需要可读的超参）。
+    if args.output_dir and misc.is_main_process():
+        with open(os.path.join(args.output_dir, "hparams.json"), "w", encoding="utf-8") as f:
+            json.dump({k: (v if isinstance(v, (int, float, str, bool, list, type(None))) else str(v))
+                       for k, v in vars(args).items()}, f, ensure_ascii=False, indent=2)
+
+    # 排序指标 S 的 baseline 分母（固定 val epoch50 的 L1_JT/L1_BF/J）。
+    s_base = None
+    if args.s_baseline_path and os.path.exists(args.s_baseline_path):
+        with open(args.s_baseline_path, "r", encoding="utf-8") as f:
+            s_base = json.load(f)
+    best_s = float("inf")
+    val_s_history = []  # (epoch, total_loss, S)
+
+    def compute_s(stats):
+        """S = L1_JT/base + L1_BF/base + J/base。缺 baseline 时返回 None。"""
+        if s_base is None:
+            return None
+        keys = ("L1_JT", "L1_BF", "jieti_J")
+        if not all(f"test_{k}".replace("test_", "") in stats for k in keys):
+            return None
+        return (stats["L1_JT"] / s_base["L1_JT"]
+                + stats["L1_BF"] / s_base["L1_BF"]
+                + stats["jieti_J"] / s_base["J"])
+
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
@@ -555,18 +725,46 @@ def main(args, ds_init):
             optimizer_d=optimizer_d,
             gradient_monitor=gradient_monitor
         )
-        if args.output_dir and (epoch % args.save_freq == 0 or epoch + 1 == args.epochs):
+        # C3：save_freq 存周期 checkpoint（正式训练用 epoch50 与 baseline 比）；
+        # 搜索组开 --save_best_only 时跳过周期保存与末轮强制保存，只留 best。
+        if (args.output_dir and not args.save_best_only
+                and (epoch % args.save_freq == 0 or epoch + 1 == args.epochs)):
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, optimizer_d=optimizer_d,
                 loss_scaler=loss_scaler, epoch=epoch)
 
-        test_stats = evaluate_pt(data_loader_val, model, device, epoch=epoch, global_rank=global_rank, args=args,
-                                 log_writer=log_writer)
+        if args.dual_view:
+            from util.dual_training import evaluate_dual, save_probe_snapshot
+            save_probe_snapshot(model, args, epoch)
+            test_stats = evaluate_dual(
+                data_loader_val, model, device, epoch, args, log_writer,
+            )
+        else:
+            test_stats = evaluate_pt(data_loader_val, model, device, epoch=epoch, global_rank=global_rank, args=args,
+                                     log_writer=log_writer)
         print(f"Val loss of the network on the {len(dataset_val)} test images: {test_stats['loss']:.3f}")
+
+        # C1：按排序指标 S 选最优 epoch（S 最低），额外存 checkpoint-best.pth。
+        cur_s = compute_s(test_stats)
+        if args.dual_view and (cur_s is None or not np.isfinite(cur_s)):
+            raise FloatingPointError('run B requires a finite new S value')
+        if cur_s is not None:
+            test_stats["S"] = cur_s
+        if args.save_best:
+            if args.dual_view and cur_s is None:
+                raise ValueError('run B best selection requires the new S')
+            select = cur_s if cur_s is not None else test_stats["loss"]
+            if select < best_s:
+                best_s = select
+                if misc.is_main_process():
+                    to_save = {"model": model_without_ddp.state_dict(), "epoch": epoch, "args": args}
+                    misc.save_on_master(to_save, os.path.join(args.output_dir, "checkpoint-best.pth"))
 
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      **{f'test_{k}': v for k, v in test_stats.items()},
                      'epoch': epoch, }
+
+        val_s_history.append((epoch, test_stats["loss"], cur_s))
 
         if args.output_dir and misc.is_main_process():
             if log_writer is not None:
@@ -576,6 +774,8 @@ def main(args, ds_init):
                 }, epoch)
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
+            if args.vis_every_epoch:
+                _plot_val_curve(val_s_history, os.path.join(args.output_dir, "val_loss_curve.png"))
     gradient_monitor.close()
 
     total_time = time.time() - start_time
