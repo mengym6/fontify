@@ -8,6 +8,27 @@ from torch import nn
 from util.tip_loss import EPSILON, masked_tip_loss, tip_weight_at_epoch
 
 
+def test_edge_budget_reference_keeps_original_fp32_autocast_reduction():
+    from types import SimpleNamespace
+
+    from tools.calibrate_tip_budget import norm, reference_edge
+
+    model = SimpleNamespace(dual_lambda_full=0.52,
+                            improved_edge_detection=lambda value: value)
+    prediction = torch.randn(2, 3, 8, 8, dtype=torch.bfloat16)
+    truth = torch.randn_like(prediction)
+    with torch.autocast('cpu', dtype=torch.bfloat16):
+        actual = reference_edge(model, [prediction, prediction], truth)
+        expected = 0.2 * (
+            torch.nn.functional.l1_loss(prediction, truth)
+            + 0.52 * torch.nn.functional.l1_loss(prediction, truth)
+        )
+    assert actual.dtype == torch.float32
+    torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+    parameter = torch.ones(2, requires_grad=True)
+    assert norm((parameter - parameter).sum(), [parameter], False) == 0
+
+
 @pytest.mark.parametrize('active', [[False, False], [True, True], [True, False]])
 def test_both_branches_replace_edge_and_preserve_full_bf_gradients(active):
     model = small_model(True)

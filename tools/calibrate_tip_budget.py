@@ -41,9 +41,19 @@ def norm(loss, parameters, retain_graph):
         if value is not None:
             total += value.detach().double().square().sum()
     result = total.sqrt().item()
-    if not math.isfinite(result) or result <= 0:
-        raise ValueError('Zero/nonfinite shared ViT detail gradient')
+    if not math.isfinite(result):
+        raise ValueError('Nonfinite shared ViT detail gradient')
     return result
+
+
+def reference_edge(model, predictions, target):
+    """Use the original autocast-to-FP32 L1, including its exact reductions."""
+    from torch.nn import functional as functional
+
+    truth = model.improved_edge_detection(target)
+    edges = [functional.l1_loss(model.improved_edge_detection(prediction), truth)
+             for prediction in predictions]
+    return 0.2 * (edges[0] + model.dual_lambda_full * edges[1])
 
 
 def measure(model, dataset, samples, device, weighted=None):
@@ -76,15 +86,10 @@ def measure(model, dataset, samples, device, weighted=None):
             tip = extra['tip_pen'] + model.dual_lambda_full * extra['tip_full']
             if weighted is None:
                 with torch.autocast('cuda', dtype=torch.bfloat16):
-                    target_edge = model.improved_edge_detection(
-                        batch['target'].to(torch.bfloat16),
+                    edge = reference_edge(
+                        model, predictions, batch['target'].to(torch.bfloat16),
                     )
-                    edges = [
-                        (model.improved_edge_detection(prediction)
-                         - target_edge).abs().mean()
-                        for prediction in predictions
-                    ]
-                    edge = 0.2 * (edges[0] + model.dual_lambda_full * edges[1])
+                assert edge.dtype == torch.float32
                 edge_norm = norm(edge, parameters, retain_graph=True)
                 tip_norm = norm(tip, parameters, retain_graph=False)
             else:
@@ -103,7 +108,7 @@ def measure(model, dataset, samples, device, weighted=None):
             del extra, batch, tip
             predictions.clear()
             if weighted is None:
-                del edge, edges, target_edge
+                del edge
             print(json.dumps({k: v for k, v in record.items()
                               if not k.endswith('sums')}), flush=True)
     return records
@@ -134,6 +139,8 @@ def main():
     initial = measure(model, dataset, samples, args.device)
     mean_edge = sum(r['edge_weighted_vit_norm'] for r in initial) / len(initial)
     mean_tip = sum(r['tip_vit_norm'] for r in initial) / len(initial)
+    if min(mean_edge, mean_tip) <= 0:
+        raise ValueError('The mean detail gradient must be positive')
     weight = mean_edge / mean_tip
     if not math.isfinite(weight) or weight <= 0:
         raise ValueError('Invalid tip gradient budget weight')
@@ -169,6 +176,7 @@ def main():
         },
         'initial_measurements': args.output + '.initial.json',
         'final_measurements': args.output + '.final.json',
+        'calibrator_sha256': sha256_file(Path(__file__)),
         'interpretation': 'Gradient scale matching; not an optimized hyperparameter.',
     }
     write_new_json(args.output, result)
