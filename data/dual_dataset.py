@@ -150,6 +150,24 @@ class DualDataset(Dataset):
             self.source_seal if verify_sources else "disabled"
         )
         self.native_geometry = cache_native_geometry(self._cache_metadata)
+        relevant = self.pairs + list((self._fixed_pairs or {}).values())
+        if any(pair["has_bf"] for pair in relevant):
+            from util.bf_geometry import AUDIT_SCHEMA
+
+            audit = self._cache_metadata.get("bf_coordinate_audit", {})
+            if (audit.get("schema") != AUDIT_SCHEMA
+                    or audit.get("status") != "passed"
+                    or audit.get("native_geometry") != self.native_geometry):
+                raise ValueError(
+                    "BF native geometry audit missing/stale; rebuild target cache"
+                )
+            for pair in relevant:
+                if not pair["has_bf"]:
+                    continue
+                entry = audit.get("records", {}).get(pair["target_path"], {})
+                if (entry.get("mask_path") != pair["bf_semantic_mask_path"]
+                        or entry.get("native_geometry") != self.native_geometry):
+                    raise ValueError("BF geometry audit does not cover this target")
         if sha256_file(cache_index_path) != self._cache_metadata["index_sha256"]:
             raise ValueError("Instance cache index hash mismatch")
         input_hashes = set(self._cache_metadata["input_sha256"].values())

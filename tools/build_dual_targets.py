@@ -100,6 +100,10 @@ def build_cache(
     if output_dir.exists():
         raise FileExistsError(f"Cache output directory must not exist: {output_dir}")
     renderer = InstanceRenderer(root, native_geometry=native_geometry)
+    from util.bf_geometry import AUDIT_SCHEMA, BFGeometryAuditor
+
+    bf_renderer = BFGeometryAuditor(root, native_geometry)
+    bf_audits = {}
     output_dir.mkdir(parents=True, exist_ok=False)
     (output_dir / "layers").mkdir()
     index, failures, source_inputs = {}, [], []
@@ -123,6 +127,8 @@ def build_cache(
             for path in paths.values():
                 digest(path)
             source_inputs.append(paths)
+            if pair["has_bf"] and pair["target_path"] not in bf_audits:
+                bf_audits[pair["target_path"]] = bf_renderer.audit(pair)
             if not pair["has_jt"] or pair["target_path"] in index:
                 continue
             regions, text, classes, entry = renderer.render(pair)
@@ -180,6 +186,10 @@ def build_cache(
         "input_sha256": {str(path): sha256_file(path) for path in input_paths},
         "source_sha256": source_hashes,
         "source_inputs": source_inputs,
+        "bf_coordinate_audit": {
+            "schema": AUDIT_SCHEMA, "status": "failed" if failures else "passed",
+            "native_geometry": native_geometry, "records": bf_audits,
+        },
         "failures": failures,
     }
     if fixed_pair_path:

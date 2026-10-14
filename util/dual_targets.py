@@ -17,7 +17,7 @@ from util.calli_labels import JT_CLASSES, normalize_category
 from util.jieti_partition import INF, _edt_sq, ink_label_map
 
 DEFINITION = "instance-lower-full-v1"
-SOURCE_SEAL = "all-record-inputs-v1"
+SOURCE_SEAL = "all-record-inputs-bf-geometry-v2"
 CACHE_SCHEMA = "dual-target-cache-v2"
 NATIVE_GEOMETRIES = ("pad_square", "direct_resize")
 K_MAX = 4
@@ -40,8 +40,8 @@ def cache_key(pair):
 def record_source_paths(pair):
     """List input files independently of whether a record has JT supervision.
 
-    BF annotation JSON is deliberately excluded: BF masks come from the NPY
-    file, while instance regions and text must always come from JT COCO.
+    BF annotation JSON is included so the exact NPY-to-native-coordinate audit
+    cannot be invalidated independently of the training inputs.
     Originals bind the manifest merge identity and JT coordinate audit.
     """
     fields = ["image_path", "target_path", "original_path"]
@@ -57,6 +57,11 @@ def record_source_paths(pair):
         if not isinstance(value, str) or not value:
             raise ValueError(f"Record source path missing: {field}")
         paths[field] = value
+    if pair["has_bf"]:
+        paths["bf_annotation_path"] = str(
+            Path(pair["bf_semantic_mask_path"]).parent.parent
+            / "annotations" / "instances_default.json"
+        )
     return paths
 
 
