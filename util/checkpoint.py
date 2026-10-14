@@ -129,4 +129,11 @@ def build_checkpoint_model(checkpoint, architecture=None, model_module=None):
                 "pred_mass_ratio", args.get("jieti_pred_mass_ratio", 0.1)
             ),
         )
+    if args.get('tip_weight') is not None:
+        model.enable_tip(
+            args['tip_weight'], args.get('edge_warmup_epochs', 10),
+            args.get('loss_warmup_duration', 8),
+        )
+        model.edge_weight_final = 0.0
+        model.style_weight = args.get('style_weight', 14.73)
     return load_fontify_checkpoint(model, checkpoint)

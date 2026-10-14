@@ -20,6 +20,13 @@ EVAL_CALIBRATION=${EVAL_CALIBRATION:-$DUAL_ROOT/eval_coef.json}
 S_BASELINE=${S_BASELINE:-$DUAL_ROOT/s_baseline_dual.json}
 BLIND_MANIFEST=${BLIND_MANIFEST:-$DUAL_ROOT/blind_manifest.json}
 OUTPUT_DIR=${OUTPUT_DIR:-models/finetune_dual_view_runb}
+DETAIL_ARGS=()
+EDGE_FINAL=0.2
+if [[ -n "${TIP_WEIGHT:-}" ]]; then
+    : "${TIP_CALIBRATION:?TIP_CALIBRATION is required with TIP_WEIGHT}"
+    DETAIL_ARGS=(--tip_weight "$TIP_WEIGHT" --tip_calibration_json "$TIP_CALIBRATION")
+    EDGE_FINAL=0.0
+fi
 
 if ! [[ "$NPROC" =~ ^[1-9][0-9]*$ && "$BATCH_SIZE" =~ ^[1-9][0-9]*$ ]]; then
     echo 'NPROC and BATCH_SIZE must be positive integers' >&2
@@ -104,7 +111,8 @@ PY
     --clip_grad 3.0 --style_weight 14.73 --layer_decay 0.8 --drop_path 0.1 \
     --input_size 896 448 --augmentation_policy finetune \
     --half_mask_ratio 0 --fusion_lambda 0.5 \
-    --edge_warmup_epochs 10 --loss_warmup_duration 8 --edge_weight_final 0.2 \
+    --edge_warmup_epochs 10 --loss_warmup_duration 8 --edge_weight_final "$EDGE_FINAL" \
+    "${DETAIL_ARGS[@]}" \
     --save_freq 10 --save_best --seed 0 \
     --data_path "$DATA_PATH" --json_path "$TRAIN_MANIFEST" \
     --val_json_path "${VAL_MANIFESTS[@]}" \

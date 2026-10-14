@@ -423,6 +423,29 @@ def train_one_epoch(model: torch.nn.Module,
         # Match the contributions actually added to the generator loss.
         loss_edge_reduce = misc.all_reduce_mean(loss_edge * edge_weight)
         loss_adv_reduce = misc.all_reduce_mean(adv_loss * adv_weight)
+        tip_metrics = {}
+        if jieti_extra is not None and 'tip_pen' in jieti_extra:
+            from util.tip_loss import POOL_NAMES, STAT_NAMES
+
+            weight = jieti_extra['tip_weight']
+            for view, outer in (('pen', 1.0),
+                                ('full', raw_model.dual_lambda_full)):
+                raw_tip = misc.all_reduce_mean(
+                    jieti_extra[f'tip_{view}'].detach().item(),
+                )
+                tip_metrics[f'tip_{view}_raw'] = raw_tip
+                tip_metrics[f'tip_{view}_weighted'] = weight * outer * raw_tip
+                packed = jieti_extra[f'tip_{view}_pools'].detach().clone()
+                if misc.is_dist_avail_and_initialized():
+                    torch.distributed.all_reduce(packed)
+                for pool, row in zip(POOL_NAMES, packed):
+                    count = row[0].item()
+                    tip_metrics[f'tip_{view}_{pool}_words'] = count
+                    for name, value in zip(STAT_NAMES, row[1:]):
+                        tip_metrics[f'tip_{view}_{pool}_{name}'] = (
+                            value.item() / count if count else 0.0
+                        )
+            metric_logger.update(**tip_metrics)
         if jieti_extra is not None:
             # 结体项写进 TensorBoard：J 及三分项、屏蔽次数。
             jieti_reduce = {
@@ -487,6 +510,7 @@ def train_one_epoch(model: torch.nn.Module,
                 'loss_edge_weighted': loss_edge_reduce,
                 'loss_adv_weighted': loss_adv_reduce,
             }
+            detail.update(tip_metrics)
             if jieti_extra is not None:
                 raw = model.module if hasattr(model, "module") else model
                 _jw = (raw.jieti_loss_weight if getattr(args, "dual_view", False)

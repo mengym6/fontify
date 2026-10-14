@@ -67,6 +67,8 @@ def parser():
     result.add_argument("--batch-size", type=int, default=2)
     result.add_argument("--iterations", type=int, default=2)
     result.add_argument("--seed", type=int, default=0)
+    result.add_argument('--epoch', type=int, default=0,
+                        help='use 18 to exercise the final tip strength')
     return result
 
 
@@ -149,6 +151,10 @@ def main(argv=None):
         seed_all,
         validate_calibration,
     )
+    base_forward_terms = forward_terms
+
+    def forward_terms(model, batch):
+        return base_forward_terms(model, batch, epoch=args.epoch)
 
     if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
         raise RuntimeError("Real-model smoke requires CUDA with bf16 support")
@@ -267,7 +273,7 @@ def main(argv=None):
                             batch["target"].to(torch.bfloat16),
                             batch["mask"].flatten(1).to(torch.bfloat16),
                             batch["valid"].to(torch.bfloat16),
-                            no_gan=True, dual_targets=batch,
+                            no_gan=True, dual_targets=batch, epoch=args.epoch,
                         )
                     if not torch.isfinite(output[0]):
                         raise RuntimeError("Nonfinite smoke loss")

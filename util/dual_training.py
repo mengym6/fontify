@@ -28,6 +28,8 @@ def unpack_batch(batch, device):
                 "instance_classes", "voro", "valid_parts",
             )
         }
+        if 'has_bf' in batch:
+            labels['has_bf'] = batch['has_bf'].to(device, non_blocking=True)
         return (*inputs, {"dual_targets": labels})
     inputs = list(batch[:4])
     labels = {}

@@ -191,6 +191,10 @@ def get_args_parser():
                         help='final adversarial loss weight')
     parser.add_argument('--edge_weight_final', default=0.3, type=float,
                         help='final edge loss weight')
+    parser.add_argument('--tip_weight', default=None, type=float,
+                        help='replace both Run B edge losses with calibrated tip')
+    parser.add_argument('--tip_calibration_json', default=None, type=str,
+                        help='sealed tip gradient calibration and initial equivalence')
     parser.add_argument('--style_weight', default=1.0, type=float,
                         help='全局 VGG style(Gram) 损失权重；默认 1.0 等价于改动前')
     parser.add_argument(
@@ -432,6 +436,10 @@ def main(args, ds_init):
     model.adv_weight_final = args.adv_weight_final
     model.edge_weight_final = args.edge_weight_final
     model.style_weight = args.style_weight
+    if args.tip_weight is not None:
+        model.enable_tip(
+            args.tip_weight, args.edge_warmup_epochs, args.loss_warmup_duration,
+        )
     if not 0.0 < args.fusion_lambda < 1.0:
         raise ValueError('fusion_lambda must be in (0, 1)')
     # 训练和训练中的 val 都用这个 λ；随 args 存进 ckpt，评测工具从 ckpt['args'] 读回

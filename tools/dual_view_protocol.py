@@ -381,6 +381,8 @@ def apply_weights(model, weights):
         weights["w_h"],
         *[weights["coef"][key] for key in COEF_NAMES],
     )
+    if weights.get('image_detail_loss') == 'tip' and 'tip_final_weight' in weights:
+        model.enable_tip(weights['tip_final_weight'])
 
 
 def fixed_batch(dataset, rows, device):
@@ -815,6 +817,11 @@ def calibrate(args):
     model, checkpoint = load_dual_model(
         args.checkpoint, args.device, args.seed
     )
+    if getattr(args, 'image_detail_loss', 'edge') == 'tip':
+        # Both details have zero weight at epoch 0. Still measure the actual
+        # new graph, preserving the original sequential calibration protocol.
+        model.enable_tip(0.0)
+        model.edge_weight_final = 0.0
     warm = checkpoint.get("dual_warmup", {})
     if (
         warm.get("status") != "validated"
@@ -906,6 +913,7 @@ def calibrate(args):
         "purpose": "training",
         "status": "validated",
         "edge_weight": 0,
+        "image_detail_loss": getattr(args, 'image_detail_loss', 'edge'),
         "train_mode": True,
         "autocast": "bfloat16",
         "norm_rule": "ratio_of_mean_batch_norms",
@@ -996,7 +1004,8 @@ def validate_training_inputs(args):
         "max_mask_patches_per_block": 392,
         "edge_warmup_epochs": 10,
         "loss_warmup_duration": 8,
-        "edge_weight_final": 0.2,
+        "edge_weight_final": 0.0 if getattr(args, 'tip_weight', None) is not None
+        else 0.2,
         "warmup_epochs": 10,
         "lr": 0.00195699,
         "min_lr": 0.0,
@@ -1054,6 +1063,16 @@ def validate_training_inputs(args):
     )
     hashes = current_hashes(mapped)
     value = validate_calibration(args.dual_calibration_json, hashes)
+    if getattr(args, 'tip_weight', None) is not None:
+        from util.tip_calibration import validate_tip_calibration
+
+        validate_tip_calibration(
+            args.tip_calibration_json, args.tip_weight,
+            args.dual_calibration_json, hashes,
+        )
+    elif (getattr(args, 'tip_calibration_json', None)
+          or value.get('image_detail_loss') == 'tip'):
+        raise ValueError('Tip calibration requires explicit --tip_weight')
     check_samples(args.dual_sample_manifest, mapped)
     check_eval_inputs(mapped, hashes)
     metadata = read_json(args.finetune + ".json")
@@ -1091,6 +1110,9 @@ def main():
             sub.add_argument("--device", default="cuda")
         if command == "warmup":
             sub.add_argument("--batch-size", type=int, default=2)
+        if command == 'calibrate':
+            sub.add_argument('--image-detail-loss', choices=('edge', 'tip'),
+                             default='edge')
         if command in ("calibrate", "preflight"):
             sub.add_argument("--parent-checkpoint", required=True)
             sub.add_argument("--val-json-path", nargs="+", required=True)

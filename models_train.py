@@ -705,18 +705,29 @@ class Fontify(nn.Module):
             loss_vgg = loss_style
             # Edge Loss
 
-        edge_pred = self.improved_edge_detection(pred)
-        edge_target = self.improved_edge_detection(target)
-        if jieti_on:
+        tip_extra = None
+        if getattr(self, 'tip_weight', None) is not None:
+            from util.tip_loss import masked_tip_loss
+
+            tip, tip_stats = masked_tip_loss(pred, target, mask)
+            tip_extra = {'tip': tip, 'tip_stats': tip_stats}
+            loss_edge = pred.new_zeros(())
+        elif jieti_on:
+            edge_pred = self.improved_edge_detection(pred)
+            edge_target = self.improved_edge_detection(target)
             # 按样本求 edge L1 再按 α_jt 加权平均。
             edge_ps = (edge_pred - edge_target).abs().mean(dim=(1, 2, 3))  # (N,)
             loss_edge = (edge_ps * wj).mean()
         else:
+            edge_pred = self.improved_edge_detection(pred)
+            edge_target = self.improved_edge_detection(target)
             loss_edge = F.l1_loss(edge_pred, edge_target)
 
         adv_weight, edge_weight = self.get_dynamic_loss_weights(epoch)
         style_weight = getattr(self, 'style_weight', 1.0)
         loss = loss_l1l2 + style_weight * loss_vgg + edge_weight * loss_edge
+        if tip_extra is not None:
+            loss = loss + self.get_tip_weight(epoch) * tip_extra['tip']
 
         adv_loss = pred.new_tensor(0.0)
         if not no_gan:
@@ -755,6 +766,10 @@ class Fontify(nn.Module):
                 "edge": loss_edge.detach() * loss_edge.new_tensor(edge_weight),
                 "adv": adv_loss.detach() * adv_loss.new_tensor(adv_weight),
             }
+            if tip_extra is not None:
+                contribs['tip'] = (
+                    self.get_tip_weight(epoch) * tip_extra['tip'].detach()
+                )
             contrib_total = loss_l1l2.new_tensor(0.0)
             for contrib in contribs.values():
                 contrib_total = contrib_total + contrib
@@ -786,8 +801,32 @@ class Fontify(nn.Module):
                       f"logsigma={scalar(jieti_extra['logsigma']):.4f} "
                       f"shape={scalar(jieti_extra['shape']):.4f} "
                       f"shield={scalar(jieti_extra['shield']):.0f}", flush=True)
+            if tip_extra is not None:
+                print(f"[tip-dbg] raw={scalar(tip_extra['tip']):.6f} "
+                      f"weight={self.get_tip_weight(epoch):.6f} "
+                      f"contribution={scalar(contribs['tip']):.6f}", flush=True)
         # === 临时调试结束 ===
+        if tip_extra is not None:
+            jieti_extra = {**(jieti_extra or {}), **tip_extra}
         return loss, loss_l1l2, loss_vgg, loss_edge, adv_loss, jieti_extra
+
+    def enable_tip(self, weight, start=10, duration=8):
+        """Replace edge in every image loss, including the full-view loss."""
+        from util.tip_loss import tip_weight_at_epoch
+
+        tip_weight_at_epoch(weight, 0, start, duration)
+        if not getattr(self, 'dual_view', False):
+            raise ValueError('This tip protocol requires the complete Run B')
+        self.tip_weight = float(weight)
+        self.tip_start = start
+        self.tip_duration = duration
+
+    def get_tip_weight(self, epoch):
+        from util.tip_loss import tip_weight_at_epoch
+
+        return tip_weight_at_epoch(
+            self.tip_weight, epoch, self.tip_start, self.tip_duration,
+        )
 
     def enable_jieti(self, alpha_jt, w, k_max=4, pool=224, soft_fg="linear",
                      sigmoid_scale=10.0, pred_mass_ratio=0.1,
@@ -946,6 +985,20 @@ class Fontify(nn.Module):
             "head_existence": head_parts["existence"],
             "head_class": head_parts["classification"],
         }
+        if getattr(self, 'tip_weight', None) is not None:
+            from util.tip_loss import pool_stat_sums
+
+            has_bf = dual_targets['has_bf'].to(imgs.device).bool()
+            extra.update({
+                'tip_pen': pen[5]['tip'], 'tip_full': full[5]['tip'],
+                'tip_weight': self.get_tip_weight(epoch),
+                'tip_pen_pools': pool_stat_sums(
+                    pen[5]['tip_stats'], has_bf, has_jt,
+                ),
+                'tip_full_pools': pool_stat_sums(
+                    full[5]['tip_stats'], has_bf, has_jt,
+                ),
+            })
         return (
             loss, pen[1] + self.dual_lambda_full * full[1],
             pen[2] + self.dual_lambda_full * full[2],
