@@ -41,6 +41,8 @@ fontdata_example/train_json_new/
 fontdata_example/val_json/
 fontdata_example/val_json_new/
 figures
+fontdata_example/train_json_clean_v2/
+fontdata_example/val_json_clean_v2/
 # Large generated files
 *.zip
 *.png
