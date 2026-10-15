@@ -888,6 +888,13 @@ class Fontify(nn.Module):
         lower = features[:, features.shape[1] // 2:]
         head_outputs = self.dual_head(quadrants, lower)
         residual = self.dual_fusion(head_outputs["layout"], has_jt)
+        if hasattr(self, "g_control"):
+            control_layout = head_outputs["layout"]
+            if hasattr(self, "g_scale"):
+                scaled = self.g_scale(head_outputs)
+                control_layout = scaled["layout"]
+                head_outputs["scale_log_sigma"] = scaled["log_sigma"]
+            residual = residual + self.g_control(lower, control_layout)
         prediction = self.forward_decoder(taps, lower_residual=residual)
         return prediction, mask, head_outputs
 
@@ -951,6 +958,12 @@ class Fontify(nn.Module):
         loss = (pen[0] + self.dual_lambda_full * full[0]
                 + self.jieti_loss_weight * jieti
                 + self.dual_head_weight * head_loss)
+        scale_loss = None
+        if hasattr(self, "g_scale"):
+            from util.g_scale import scale_supervision
+
+            scale_loss = scale_supervision(self, head, tgts, dual_targets, head_parts)
+            loss = loss + self.dual_head_weight * scale_loss
         pixel_mask = self.unpatchify(
             full_mask[:, :, None].repeat(1, 1, self.patch_size ** 2 * 3)
         ).to(full_prediction.dtype) * full_valid
@@ -999,6 +1012,8 @@ class Fontify(nn.Module):
                     full[5]['tip_stats'], has_bf, has_jt,
                 ),
             })
+        if scale_loss is not None:
+            extra["sigma"] = scale_loss
         return (
             loss, pen[1] + self.dual_lambda_full * full[1],
             pen[2] + self.dual_lambda_full * full[2],

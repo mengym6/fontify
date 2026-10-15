@@ -136,4 +136,20 @@ def build_checkpoint_model(checkpoint, architecture=None, model_module=None):
         )
         model.edge_weight_final = 0.0
         model.style_weight = args.get('style_weight', 14.73)
+    control = checkpoint.get("g_control_config")
+    has_control = any(key.startswith("g_control.") for key in checkpoint["model"])
+    if bool(control) != has_control:
+        raise ValueError("G control metadata and model keys disagree")
+    if control:
+        from util.g_control import enable_g_control
+
+        enable_g_control(model, control)
+    scale = checkpoint.get("g_scale_config")
+    has_scale = any(key.startswith("g_scale.") for key in checkpoint["model"])
+    if bool(scale) != has_scale:
+        raise ValueError("G scale metadata and model keys disagree")
+    if scale:
+        from util.g_scale import enable_g_scale
+
+        enable_g_scale(model, scale)
     return load_fontify_checkpoint(model, checkpoint)
