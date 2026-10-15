@@ -5,6 +5,45 @@ from torch import nn
 from torch.nn import functional as F
 
 SCHEMA = "g-spatial-control-v1"
+SLOT_PREFIXES = (
+    "slot_queries",
+    "slot_norm.",
+    "token_norm.",
+    "slot_attention.",
+    "slot_ffn_norm.",
+    "slot_ffn.",
+    "existence.",
+    "classifier.",
+)
+
+
+def route_control_head(head, has_jt=None):
+    """Preserve predictions while blocking BF image gradients into the JT head."""
+    if has_jt is None:
+        return head
+    result = {}
+    for name, value in head.items():
+        active = has_jt.to(device=value.device, dtype=torch.bool)
+        if active.shape != (value.shape[0],):
+            raise ValueError("JT availability must match the head batch")
+        active = active.reshape(value.shape[0], *([1] * (value.ndim - 1)))
+        result[name] = torch.where(active, value, value.detach())
+    return result
+
+
+def protected_prefix_exclusions(stage):
+    """List only tensors permitted to change in each continuation stage."""
+    if stage == 2:
+        return ("g_control.",)
+    if stage == 3:
+        return ("g_control.", "decoder_embed.", "decoder_pred.")
+    if stage == 4:
+        return ("g_scale.",)
+    if stage == 5:
+        return ("g_control.", "g_scale.", "decoder_pred.") + tuple(
+            "dual_head." + prefix for prefix in SLOT_PREFIXES
+        )
+    raise ValueError("Unsupported training stage")
 
 
 class GSpatialControl(nn.Module):
@@ -94,12 +133,22 @@ def enable_g_control(model, config=None):
 
 
 def configure_stage(model, stage, decoder_phase=0):
-    """Stage 2 trains G only; stage 3 progressively adds decoder parameters."""
-    if stage not in (2, 3, 4) or decoder_phase not in (0, 1, 2):
+    """Select stage-specific modules while preserving the ViT and Q network."""
+    if stage not in (2, 3, 4, 5) or decoder_phase not in (0, 1, 2):
         raise ValueError("Unsupported G training stage or decoder phase")
     if not hasattr(model, "g_control"):
         raise ValueError("G module must exist before selecting trainable parameters")
     model.requires_grad_(False)
+    if stage == 5:
+        if not hasattr(model, "g_scale"):
+            raise ValueError("Stage 5 requires the trained scale branch")
+        model.g_control.requires_grad_(True)
+        model.g_scale.requires_grad_(True)
+        model.decoder_pred.requires_grad_(True)
+        for name, parameter in model.dual_head.named_parameters():
+            if name.startswith(SLOT_PREFIXES):
+                parameter.requires_grad_(True)
+        return [name for name, value in model.named_parameters() if value.requires_grad]
     if stage == 4:
         if not hasattr(model, "g_scale"):
             raise ValueError("Stage 4 requires the scale branch")

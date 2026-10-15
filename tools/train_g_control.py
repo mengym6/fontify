@@ -42,7 +42,11 @@ from tools.eval_s_baseline import (  # noqa: E402
 )
 from util.checkpoint import build_checkpoint_model, checkpoint_args  # noqa: E402
 from util.dual_loss import LowerJietiLoss  # noqa: E402
-from util.g_control import configure_stage, enable_g_control  # noqa: E402
+from util.g_control import (  # noqa: E402
+    configure_stage,
+    enable_g_control,
+    protected_prefix_exclusions,
+)
 from util.g_scale import enable_g_scale  # noqa: E402
 from util.masking_generator import MaskingGenerator  # noqa: E402
 
@@ -67,8 +71,21 @@ def decoder_phase(epoch, epochs):
     return min(2, 3 * epoch // epochs)
 
 
-def configure_optimizer(model, stage, phase, lr_g, lr_decoder):
+def configure_optimizer(model, stage, phase, lr_g, lr_decoder, lr_head=1e-5):
     names = configure_stage(model, stage, phase)
+    if stage == 5:
+        groups = []
+        for name, lr in (
+            ("g_control", lr_g),
+            ("g_scale", lr_g),
+            ("decoder_pred", lr_decoder),
+            ("dual_head", lr_head),
+        ):
+            parameters = [
+                p for p in getattr(model, name).parameters() if p.requires_grad
+            ]
+            groups.append({"params": parameters, "lr": lr, "base_lr": lr, "name": name})
+        return torch.optim.AdamW(groups, weight_decay=0.05, betas=(0.9, 0.999)), names
     if stage == 4:
         groups = [
             {
@@ -127,10 +144,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--stage", type=int, choices=(2, 3, 4), required=True)
+    parser.add_argument("--stage", type=int, choices=(2, 3, 4, 5), required=True)
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--lr-g", type=float, default=3e-4)
     parser.add_argument("--lr-decoder", type=float, default=3e-5)
+    parser.add_argument("--lr-head", type=float, default=1e-5)
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument("--effective-batch", type=int, default=64)
     parser.add_argument("--num-workers", type=int, default=4)
@@ -162,6 +180,8 @@ def main():
         raise ValueError("Stage 3 must continue a stage 2 result")
     if args.stage == 4 and source.get("g_training_config", {}).get("stage") != 3:
         raise ValueError("Stage 4 must continue a stage 3 result")
+    if args.stage == 5 and source.get("g_training_config", {}).get("stage") != 4:
+        raise ValueError("Stage 5 must continue a stage 4 result")
     if not args.smoke and source.get("g_training_config", {}).get("smoke"):
         raise ValueError("Diagnostic checkpoints cannot initialize a formal run")
     model = build_checkpoint_model(source).to(device).eval()
@@ -173,6 +193,8 @@ def main():
         raise ValueError("Stage 3 requires the completed stage 2 checkpoint")
     if args.stage == 4:
         enable_g_scale(model).to(device)
+    if args.stage == 5 and not hasattr(model, "g_scale"):
+        raise ValueError("Stage 5 requires the trained scale module")
     control_module = model.g_scale if args.stage == 4 else model.g_control
     saved_args = checkpoint_args(source)
     for name, default in (
@@ -185,13 +207,9 @@ def main():
     if saved_args.get("tip_weight") is not None:
         raise ValueError("This experiment requires the original edge Run B Fix")
     optimizer, trainable = configure_optimizer(
-        model, args.stage, 0, args.lr_g, args.lr_decoder
+        model, args.stage, 0, args.lr_g, args.lr_decoder, args.lr_head
     )
-    protected = ("g_control.",) + (
-        ("decoder_embed.", "decoder_pred.") if args.stage == 3 else ()
-    )
-    if args.stage == 4:
-        protected = ("g_scale.",)
+    protected = protected_prefix_exclusions(args.stage)
     frozen_digest = state_digest(model, protected)
     data = ROOT / "fontdata_example"
     prep = ROOT / "models/dual_view_pad_20261014"
@@ -248,6 +266,15 @@ def main():
         "eval_coef_sha256": file_sha256(coef_file),
         "frozen_tensors_sha256_before": frozen_digest,
         "original_Q_projection_frozen": True,
+        "trainable_parameter_counts": {
+            name: sum(
+                p.numel() for p in getattr(model, name).parameters() if p.requires_grad
+            )
+            for name in ("g_control", "dual_head", "decoder_pred", "decoder_embed")
+        },
+        "ViT_and_raw_Q_network_frozen": True,
+        "decoder_embed_frozen": args.stage != 3,
+        "head_image_gradient_route": "JT only; BF inputs detached before new G paths",
         "frozen_backbone_mode": "eval",
         "loss_epoch": 50,
         "image_edge_weight": model.get_dynamic_loss_weights(50)[1],
@@ -327,7 +354,7 @@ def main():
             trainable = configure_stage(model, args.stage, phase)
             model.eval()
             control_module.train()
-            if args.stage == 3:
+            if args.stage in (3, 5):
                 model.decoder_pred.train()
             wrapped = (
                 DistributedDataParallel(
@@ -342,7 +369,7 @@ def main():
             if rank == 0:
                 write_json(args.output / f"trainable_phase_{phase}.json", trainable)
         control_module.train()
-        if args.stage == 3:
+        if args.stage in (3, 5):
             model.decoder_pred.train()
         sampler.set_epoch(epoch)
         seed_all(args.seed + epoch * 1009 + rank)
@@ -357,7 +384,7 @@ def main():
             # warm up over one epoch when new parameters are made trainable.
             for group in optimizer.param_groups:
                 warmup = min(1.0, (progress + 1 / usable) / 2)
-                if group["name"] not in ("g_control", "g_scale"):
+                if args.stage == 3 and group["name"] not in ("g_control", "g_scale"):
                     phase_start = math.ceil(phase * args.epochs / 3)
                     warmup = min(1.0, progress - phase_start + 1 / usable)
                 cosine = (
@@ -420,12 +447,28 @@ def main():
                     if not p.requires_grad
                 ), "Frozen parameter received gradient"
                 if len(grad_evidence) < 3 or args.smoke:
+                    module_norms = {}
+                    if args.stage == 5:
+                        for name in (
+                            "g_control",
+                            "g_scale",
+                            "dual_head",
+                            "decoder_pred",
+                        ):
+                            module_norms[name] = math.sqrt(
+                                sum(
+                                    float(p.grad.float().square().sum())
+                                    for p in getattr(model, name).parameters()
+                                    if p.grad is not None
+                                )
+                            )
                     grad_evidence.append(
                         {
                             "epoch": epoch,
                             "step": step,
                             "G_grad_post_clip": g_grad,
                             "pre_clip_grad_norm": float(grad),
+                            "module_post_clip_norms": module_norms,
                         }
                     )
                 if g_grad <= 0:

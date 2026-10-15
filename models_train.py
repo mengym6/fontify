@@ -889,9 +889,12 @@ class Fontify(nn.Module):
         head_outputs = self.dual_head(quadrants, lower)
         residual = self.dual_fusion(head_outputs["layout"], has_jt)
         if hasattr(self, "g_control"):
-            control_layout = head_outputs["layout"]
+            from util.g_control import route_control_head
+
+            control_head = route_control_head(head_outputs, has_jt)
+            control_layout = control_head["layout"]
             if hasattr(self, "g_scale"):
-                scaled = self.g_scale(head_outputs)
+                scaled = self.g_scale(control_head)
                 control_layout = scaled["layout"]
                 head_outputs["scale_log_sigma"] = scaled["log_sigma"]
             residual = residual + self.g_control(lower, control_layout)
