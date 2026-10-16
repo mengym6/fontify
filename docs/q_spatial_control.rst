@@ -42,7 +42,9 @@ Usage, in the server's fontify environment::
     --output outputs/q_spatial_layout_runb_fix_20261016
 
 The launcher runs independent shards on GPUs 0 and 1 and aggregates only
-after both succeed. --limit 2 runs a disposable real-model validation.
+after both succeed. --limit 2 runs a disposable real-model validation of the
+first two BF items. The performed mixed BF/JT smoke instead used worker rank0,
+shards14, limit15 (indices0 and14), with a precreated temporary figures folder.
 Each A0 output is compared bitwise with predict_full, and per-item L1/J
 reconcile to the sealed evaluation at rtol=1e-6, atol=1e-7. Every identity
 condition is pixel-exact. The sealed evaluator historically allowed cuDNN
