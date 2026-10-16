@@ -341,16 +341,21 @@ def worker(args):
                         "slot": slot,
                         "existence": float(existence[0, slot]),
                         "area": float(area[0, slot]),
-                        "selected": bool(valid[0, slot]),
+                        "prediction_valid": bool(valid[0, slot]),
+                        "selected": jt and bool(valid[0, slot]),
                         "matched_gt": slot_to_gt.get(slot),
-                        "reason": "valid"
+                        "reason": "BF_no_JT_intervention"
+                        if not jt
+                        else "valid"
                         if bool(valid[0, slot])
                         else "existence_below_0.5_or_area_below_1_or_nonfinite",
                     }
                 )
             # AO is isolated and includes every GT instance, including slots
             # rejected by the prediction-only selection gate.
-            controls = [(slot, None) for slot in range(4) if bool(valid[0, slot])]
+            controls = [
+                (slot, None) for slot in range(4) if jt and bool(valid[0, slot])
+            ]
             controls += [(slot, gt_index) for slot, gt_index in slot_to_gt.items()]
             for slot, oracle_gt in controls:
                 oracle = oracle_gt is not None

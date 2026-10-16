@@ -28,8 +28,9 @@ geometry is measured independently. Identity ratio bypasses sampling exactly.
 The same raw soft occupancy is used for every predicted-slot intervention.
 Existence >=0.5 and soft area >=1 grid cell determine eligibility without GT.
 All four slots, failures and post-hoc GT matches are logged. BF has no GT
-instance metrics. BF image interventions still run for eligible predicted
-slots; absent eligible slots are explicit no-ops in complete-240 scoring.
+instance metrics. Per the stage A contract, only JT instances are intervened
+on. BF predictions are retained as no-ops in complete-240 scoring; identical
+BF quality is by design, not evidence of robustness after training.
 
 Usage, in the server's fontify environment::
 

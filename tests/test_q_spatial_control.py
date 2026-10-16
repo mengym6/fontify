@@ -121,3 +121,78 @@ def test_metric_uses_fixed_regions_and_missing_mass_is_not_zero_gain():
     values = response_metrics(after, before, np.ones_like(before, bool), before, 0)
     assert math.isclose(values["soft_pixel_ratio"], 1.5, rel_tol=1e-5)
     assert sigma(np.zeros_like(before)) is None
+
+
+def test_final_aggregation_preserves_complete_cohorts_and_noop_bf(tmp_path):
+    from tools.evaluate_q_spatial_probe import (
+        aggregate,
+        dump_json,
+        read_csv,
+        write_csv,
+    )
+
+    shard = tmp_path / "shard_0"
+    shard.mkdir()
+    (tmp_path / "figures").mkdir()
+    dump_json(
+        tmp_path / "config.json",
+        {"s_denominator": {"L1_JT": 1.0, "L1_BF": 1.0, "J": 1.0}},
+    )
+    rows = []
+    for index in range(240):
+        jt = index < 101
+        rows.append(
+            {
+                "index": index,
+                "kind": "JT" if jt else "BF",
+                "group": "A0",
+                "slot": 0,
+                "axis": "none",
+                "requested_ratio": 1,
+                "L1": 1.0,
+                "J": 1.0 if jt else None,
+                "sealed_backend_L1": 1.0,
+                "sealed_backend_J": 1.0 if jt else None,
+                "edge_strength": 1.0,
+                "highpass_l1": 1.0,
+                "extra_ink_rate": 0.0,
+                "components": 1,
+                "endpoints": 2,
+                "thin_recall": 0.8,
+                "short_recall": None,
+            }
+        )
+    intervention_row = {
+        **rows[0],
+        "group": "A1",
+        "axis": "x",
+        "requested_ratio": 1.5,
+        "L1": 1.1,
+        "J": 0.9,
+        "gt_instance": 0,
+        "candidate20": True,
+        "glyph_key": "author:char",
+        "support_ratio": 1.5,
+        "soft_pixel_ratio": 1.2,
+        "hard_pixel_ratio": 1.18,
+        "roi_pixel_ratio": 1.1,
+        "mass_clipping_fraction": 0.01,
+    }
+    write_csv(shard / "per_item.csv", [*rows, intervention_row])
+    write_csv(
+        shard / "per_instance.csv",
+        [
+            *[{"group": "A0", "index": k % 101} for k in range(216)],
+            intervention_row,
+        ],
+    )
+    write_csv(shard / "slot_selection.csv", [{"index": 0, "slot": 0, "selected": True}])
+    dump_json(shard / "verification.json", {"items": 240})
+    result = aggregate(tmp_path)
+    assert result["baseline"]["S"] == 3.0
+    condition = read_csv(tmp_path / "condition_scores.csv")[0]
+    assert float(condition["L1_BF"]) == 1.0
+    assert math.isclose(float(condition["L1_JT"]), 1 + 0.1 / 101)
+    assert math.isclose(float(condition["J"]), 1 - 0.1 / 101)
+    gains = read_csv(tmp_path / "gain_summary.csv")
+    assert math.isclose(float(gains[0]["median"]), math.log(1.2) / math.log(1.5))
