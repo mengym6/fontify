@@ -44,7 +44,11 @@ The launcher runs independent shards on GPUs 0 and 1 and aggregates only
 after both succeed. --limit 2 runs a disposable real-model validation.
 Each A0 output is compared bitwise with predict_full, and per-item L1/J
 reconcile to the sealed evaluation at rtol=1e-6, atol=1e-7. Every identity
-condition is pixel-exact. GT perturbation, fixed upstream outputs, upper
+condition is pixel-exact. The sealed evaluator historically allowed cuDNN
+TF32: a separate native prediction in that original backend reconciles every
+sealed L1/J value. The entire paired A0--AO experiment disables both TF32
+flags, and reports the strict/original A0 differences explicitly. No sealed
+reconciliation tolerance is relaxed. GT perturbation, fixed upstream outputs, upper
 tap identity, complete parameter digests and checkpoint SHA are checked.
 
 Final deliverables include per-item/per-instance CSVs, slot selection logs,

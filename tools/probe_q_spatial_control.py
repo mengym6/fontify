@@ -196,6 +196,7 @@ def worker(args):
         "identity_pixel_exact": 0,
         "upstream_fixed": 0,
         "gt_leak_checks": 0,
+        "sealed_backend_matches": 0,
         "items": 0,
         "checkpoint_before": CHECKPOINT_SHA,
         "state_before": before_state,
@@ -208,6 +209,12 @@ def worker(args):
             sample = dataset[index]
             image = sample["image"][None].to(device)
             target = sample["target"][None].to(device)
+            # Reconcile the sealed cuDNN backend separately, then conduct all
+            # paired interventions in strict FP32 with both TF32 flags False.
+            torch.backends.cudnn.allow_tf32 = True
+            original_backend = model.predict_full(image, target)
+            original_metrics = score(jmod, original_backend, target, sample)
+            torch.backends.cudnn.allow_tf32 = False
             mask = model.full_target_mask(image)
             taps, quadrants = model.forward_encoder(
                 image, target, mask, return_quadrants=True
@@ -267,10 +274,11 @@ def worker(args):
             ):
                 raise AssertionError("Fixed pairing changed")
             for key in ("L1", "J"):
-                if base_metrics[key] is not None and not math.isclose(
-                    base_metrics[key], reference[key], rel_tol=1e-6, abs_tol=1e-7
+                if original_metrics[key] is not None and not math.isclose(
+                    original_metrics[key], reference[key], rel_tol=1e-6, abs_tol=1e-7
                 ):
                     raise AssertionError(f"A0 reference mismatch {index} {key}")
+            checks["sealed_backend_matches"] += 1
             records.append(
                 {
                     **base_record,
@@ -279,6 +287,11 @@ def worker(args):
                     "axis": "none",
                     "requested_ratio": 1,
                     **base_metrics,
+                    "sealed_backend_L1": original_metrics["L1"],
+                    "sealed_backend_J": original_metrics["J"],
+                    "strict_vs_sealed_pixel_max": float(
+                        (baseline - original_backend).abs().max()
+                    ),
                     **quality(base_fg, global_context),
                 }
             )
@@ -612,6 +625,11 @@ def launch(args):
             "groups": ["A0", *GROUPS, "AO"],
             "seed": 0,
             "precision": "FP32_TF32_disabled",
+            "sealed_reconciliation": (
+                "Original backend FP32 tensors/cuDNN TF32=True reconciles "
+                "separately per item. All paired A0-AO interventions use strict "
+                "FP32 with both TF32 flags False; report precision deltas."
+            ),
             "s_denominator": {k: den[k] for k in ("L1_JT", "L1_BF", "J")},
             "checkpoint_sha256": CHECKPOINT_SHA,
             "A1_location": (

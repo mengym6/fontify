@@ -282,6 +282,19 @@ def aggregate(output):
         np.mean([numeric(r, "J") for r in baseline if r["kind"] == "JT"])
     )
     metrics["S"] = sum(metrics[k] / denominator[k] for k in ("L1_JT", "L1_BF", "J"))
+    sealed_metrics = {}
+    for kind in ("JT", "BF"):
+        sealed_metrics["L1_" + kind] = float(
+            np.mean(
+                [numeric(r, "sealed_backend_L1") for r in baseline if r["kind"] == kind]
+            )
+        )
+    sealed_metrics["J"] = float(
+        np.mean([numeric(r, "sealed_backend_J") for r in baseline if r["kind"] == "JT"])
+    )
+    sealed_metrics["S"] = sum(
+        sealed_metrics[k] / denominator[k] for k in ("L1_JT", "L1_BF", "J")
+    )
     # Condition scores average interventions within each image first. Missing
     # valid predictions are explicit no-ops, so every condition has all 240.
     conditions = defaultdict(lambda: defaultdict(list))
@@ -357,6 +370,7 @@ def aggregate(output):
         "status": "complete",
         "training_steps": 0,
         "baseline": metrics,
+        "sealed_original_backend_baseline": sealed_metrics,
         "curves": curves,
         "manual_quality_gate": "pending_blind_human_review",
         "B_authorized": False,
@@ -369,6 +383,10 @@ def aggregate(output):
         "零训练、FP32、固定240条；101 JT、139 BF、216 GT实例。",
         "",
         f"A0：L1_JT={metrics['L1_JT']:.9f}，L1_BF={metrics['L1_BF']:.9f}，J={metrics['J']:.9f}，S={metrics['S']:.9f}。",
+        "",
+        "封存评测原cuDNN后端允许TF32；程序另用原后端逐条按原容差复现。"
+        "本次全部配对干预关闭两项TF32，使用严格FP32。两种A0数值单列于summary.json，"
+        "逐图后端差异列在per_item.csv；不放宽原对账容差。",
         "",
         "下表只统计实际支持域尺度变化至少20%的条件；gain为像素/支持域的log比值。",
         "",
