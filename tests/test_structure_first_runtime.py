@@ -142,6 +142,17 @@ class SmallModel(nn.Module):
         self.bf_refiner = nn.Linear(2, 1)
 
 
+def test_balanced_probe_covers_authors_before_revisiting():
+    pairs = [{"calligrapher": name} for name in ("a", "b", "c")
+             for _ in range(4)]
+    order = runtime.balanced_probe_order(pairs, list(range(12)), seed=13)
+    assert len(order) == len(set(order)) == 12
+    for start in range(0, 12, 3):
+        assert {pairs[index]["calligrapher"]
+                for index in order[start:start + 3]} == {"a", "b", "c"}
+    assert order == runtime.balanced_probe_order(pairs, list(range(12)), seed=13)
+
+
 def test_bf_only_head_adamw_noop_after_momentum_exists():
     model = SmallModel()
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.1, weight_decay=0.1)

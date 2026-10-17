@@ -31,6 +31,7 @@
   "weights_status": "unit_candidates_for_correctness_only_not_calibrated",
   "probe_batch_size": 2,
   "probe_include_mixed": true,
+  "probe_balance_authors": true,
   "data": {
     "root": "fontdata_example",
     "train_json": ["fontdata_example/train_json_dual_v1/train_dual.json"],

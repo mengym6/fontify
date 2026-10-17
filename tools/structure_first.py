@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 import os
+import random
 import subprocess
 import sys
 from contextlib import nullcontext
@@ -580,6 +581,26 @@ def audit(config, output):
     })
 
 
+def balanced_probe_order(pairs, indices, seed=0):
+    """Cycle through authors before revisiting an author, without replacement."""
+    grouped = {}
+    for index in indices:
+        author = pairs[index].get("calligrapher")
+        if not author:
+            raise ValueError("Author-balanced probes require calligrapher metadata")
+        grouped.setdefault(author, []).append(index)
+    generator = random.Random(seed)
+    for group in grouped.values():
+        generator.shuffle(group)
+    order = []
+    authors = sorted(grouped)
+    while any(grouped.values()):
+        for author in authors:
+            if grouped[author]:
+                order.append(grouped[author].pop())
+    return order
+
+
 def probe(config, model, dataset, output, device, batches):
     """A multi-batch report measures raw terms; it does not select final weights."""
     import torch
@@ -589,6 +610,12 @@ def probe(config, model, dataset, output, device, batches):
     training_mode(model, config["stage"])
     amp = bool(config.get("training", {}).get("amp", False))
     pools = pool_indices(dataset)
+    if config.get("probe_balance_authors", False):
+        pools = {
+            name: balanced_probe_order(dataset.pairs, indices,
+                                       config["training"]["seed"])
+            for name, indices in pools.items()
+        }
     records = []
     active = [name for name, indices in pools.items() if indices]
     batch_size = config.get("probe_batch_size", 1)
@@ -602,7 +629,10 @@ def probe(config, model, dataset, output, device, batches):
                    for index in range(batch_size)]
         scenarios.append((pool, indices))
     if config.get("probe_include_mixed", False):
-        scenarios.append(("mixed", [pools[pool][0] for pool in active]))
+        scenarios.append(("mixed", [
+            pools[pool][index % len(pools[pool])]
+            for index, pool in enumerate(active)
+        ]))
     for number, (pool, indices) in enumerate(scenarios):
         batch = collate_indices(dataset, indices, device, seed=number)
         with torch.autocast(device.type, dtype=torch.bfloat16, enabled=amp):
@@ -660,6 +690,7 @@ def probe(config, model, dataset, output, device, batches):
         },
         "probe_batch_size": batch_size,
         "probe_include_mixed": config.get("probe_include_mixed", False),
+        "probe_balance_authors": config.get("probe_balance_authors", False),
     })
 
 
