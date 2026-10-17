@@ -488,7 +488,7 @@ def save_visual(path, outputs, batch, lowpass=None):
         labels.append("actual-reconstruction-mask")
     head = outputs.get("head", {})
     if "occupancy_logits" in head:
-        occupancy = head["occupancy_logits"][0].sigmoid().sum(0).clamp(0, 1)
+        occupancy = head["occupancy_logits"][0].float().sigmoid().sum(0).clamp(0, 1)
         occupancy = torch.nn.functional.interpolate(
             occupancy[None, None], size=(height, height), mode="nearest"
         )[0, 0].detach().cpu().numpy()
@@ -587,6 +587,7 @@ def probe(config, model, dataset, output, device, batches):
     if batches < 2:
         raise ValueError("gradient probe requires at least two real batches")
     training_mode(model, config["stage"])
+    amp = bool(config.get("training", {}).get("amp", False))
     pools = pool_indices(dataset)
     records = []
     active = [name for name, indices in pools.items() if indices]
@@ -604,8 +605,9 @@ def probe(config, model, dataset, output, device, batches):
         scenarios.append(("mixed", [pools[pool][0] for pool in active]))
     for number, (pool, indices) in enumerate(scenarios):
         batch = collate_indices(dataset, indices, device, seed=number)
-        outputs = call_model(model, batch, config["stage"])
-        losses = loss_for(model, outputs, batch, config)
+        with torch.autocast(device.type, dtype=torch.bfloat16, enabled=amp):
+            outputs = call_model(model, batch, config["stage"])
+            losses = loss_for(model, outputs, batch, config)
         names = ("raw_low", "raw_j0", "raw_head") if (
             config["stage"] == "coarse"
         ) else ("raw_img_smooth", "raw_img_gram", "raw_img_edge",
@@ -650,6 +652,12 @@ def probe(config, model, dataset, output, device, batches):
             "diagnostic only; no target ratio or user selection assumed"
         ),
         "configured_weights": config["weights"], "metadata": metadata(config),
+        "precision": {
+            "forward_autocast": amp,
+            "forward_dtype": "bfloat16" if amp else "float32",
+            "gradient_inner_product_dtype": "float32",
+            "device_type": device.type,
+        },
         "probe_batch_size": batch_size,
         "probe_include_mixed": config.get("probe_include_mixed", False),
     })

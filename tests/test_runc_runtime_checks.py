@@ -141,3 +141,62 @@ def test_independent_gradients_use_actual_fontify_loss_and_routes(
     assert len(result["checks"]) == len(cases)
     bf_only = next(row for row in result["checks"] if row["pool"] == "bf_only")
     assert bf_only["gradients"]["total"]["group_norm"]["head"] == 0
+
+
+def test_runner_snapshot_roundtrip_accepts_original_args_only_metadata(
+    tmp_path,
+):
+    from tools.structure_first import snapshot
+    from util.checkpoint import build_checkpoint_model
+
+    spec = importlib.util.spec_from_file_location(
+        "_runc_snapshot_fixture",
+        Path(__file__).with_name("test_structure_first_model.py"),
+    )
+    fixture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixture)
+    model = fixture.new_model()
+    fixture.set_structure_stage(model, "refine")
+    model.eval()
+    nn.init.normal_(model.bf_refiner.adapter.projection.weight, std=0.01)
+    optimizer = torch.optim.AdamW(model.bf_refiner.parameters(), lr=1e-4)
+    # The sealed Run B Fix stores these values only in args, without the newer
+    # dual_view_config key. Production snapshot must retain that compatibility.
+    saved = {
+        "args": {
+            "model": "small",
+            "dual_view": True,
+            "dual_lambda_full": 0.5,
+            "dual_jieti_weight": 1.0,
+            "dual_head_weight": 1.0,
+            "jieti_w_centroid": 0.2,
+            "jieti_w_logsigma": 0.3,
+            "jieti_w_shape": 0.4,
+            "jieti_pool": 8,
+        }
+    }
+    config = {
+        "j_coefficients": {
+            "centroid": 1.0,
+            "logsigma": 1.0,
+            "shape": 1.0,
+        },
+        "training": {"steps": 2, "batch_size": 1, "accum_iter": 1},
+    }
+    snapshot(model, saved, config, {}, optimizer, 2, tmp_path)
+    checkpoint = torch.load(
+        tmp_path / "checkpoint-step-000002.pth", weights_only=False
+    )
+    restored = build_checkpoint_model(
+        checkpoint,
+        model_module=SimpleNamespace(
+            small=lambda dual_view: fixture.small_model(dual=dual_view),
+        ),
+    ).eval()
+    images, target, _, _ = fixture.sample_inputs(batch=1)
+    with torch.no_grad():
+        expected = model.predict_full(images, target)
+        actual = restored.predict_full(images, target)
+    assert torch.equal(expected, actual)
+    assert state_digest(restored) == state_digest(model)
+    assert checkpoint["dual_view_config"]["coef"] == config["j_coefficients"]

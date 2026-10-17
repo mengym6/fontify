@@ -76,6 +76,18 @@ def test_lowpass_is_detached_target_only_and_reflect_constant_preserved():
     assert torch.equal(lowpass_target(impulse, {"kernel_size": 1}), impulse)
 
 
+def test_lowpass_target_is_fp32_and_equal_under_outer_cpu_bf16_autocast():
+    generator = torch.Generator().manual_seed(17)
+    target = torch.randn(2, 3, 16, 16, generator=generator,
+                         requires_grad=True)
+    expected = lowpass_target(target)
+    with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+        observed = lowpass_target(target)
+    assert observed.dtype == torch.float32
+    assert not observed.requires_grad
+    assert torch.equal(observed, expected)
+
+
 @pytest.mark.parametrize("kwargs", [
     {"kernel_size": 0}, {"kernel_size": 4}, {"kernel_size": 3.0},
     {"sigma": 0}, {"sigma": float("nan")}, {"boundary": "unknown"},

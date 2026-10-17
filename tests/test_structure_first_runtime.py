@@ -238,6 +238,26 @@ def test_head_metrics_use_matching_and_valid_instance_count():
     assert result["head_soft_iou_sum"] == pytest.approx(1)
 
 
+def test_visualization_accepts_bfloat16_images_masks_and_occupancy(tmp_path):
+    from PIL import Image
+
+    image = torch.randn(1, 3, 16, 8, dtype=torch.bfloat16)
+    outputs = {
+        "p0": image.clone(), "p1": image.clone(),
+        "mask": torch.ones(1, 4, 4, dtype=torch.bfloat16),
+        "head": {"occupancy_logits": torch.randn(
+            1, 4, 4, 4, dtype=torch.bfloat16,
+        )},
+    }
+    destination = tmp_path / "bfloat16.png"
+    runtime.save_visual(destination, outputs, {"image": image, "target": image})
+    with Image.open(destination) as opened:
+        assert opened.mode == "RGB"
+        assert opened.size == (48, 8)
+    metadata = json.loads(Path(str(destination) + ".json").read_text())
+    assert metadata["panels"][-1] == "predicted-S-occupancy"
+
+
 @pytest.mark.parametrize("stage", ["coarse", "refine"])
 def test_runner_smoke_integrates_actual_model_loss_and_pool_windows(
     stage, tmp_path, monkeypatch,
@@ -290,8 +310,13 @@ def test_runner_smoke_integrates_actual_model_loss_and_pool_windows(
         assert all(row["refiner_grad_norm"] > 0 for row in report["checks"])
     config["probe_batch_size"] = 2
     config["probe_include_mixed"] = True
+    config["training"]["amp"] = True
     runtime.probe(config, model, Dataset(), tmp_path, torch.device("cpu"), batches=3)
     probe_report = json.loads((tmp_path / "gradient-probe.json").read_text())
+    assert probe_report["precision"] == {
+        "forward_autocast": True, "forward_dtype": "bfloat16",
+        "gradient_inner_product_dtype": "float32", "device_type": "cpu",
+    }
     assert all(row["batch_size"] == 2
                for row in probe_report["measurements"] if row["pool"] != "mixed")
     mixed = probe_report["measurements"][-1]

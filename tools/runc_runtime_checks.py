@@ -470,11 +470,25 @@ def safety_check(config, output, device, args):
         collate_indices,
         loss_for,
         save_visual,
+        snapshot,
     )
     from util.checkpoint import build_checkpoint_model
     from util.structure_first import structure_forward
 
     config, model, saved = common_model(config, "refine", device)
+    config["training"].update(
+        {
+            "steps": 2,
+            "batch_size": 1,
+            "accum_iter": 1,
+            "lr": 1e-4,
+            "weight_decay": 0.01,
+            "seed": 1729,
+            "save_every": 2,
+            "amp": args.amp,
+        }
+    )
+    config["purpose"] = "two-step safety correctness, not formal training"
     dataset, cases, pool_counts = data_and_cases(config, device, "refine")
     index = dict(cases)["dual"]
     batch = collate_indices(dataset, index, device, seed=1729)
@@ -572,15 +586,16 @@ def safety_check(config, output, device, args):
                 )
                 expected = baseline["p1"].detach().cpu()
                 expected_mask = baseline["mask"].cpu()
-    checkpoint = output / "strict-roundtrip.pth"
-    payload = {
-        "model": model.state_dict(),
-        "args": saved.get("args"),
-        "dual_view_config": saved["dual_view_config"],
-        "structure_first_config": dict(model.structure_first_config),
-    }
-    with checkpoint.open("xb") as stream:
-        torch.save(payload, stream)
+    snapshot(
+        model,
+        saved,
+        config,
+        {"purpose": "correctness-roundtrip"},
+        optimizer,
+        2,
+        output,
+    )
+    checkpoint = output / "checkpoint-step-000002.pth"
     expected_state = state_digest(model)
     del (
         outputs,
@@ -590,7 +605,6 @@ def safety_check(config, output, device, args):
         actual,
         model,
         saved,
-        payload,
         optimizer,
     )
     gc.collect()

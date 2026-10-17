@@ -82,15 +82,17 @@ def lowpass_target(target, config=None):
     if (config.boundary == "reflect"
             and min(target.shape[-2:]) <= radius):
         raise ValueError("Reflect lowpass radius exceeds target dimensions")
-    axis = torch.arange(
-        -radius, radius + 1, device=target.device, dtype=target.dtype
-    )
-    kernel_1d = torch.exp(-axis.square() / (2 * config.sigma ** 2))
-    kernel_1d = kernel_1d / kernel_1d.sum()
-    kernel = kernel_1d[:, None] * kernel_1d[None, :]
-    kernel = kernel.expand(target.shape[1], 1, -1, -1).contiguous()
-    padded = F.pad(target, (radius,) * 4, mode=config.boundary)
-    return F.conv2d(padded, kernel, groups=target.shape[1])
+    # Keep supervision identical to the FP32 preview under outer AMP contexts.
+    with torch.autocast(device_type=target.device.type, enabled=False):
+        axis = torch.arange(
+            -radius, radius + 1, device=target.device, dtype=target.dtype
+        )
+        kernel_1d = torch.exp(-axis.square() / (2 * config.sigma ** 2))
+        kernel_1d = kernel_1d / kernel_1d.sum()
+        kernel = kernel_1d[:, None] * kernel_1d[None, :]
+        kernel = kernel.expand(target.shape[1], 1, -1, -1).contiguous()
+        padded = F.pad(target, (radius,) * 4, mode=config.boundary)
+        return F.conv2d(padded, kernel, groups=target.shape[1])
 
 
 def masked_per_sample(error, area):
