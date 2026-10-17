@@ -1,8 +1,8 @@
 {
   "experiment": "runc",
-  "status": "local_contracts_passed_cuda_pending",
+  "status": "local_contracts_and_real_cuda_nccl_passed",
   "local_tests": {
-    "passed": 273,
+    "passed": 291,
     "runtime": "Python 3.10 / torch 2.11.0 on macOS CPU",
     "includes": ["new model/data/loss/runner", "legacy RunB and checkpoint", "Q spatial and Tip regressions"],
     "scope": "small tensor contracts with optional dependency substitutes; not full production ViT CUDA"
@@ -20,8 +20,13 @@
   "new_parameters": 5022851,
   "coarse_trainable_parameters": 59232704,
   "refine_trainable_parameters": 2513027,
-  "production_cuda_fp32": "pending",
-  "production_cuda_bf16": "pending",
-  "production_nccl_two_gpu": "pending",
-  "formal_training": "pending runtime and new-weight calibration"
+  "production_cuda_fp32": "passed: legacy, coarse/refine gradients, safety and S response",
+  "production_cuda_bf16": "passed: coarse/refine gradients, safety and S response",
+  "cuda_evidence_commit": "d1ad239c6f92212c84e7e7601809962ede13a30f",
+  "production_nccl_two_gpu": "passed coarse/refine mixed pools and accumulation with bf16",
+  "nccl_evidence_commit": "43a6c349edb8d9c0eef46d42bf65bc97b713fdd9",
+  "cuda_static_graph": "not exercised: actual runner uses find_unused_parameters=True and static_graph=False",
+  "real_cuda_peak_allocated_gib": 4.34,
+  "formal_training": "coarse340 completed; structural quality gate not passed, phase-II formal training not started",
+  "optional_prefetch": "CPU two-worker spawn versus serial actual dataset contract passed; current coarse run retains serial loading"
 }

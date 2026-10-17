@@ -66,3 +66,5 @@ train manifest SHA256 `cf7fea0e08e831ebd5ff6bbee0a463af2018c016c090610ca1fdf7d6b
 新功能关闭的真实checkpoint逐值回归、CUDA bf16、DDP、模型训练与推理验证仍需在新代码集成后单独运行；T0审计与旧代码62项CPU回归不替代这些证据。
 
 用户后续明确Gaussian初始kernel_size=7、sigma=1.5、padding=reflect；正式训练前必须审核固定样本sigma=1.0/1.5/2.0对图。GT低通仅用于重建loss，J仍用原始GT。未经该图像确认，不启动正式训练；代码正确性测试可继续。
+
+后续授权与执行更新：用户随后明确“无需等待授权，自行按计划推进”，图像审查与技术验收由Codex委托执行并记录，不伪称人类确认。完整CUDA/NCCL检查及阶段一340更新现已完成；结构验收未通过，阶段II未正式训练。当前状态以results.md为准，以上T0“待执行”条目保留为审计时点记录。
