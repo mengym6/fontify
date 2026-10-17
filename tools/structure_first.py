@@ -93,6 +93,9 @@ def validate_config(config, command):
         for key in ("steps", "batch_size", "accum_iter", "save_every"):
             if type(train[key]) is not int or train[key] < 1:
                 raise ValueError(f"training.{key} must be a positive integer")
+        workers = train.get("data_workers", 0)
+        if type(workers) is not int or workers < 0:
+            raise ValueError("training.data_workers must be a nonnegative integer")
         if not train["freeze_vit"]:
             raise ValueError("initial runc protocol requires frozen stage-I ViT")
         if (not math.isfinite(float(train["lr"])) or train["lr"] <= 0
@@ -694,6 +697,27 @@ def probe(config, model, dataset, output, device, batches):
     })
 
 
+class FixedDrawSamples:
+    """Fetch sealed draws with the same per-microbatch augmentation seeds."""
+
+    def __init__(self, dataset, draws, micro, world, rank, seed):
+        self.dataset = dataset
+        self.draws = draws
+        self.micro, self.world, self.rank, self.seed = micro, world, rank, seed
+
+    def __len__(self):
+        return len(self.draws)
+
+    def __getitem__(self, position):
+        offset, within = divmod(position, self.micro)
+        augmentation_seed = (
+            self.seed + offset * self.micro * self.world + self.rank + within
+        )
+        return self.dataset.get_pair(
+            self.draws[position], augmentation_seed=augmentation_seed,
+        )
+
+
 def train(config, model, saved, dataset, output, device, rank, world):
     import torch
     import torch.distributed as dist
@@ -717,14 +741,28 @@ def train(config, model, saved, dataset, output, device, rank, world):
     draws = draws[rank::world].tolist()
     micro = settings["batch_size"]
     accumulation = settings["accum_iter"]
+    workers = settings.get("data_workers", 0)
+    batches = None
+    if workers:
+        loader = torch.utils.data.DataLoader(
+            FixedDrawSamples(dataset, draws, micro, world, rank, settings["seed"]),
+            batch_size=micro, shuffle=False, num_workers=workers,
+            pin_memory=device.type == "cuda", persistent_workers=True,
+            prefetch_factor=2, multiprocessing_context="spawn",
+            generator=torch.Generator().manual_seed(settings["seed"]),
+        )
+        batches = iter(loader)
     for step in range(1, settings["steps"] + 1):
         optimizer.zero_grad(set_to_none=True)
         jt_count = 0
         logs = []
         for inner in range(accumulation):
             offset = ((step - 1) * accumulation + inner) * micro
-            batch = collate_indices(dataset, draws[offset:offset + micro], device,
-                                    settings["seed"] + offset * world + rank)
+            if batches is None:
+                batch = collate_indices(dataset, draws[offset:offset + micro], device,
+                                        settings["seed"] + offset * world + rank)
+            else:
+                batch = to_device(next(batches), device)
             jt_count += int(batch["has_jt"].sum())
             sync = model.no_sync() if (
                 world > 1 and inner < accumulation - 1
