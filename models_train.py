@@ -908,6 +908,14 @@ class Fontify(nn.Module):
             supplied = mask.flatten(1).to(device=imgs.device, dtype=torch.bool)
             if not torch.equal(supplied, full_mask):
                 raise ValueError("Full inference mask must cover the lower half")
+        if getattr(self, "runc_v2", False):
+            from util.runc_v2 import runc_v2_forward, runc_v2_refine_forward
+
+            if getattr(self, "runc_v2_stage", None) == "refine":
+                return runc_v2_refine_forward(
+                    self, imgs, tgts, inference=True,
+                )["p1"]
+            return runc_v2_forward(self, imgs, tgts, render=True)["p0"]
         if getattr(self, "structure_first_bifa", False):
             from util.structure_first import structure_forward
 

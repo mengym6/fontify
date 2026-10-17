@@ -50,6 +50,18 @@ def load_fontify_checkpoint(model, checkpoint, allow_dual_initialization=False):
     Formal evaluation always keeps ``allow_dual_initialization=False``. Shape
     mismatches, unexpected keys and absent backbone keys are never tolerated.
     """
+    if checkpoint.get("runc_v2_config"):
+        from util.runc_v2 import restore_runc_v2, runc_v2_checkpoint_metadata
+
+        if allow_dual_initialization:
+            raise ValueError("Run C v2 cannot use legacy-to-dual migration")
+        if not getattr(model, "runc_v2", False):
+            return restore_runc_v2(model, checkpoint)
+        metadata = runc_v2_checkpoint_metadata(model)
+        if any(checkpoint.get(key) != value for key, value in metadata.items()):
+            raise ValueError("Run C v2 checkpoint/model metadata disagree")
+        model.load_state_dict(checkpoint["model"], strict=True)
+        return model
     config = checkpoint.get("stage3_config") or {}
     state = checkpoint["model"]
     structure = checkpoint.get("structure_first_config")
@@ -100,6 +112,19 @@ def load_baseline_checkpoint(model, checkpoint):
 def build_checkpoint_model(checkpoint, architecture=None, model_module=None):
     """Reconstruct architecture and saved loss buffers before a strict load."""
     args = checkpoint_args(checkpoint)
+    if checkpoint.get("runc_v2_config"):
+        from util.runc_v2 import restore_runc_v2
+
+        # The legacy eval implementation lacks quadrant extraction. Run C v2
+        # shares the canonical training encoder, as Run B already does.
+        if (model_module is None
+                or getattr(model_module, "__name__", "") == "models_eval"):
+            import models_train as model_module
+        architecture = architecture or args.get(
+            "model", "vit_base_patch16_input896x448_win_dec64_8glb_sl1"
+        )
+        model = getattr(model_module, architecture)(dual_view=False)
+        return restore_runc_v2(model, checkpoint)
     dual = checkpoint_is_dual(checkpoint)
     if model_module is None:
         import models_train as model_module
