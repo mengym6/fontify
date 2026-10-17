@@ -1,0 +1,27 @@
+{
+  "experiment": "runc",
+  "status": "local_contracts_passed_cuda_pending",
+  "local_tests": {
+    "passed": 273,
+    "runtime": "Python 3.10 / torch 2.11.0 on macOS CPU",
+    "includes": ["new model/data/loss/runner", "legacy RunB and checkpoint", "Q spatial and Tip regressions"],
+    "scope": "small tensor contracts with optional dependency substitutes; not full production ViT CUDA"
+  },
+  "gloo_two_process_runner": {
+    "coarse": "passed",
+    "refine": "passed",
+    "evidence": "/private/tmp/runc_runner_ddp_check",
+    "covers": ["pure pools", "mixed batch", "mixed accumulation", "cross-rank mixed", "AdamW head no-op"]
+  },
+  "syntax": "Python 3.9 py_compile passed",
+  "lint": "Ruff E/F/I passed for new code and tests",
+  "shell": "bash -n passed",
+  "git_diff_check": "passed",
+  "new_parameters": 5022851,
+  "coarse_trainable_parameters": 59232704,
+  "refine_trainable_parameters": 2513027,
+  "production_cuda_fp32": "pending",
+  "production_cuda_bf16": "pending",
+  "production_nccl_two_gpu": "pending",
+  "formal_training": "pending runtime and new-weight calibration"
+}

@@ -1,0 +1,78 @@
+{
+  "schema": "structure-first-bifa-runtime-v1",
+  "experiment": "runc",
+  "stage": "coarse",
+  "checkpoint": "models/finetune_dual_view_runb_fix_20261015/checkpoint-best.pth",
+  "model": {
+    "schema": "structure-first-bifa-v1",
+    "experiment": "runc",
+    "hidden_dim": 256,
+    "num_heads": 4,
+    "num_layers": 1,
+    "rgb_hidden": 32,
+    "coarse_decoder": "full",
+    "auto_candidates": 32,
+    "auto_threshold": 0.1,
+    "auto_rounds": 1
+  },
+  "lowpass": {"kernel_size": 7, "sigma": 1.5, "boundary": "reflect"},
+  "j_coefficients": {"centroid": 1.0, "logsigma": 1.0, "shape": 1.0},
+  "weights": {
+    "lambda_low": 1.0,
+    "lambda_j0": 1.0,
+    "lambda_h": 1.0,
+    "lambda_img1": 1.0,
+    "lambda_bf": 1.0,
+    "lambda_j1": 1.0,
+    "gram": 1.0,
+    "edge": 1.0,
+    "edge_local": 1.0
+  },
+  "weights_status": "unit_candidates_for_correctness_only_not_calibrated",
+  "probe_batch_size": 2,
+  "probe_include_mixed": true,
+  "data": {
+    "root": "fontdata_example",
+    "train_json": ["fontdata_example/train_json_dual_v1/train_dual.json"],
+    "cache": "fontdata_example/dual_targets_v1",
+    "fixed_pairs": "fontdata_example/val_pairs_fixed_clean.json",
+    "val_json": [
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_SushiBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_SushiJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfJT.json"
+    ],
+    "eval_coef": "models/dual_view_pad_20261014/eval_coef.json",
+    "s_baseline": "models/dual_view_pad_20261014/s_baseline_dual.json"
+  },
+  "training": {
+    "steps": 340,
+    "batch_size": 2,
+    "accum_iter": 16,
+    "lr": 0.0001,
+    "weight_decay": 0.1,
+    "seed": 0,
+    "save_every": 85,
+    "amp": true,
+    "freeze_vit": true,
+    "clip_grad": 3.0
+  },
+  "training_authorization": {
+    "authorized": true,
+    "reference": "2026-10-17 user: 不用等待我授权，自行按照计划推进"
+  }
+}

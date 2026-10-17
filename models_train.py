@@ -908,6 +908,13 @@ class Fontify(nn.Module):
             supplied = mask.flatten(1).to(device=imgs.device, dtype=torch.bool)
             if not torch.equal(supplied, full_mask):
                 raise ValueError("Full inference mask must cover the lower half")
+        if getattr(self, "structure_first_bifa", False):
+            from util.structure_first import structure_forward
+
+            stage = getattr(self, "structure_first_stage", "coarse")
+            stage = "coarse" if stage == "coarse" else "infer"
+            result = structure_forward(self, imgs, tgts, stage)
+            return result["p0" if stage == "coarse" else "p1"]
         if not getattr(self, "dual_view", False):
             return self.forward_decoder(
                 self.forward_encoder(imgs, tgts, full_mask)
@@ -1026,6 +1033,15 @@ class Fontify(nn.Module):
 
     def forward(self, imgs, tgts, bool_masked_pos=None, valid=None, epoch=0, no_gan=False,
                 voro=None, valid_parts=None, is_jt=None, dual_targets=None):
+        if getattr(self, "structure_first_bifa", False):
+            from util.structure_first import structure_forward
+
+            targets = dual_targets or {}
+            return structure_forward(
+                self, imgs, tgts, self.structure_first_stage,
+                has_jt=targets.get("has_jt"),
+                bf_mask=targets.get("bf_patch_mask", targets.get("bf_mask")),
+            )
         #imgs = self.tps(imgs)
         #tgts = self.tps(tgts)
         if bool_masked_pos is None:

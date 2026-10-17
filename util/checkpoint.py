@@ -52,6 +52,19 @@ def load_fontify_checkpoint(model, checkpoint, allow_dual_initialization=False):
     """
     config = checkpoint.get("stage3_config") or {}
     state = checkpoint["model"]
+    structure = checkpoint.get("structure_first_config")
+    has_structure = any(
+        key.startswith(("structure_adapter.", "bf_refiner.")) for key in state
+    )
+    if bool(structure) != has_structure:
+        raise ValueError("Structure-first metadata and model keys disagree")
+    if structure:
+        from util.structure_first import enable_structure_first
+
+        if not hasattr(model, "structure_first_config"):
+            enable_structure_first(model, structure)
+        if model.structure_first_config != structure:
+            raise ValueError("Structure-first checkpoint configuration mismatch")
     if config.get("style_mode", "off") != "off" or any(
         key.startswith("style_conditioner.") for key in state
     ):
@@ -152,4 +165,15 @@ def build_checkpoint_model(checkpoint, architecture=None, model_module=None):
         from util.g_scale import enable_g_scale
 
         enable_g_scale(model, scale)
+    structure = checkpoint.get("structure_first_config")
+    has_structure = any(
+        key.startswith(("structure_adapter.", "bf_refiner."))
+        for key in checkpoint["model"]
+    )
+    if bool(structure) != has_structure:
+        raise ValueError("Structure-first metadata and model keys disagree")
+    if structure:
+        from util.structure_first import enable_structure_first
+
+        enable_structure_first(model, structure)
     return load_fontify_checkpoint(model, checkpoint)

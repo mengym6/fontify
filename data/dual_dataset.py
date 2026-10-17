@@ -80,6 +80,7 @@ class DualDataset(Dataset):
         crop_scale=(0.9999, 1.0),
         crop_ratio=(0.75, 4.0 / 3.0),
         verify_sources=True,
+        collect_bf_mask_stats=False,
     ):
         self.root = Path(root)
         self.target_cache_dir = Path(target_cache_dir)
@@ -90,6 +91,7 @@ class DualDataset(Dataset):
         self.mask_coverage_threshold = mask_coverage_threshold
         self.jieti_pool, self.jieti_valid_ink = jieti_pool, jieti_valid_ink
         self.crop_scale, self.crop_ratio = crop_scale, crop_ratio
+        self.collect_bf_mask_stats = bool(collect_bf_mask_stats)
         if image_size != 448 or patch_size != 16:
             raise ValueError("Run B requires 448-square images and 16-pixel patches")
         if num_mask_annotations_bf < 1:
@@ -232,7 +234,7 @@ class DualDataset(Dataset):
             )
         return image
 
-    def _bf_mask(self, pair):
+    def _bf_mask(self, pair, return_stats=False):
         path = self.root / pair["bf_semantic_mask_path"]
         layers = np.load(path, allow_pickle=False)
         if layers.ndim != 3 or layers.shape[1:] != (self.image_size, self.image_size):
@@ -242,7 +244,17 @@ class DualDataset(Dataset):
         selected = random.sample(
             range(len(layers)), min(self.num_mask_annotations_bf, len(layers))
         )
-        return np.any(layers[selected] > 0, axis=0).astype(np.uint8)
+        selected_layers = layers[selected] > 0
+        semantic = np.any(selected_layers, axis=0).astype(np.uint8)
+        if not return_stats:
+            return semantic
+        stats = {
+            "requested": self.num_mask_annotations_bf,
+            "selected": len(selected),
+            "source_layers": len(layers),
+            "nonempty_source": int(selected_layers.any((1, 2)).sum()),
+        }
+        return semantic, selected_layers.astype(np.uint8), stats
 
     def _transform_row(self, pair, crop, needs_targets):
         image = self._load_image(pair["image_path"])
@@ -254,8 +266,19 @@ class DualDataset(Dataset):
             target, *crop, [self.image_size] * 2, InterpolationMode.NEAREST
         )
         semantic = None
+        bf_stats = None
         if self.is_train and pair["has_bf"]:
-            semantic = transform_layers(self._bf_mask(pair), crop)[0]
+            if self.collect_bf_mask_stats:
+                source_mask, selected_layers, bf_stats = self._bf_mask(
+                    pair, return_stats=True
+                )
+                semantic = transform_layers(source_mask, crop)[0]
+                selected_crop = transform_layers(selected_layers, crop)
+                bf_stats["nonempty_after_crop"] = int(
+                    selected_crop.any((1, 2)).sum()
+                )
+            else:
+                semantic = transform_layers(self._bf_mask(pair), crop)[0]
         if needs_targets and pair["has_jt"]:
             raw = load_cached_targets(
                 self.target_cache_dir,
@@ -279,6 +302,8 @@ class DualDataset(Dataset):
             )
         image = TF.normalize(TF.to_tensor(image), MEAN, STD)
         target = TF.normalize(TF.to_tensor(target), MEAN, STD)
+        if self.collect_bf_mask_stats:
+            return image, target, semantic, targets, bf_stats
         return image, target, semantic, targets
 
     def get_pair(self, index, ref_index=None, augmentation_seed=None):
@@ -352,6 +377,19 @@ class DualDataset(Dataset):
             sample.update(
                 {name: torch.from_numpy(value) for name, value in lower[3].items()}
             )
+            if self.collect_bf_mask_stats:
+                stats = lower[4] or {
+                    "requested": self.num_mask_annotations_bf,
+                    "selected": 0,
+                    "source_layers": 0,
+                    "nonempty_source": 0,
+                    "nonempty_after_crop": 0,
+                }
+                stats["target_patch_coverage"] = (
+                    float(mask[expected[0] // 2:].mean())
+                    if self.is_train and bottom["has_bf"] else 0.0
+                )
+                sample["bf_mask_stats"] = stats
             return sample
 
     def __getitem__(self, index):
