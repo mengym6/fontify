@@ -299,12 +299,19 @@ def test_runner_smoke_integrates_actual_model_loss_and_pool_windows(
 
     config = configuration()
     config["stage"] = stage
+    config["training"]["amp"] = True
     monkeypatch.setattr(runtime, "metadata", lambda config: {})
     monkeypatch.setattr(runtime, "save_visual", lambda *args: None)
     runtime.smoke(config, model, Dataset(), tmp_path, torch.device("cpu"), 0, 1)
     report = json.loads((tmp_path / "smoke-rank-0.json").read_text())
     assert report["gt_perturbation_equal"]
     assert report["deterministic_equal"]
+    assert report["precision"] == {
+        "forward_autocast": True, "forward_dtype": "bfloat16",
+        "determinism_inference_dtype": "float32", "device_type": "cpu",
+    }
+    assert report["ddp"]["static_graph"] is False
+    assert report["ddp"]["find_unused_parameters"] is True
     assert any(row["pool"] == "mixed_accumulation" for row in report["checks"])
     if stage == "refine":
         assert all(row["refiner_grad_norm"] > 0 for row in report["checks"])

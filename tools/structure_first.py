@@ -888,6 +888,7 @@ def smoke(config, model, dataset, output, device, rank, world):
     from util.structure_first import set_structure_stage
 
     pools = pool_indices(dataset)
+    amp = bool(config.get("training", {}).get("amp", False))
     results = []
     scenarios = [(name, [[indices[rank % len(indices)]]])
                  for name, indices in pools.items() if indices]
@@ -921,8 +922,9 @@ def smoke(config, model, dataset, output, device, rank, world):
                 world > 1 and inner < len(micro_batches) - 1
             ) else nullcontext()
             with sync:
-                outputs = call_model(wrapped, batch, config["stage"])
-                losses = loss_for(model, outputs, batch, config)
+                with torch.autocast(device.type, dtype=torch.bfloat16, enabled=amp):
+                    outputs = call_model(wrapped, batch, config["stage"])
+                    losses = loss_for(model, outputs, batch, config)
                 (losses["total"] / len(micro_batches)).backward()
         head_norm = sum(
             float(p.grad.float().square().sum())
@@ -979,6 +981,16 @@ def smoke(config, model, dataset, output, device, rank, world):
         "schema": SCHEMA, "experiment": "runc", "world_size": world,
         "checks": results, "gt_perturbation_equal": True,
         "deterministic_equal": True, "metadata": metadata(config),
+        "precision": {
+            "forward_autocast": amp,
+            "forward_dtype": "bfloat16" if amp else "float32",
+            "determinism_inference_dtype": "float32",
+            "device_type": device.type,
+        },
+        "ddp": {
+            "enabled": world > 1, "find_unused_parameters": True,
+            "static_graph": False, "broadcast_buffers": False,
+        },
     })
     set_structure_stage(model, config["stage"])
 
