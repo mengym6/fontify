@@ -1,5 +1,7 @@
 # runc 验证状态
 
+2026-10-18：以下为已执行测试的历史结论；按用户要求，原始测试 JSON/日志、用于严格恢复测试的 checkpoint 和基线预测 PT 已清理，保留本报告与测试图片。完整清理范围见 [清理记录](cleanup_20261018.md)。
+
 本地最终综合291项CPU测试通过，包括新模型/采样/loss/runner/runtime-check、阶段II标定及预取合约，以及RunB、checkpoint、Q空间、Tip回归。另实际双进程Gloo在coarse/refine均通过，覆盖混池、跨rank和累积窗口。CPU合约使用小网格和部分依赖替身，与完整生产模型CUDA证据分开记录。
 
 PEP8相关Ruff E/F/I、Python3.9编译、shell语法与diff检查通过。新增参数5,022,851；阶段一默认可训练59,232,704；阶段二2,513,027。

@@ -2,6 +2,8 @@
 
 2026-10-17。**实现、CUDA/NCCL正确性测试及阶段一340次更新已完成；当前结构验收未通过，未启动阶段二正式训练。** 这是对本次初始配置与预算的判断，不证明双阶段架构不可行。
 
+2026-10-18 清理说明：按用户要求，两端仅保留本轮 Markdown 报告、HTML 和图片；训练/测试 checkpoint、optimizer、原始日志、数值 JSON/JSONL 与临时脚本均已删除。下文快照路径与 SHA 是历史记录，不能用于续训。源码、版本化配置、原 Run B Fix、预训练权重及共享数据保留；详见 [清理记录](cleanup_20261018.md)。
+
 ## 实际执行
 
 - 分支 `codex/structure-first-bifa`；训练源码 `10227342e59405db631967df37fe945eb23670b8`。
@@ -9,13 +11,13 @@
 - Cross-Attention 256维/4头/1层；Gaussian kernel7/sigma1.5/reflect，仅GT loss target；J仍原始GT。
 - 冻结ViT，训练head/fusion/新结构adapter/原Decoder；AdamW固定LR1e-4、wd0.1、clip3、seed0；2卡×batch2×accum16=64。
 - 340个连续更新，21,760次目标抽样；2026-10-17 23:24:36正常退出。日志值全有限，没有触发clip3。原冻结张量与初始化逐值不变，BF Refiner从step1到340逐值不变。
-- 输出 `models/runc_20261017_coarse340_v1/`，保存1/85/170/255/340快照及optimizer，不覆盖旧模型。
+- 训练时输出 `models/runc_20261017_coarse340_v1/`，曾保存1/85/170/255/340快照及optimizer；本轮快照已于2026-10-18清理，旧模型未删除。
 
 ## 新权重
 
 九来源、每池18个无放回目标、27个纯池batch2加1个mixed，多batch真实BF16参数梯度标定后重新实测。J内部centroid/logsigma/shape系数为2.0985011631/0.2205788097/1；外层low/J0/H为1/0.0571819470/0.3125585722。
 
-初始尺度政策为J子项加权梯度范数中位比1:2:1，weighted J/low与H/J中位比0.5。实际autograd复测0.500079/0.499963，与Gram合成最大相对差0.3004%。各batch波动、夹角和抵消均保留；不把范数比例当作独立优化贡献或最优权重。最早只覆盖曹全碑的probe另保留，不用于正式权重。
+初始尺度政策为J子项加权梯度范数中位比1:2:1，weighted J/low与H/J中位比0.5。实际autograd复测0.500079/0.499963，与Gram合成最大相对差0.3004%。当时记录了各batch波动、夹角和抵消；不把范数比例当作独立优化贡献或最优权重。最早只覆盖曹全碑的probe不用于正式权重。原始probe数值文件现已清理，标定结论留于本报告。
 
 ## 固定240条结果
 
@@ -51,9 +53,9 @@ S的像素项对原始GT计算，粗图重建目标则是Gaussian GT，二者含
 
 ## 交付与限制
 
-- 本地原始结果、sum/count、逐字记录、跨快照12字对照及几何明细：`outputs/runc_20261017/`。
+- 两端最终报告与图集统一为 `outputs/runc_20261017/`；原始数值文件已清理，报告保留上述汇总及验证口径。
 - 跨快照图集：`outputs/runc_20261017/comparison/index.html`；GT/LPF/P0/S/GTJT/尺度图：`coarse_review85/index.html`及`coarse_review340/index.html`。
-- 服务器对应输出：`/root/autodl-tmp/fontify_dual_runb/outputs/runc_20261017*`；大checkpoint留服务器。
+- 服务器归档入口：`/root/autodl-tmp/fontify_dual_runb/outputs/runc_20261017/index.html`；补充原始图集收于其 `server_originals/`，训练预览收于 `training_previews/`。本轮大checkpoint已全部删除。
 - 单seed、val选点且含重复目标、没有等预算消融，不外推为泛化或单模块因果收益。
 - 训练11个BF annotation层与推理自动patch差异保留，未私改协议；阶段二正式标定、训练和完整P1质量验收尚未进行。
 

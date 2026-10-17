@@ -7,13 +7,11 @@
 - [data/structure_first_dataset.py](/Users/root1/Desktop/Fontify-main/data/structure_first_dataset.py)
 - [docs/structure_first/audit.md](/Users/root1/Desktop/Fontify-main/docs/structure_first/audit.md)
 - [docs/structure_first/changed_files.md](/Users/root1/Desktop/Fontify-main/docs/structure_first/changed_files.md)
+- [docs/structure_first/cleanup_20261018.md](/Users/root1/Desktop/Fontify-main/docs/structure_first/cleanup_20261018.md)
 - [docs/structure_first/implementation.md](/Users/root1/Desktop/Fontify-main/docs/structure_first/implementation.md)
 - [docs/structure_first/open_questions.md](/Users/root1/Desktop/Fontify-main/docs/structure_first/open_questions.md)
 - [docs/structure_first/plan_20261017.md](/Users/root1/Desktop/Fontify-main/docs/structure_first/plan_20261017.md)
-- [docs/structure_first/results.json](/Users/root1/Desktop/Fontify-main/docs/structure_first/results.json)
 - [docs/structure_first/results.md](/Users/root1/Desktop/Fontify-main/docs/structure_first/results.md)
-- [docs/structure_first/runb_fix_legacy_parity.json](/Users/root1/Desktop/Fontify-main/docs/structure_first/runb_fix_legacy_parity.json)
-- [docs/structure_first/smoke.json](/Users/root1/Desktop/Fontify-main/docs/structure_first/smoke.json)
 - [docs/structure_first/smoke.md](/Users/root1/Desktop/Fontify-main/docs/structure_first/smoke.md)
 - [finetune_structure_first.sh](/Users/root1/Desktop/Fontify-main/finetune_structure_first.sh)
 - [models_train.py](/Users/root1/Desktop/Fontify-main/models_train.py)
@@ -35,3 +33,5 @@
 - [util/structure_first_loss.py](/Users/root1/Desktop/Fontify-main/util/structure_first_loss.py)
 
 PROGRESS.md受现有.gitignore忽略，已真实落盘并另行同步服务器；其余清单随实验分支提交。原有未跟踪数据目录与服务器stage3_json删除状态保留。
+
+2026-10-18 按用户要求删除本轮运行产物和 checkpoint，并删除版本化原始报告 `results.json`、`smoke.json`、`runb_fix_legacy_parity.json`；保留 Markdown 结论、HTML、全部图片、源码及版本化配置。归档页面及报告副本位于 `outputs/runc_20261017/`。历史配置引用的验收/标定 JSON 已删除，后续重跑需重新生成，不能直接续训本轮快照。
