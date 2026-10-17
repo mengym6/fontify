@@ -469,7 +469,9 @@ def save_visual(path, outputs, batch, lowpass=None):
         return (value.clamp(0, 1).permute(1, 2, 0).numpy() * 255).astype("uint8")
 
     panels = [rgb(batch["image"]), rgb(batch["target"]), rgb(outputs["p0"])]
-    labels = ["source", "GT-comparison-only", "P0"]
+    target_label = ("GT-comparison-only" if batch.get("target_is_gt", True)
+                    else "placeholder-no-target-GT")
+    labels = ["source", target_label, "P0"]
     if "p1" in outputs and outputs["p1"] is not None:
         panels.append(rgb(outputs["p1"]))
         labels.append("P1")
@@ -924,7 +926,8 @@ def infer(config, model, args, output, device):
     ))
     target = torch.cat((reference, torch.zeros_like(reference)), 1)[None].to(device)
     inputs = torch.cat((reference_source, source), 1)[None].to(device)
-    batch = {"image": inputs, "target": target, "input_target": target}
+    batch = {"image": inputs, "target": target, "input_target": target,
+             "target_is_gt": False}
     model.eval()
     with torch.no_grad():
         first = call_model(model, batch, config["stage"], inference=True,

@@ -267,6 +267,12 @@ def test_visualization_accepts_bfloat16_images_masks_and_occupancy(tmp_path):
         assert opened.size == (48, 8)
     metadata = json.loads(Path(str(destination) + ".json").read_text())
     assert metadata["panels"][-1] == "predicted-S-occupancy"
+    placeholder = tmp_path / "without_gt.png"
+    runtime.save_visual(placeholder, outputs, {
+        "image": image, "target": image, "target_is_gt": False,
+    })
+    metadata = json.loads(Path(str(placeholder) + ".json").read_text())
+    assert metadata["panels"][1] == "placeholder-no-target-GT"
 
 
 @pytest.mark.parametrize("stage", ["coarse", "refine"])
