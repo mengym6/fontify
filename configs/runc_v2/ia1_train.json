@@ -1,0 +1,84 @@
+{
+  "schema": "runc-v2-runtime-v1",
+  "experiment": "runc_v2",
+  "stage": "ia1",
+  "checkpoint": "models/runc_v2_jt_structure_20261018/ia0_run1/checkpoint-step-000004.pth",
+  "initial_checkpoint_sha256": "339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+  "model": {
+    "unfreeze_blocks": [
+      2,
+      5,
+      8,
+      11
+    ]
+  },
+  "data": {
+    "root": "fontdata_example",
+    "train_json": [
+      "fontdata_example/train_json_dual_v1/train_dual.json"
+    ],
+    "cache": "fontdata_example/dual_targets_v1",
+    "fixed_pairs": "fontdata_example/val_pairs_fixed_clean.json",
+    "val_json": [
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_SushiBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_SushiJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfJT.json"
+    ],
+    "eval_coef": "models/dual_view_pad_20261014/eval_coef.json",
+    "s_baseline": "models/dual_view_pad_20261014/s_baseline_dual.json"
+  },
+  "weights": {
+    "head": 1,
+    "head_geo": 1.5347093303260353,
+    "head_logsigma": 1.4795766215028734,
+    "head_centroid": 21.47733494660192,
+    "head_shape": 1,
+    "density": 0,
+    "occupancy": 0,
+    "occupancy_dice": 0,
+    "j_coarse": 0,
+    "j_centroid": 1,
+    "j_logsigma": 1,
+    "j_shape": 1
+  },
+  "backend": {
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false
+  },
+  "training": {
+    "seed": 0,
+    "steps": 400,
+    "batch_size": 2,
+    "accum_iter": 8,
+    "save_every": 50,
+    "lr_head": 0.0003,
+    "lr_vit": 0.000003,
+    "lr_coarse": 0.0003,
+    "clip_grad": 3,
+    "weight_decay": 0.05,
+    "amp": true,
+    "warmup_steps": 20,
+    "evaluate_every_save": true,
+    "save_initial": true
+  },
+  "purpose": "IA1 joint Head and four tap-block structure adaptation; final acceptance remains pending",
+  "calibration_record": "outputs/runc_v2_jt_structure_20261018/calibration_ia1.json",
+  "budget_rationale": "400 bounded updates x32 =12800 replacement draws (17.30 times740 targets); fixed train18 and val101 evaluation at0,1,50,...,400. Partial ViT LR is100x lower than Head, supported by nonzero real tap-group gradients and finite FP32/BF16/DDP smoke. Warmup20 is5% of the update budget. Stop for verified sustained scale/occupancy degradation; no automatic BF training.",
+  "optimizer_transition": "Fresh stage-specific AdamW; all model weights continue from IA0_run1 step4; previous optimizer retained in source checkpoint."
+}
