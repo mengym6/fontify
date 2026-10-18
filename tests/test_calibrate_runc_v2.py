@@ -1,6 +1,7 @@
 """Analytic gradient-vector tests for the CPU Run C v2 selector."""
 
 import copy
+import hashlib
 import json
 import math
 import subprocess
@@ -11,6 +12,7 @@ import pytest
 
 from tools.calibrate_runc_v2 import (
     POLICY_SCHEMA,
+    REFERENCE_POLICY,
     select_weights,
     sha256_file,
 )
@@ -67,6 +69,15 @@ def probe(stage="ia1", mixed_centroid=False, aligned=False):
             "batch": index, "author": str(index),
             "target_path": [f"author-{index}/a.png"],
             "reference_path": [f"author-{index}/b.png"],
+            "query_original_identity": [f"author-{index}:" + hashlib.sha256(
+                f"{index}:query:original".encode()).hexdigest()],
+            "reference_original_identity": [f"author-{index}:" + hashlib.sha256(
+                f"{index}:reference:original".encode()).hexdigest()],
+            **{f"{side}_{kind}_sha256": [hashlib.sha256(
+                f"{index}:{side}:{kind}".encode()).hexdigest()]
+               for side in ("query", "reference")
+               for kind in ("original", "target")},
+            "reference_policy": REFERENCE_POLICY,
             "losses": {count_key: 2, "raw_head": 10000 + index},
             eligibility: 2 if eligible else 0,
             "gradients": {"all_trainable": measurement(local)},
@@ -78,6 +89,7 @@ def probe(stage="ia1", mixed_centroid=False, aligned=False):
         "metadata": {
             "source_sha": "b" * 40, "initial_checkpoint_sha256": "a" * 64,
             "checkpoint_sha256": "c" * 64,
+            "reference_policy": REFERENCE_POLICY,
         },
         "model_config": {"hidden_dim": 256, "stage": stage},
         "backend": {"matmul_tf32": False}, "amp": True,
@@ -99,6 +111,40 @@ def write_probe(tmp_path, value):
 
 def median_ratio(result, name):
     return result["achieved_ratios"][name]["median"]
+
+
+def test_legacy_probe_without_reference_policy_is_rejected(tmp_path):
+    value = probe()
+    value["metadata"].pop("reference_policy")
+    with pytest.raises(ValueError, match="reference policy"):
+        select_weights(write_probe(tmp_path, value))
+
+
+@pytest.mark.parametrize("kind", ["original", "target"])
+def test_equal_reference_image_sha_is_rejected(tmp_path, kind):
+    value = probe()
+    row = value["rows"][0]
+    row[f"reference_{kind}_sha256"] = row[f"query_{kind}_sha256"]
+    with pytest.raises(ValueError, match="identical.*image SHA"):
+        select_weights(write_probe(tmp_path, value))
+
+
+def test_missing_reference_sha_cannot_bypass_identity_check(tmp_path):
+    value = probe()
+    row = value["rows"][0]
+    row.pop("reference_original_sha256")
+    row.pop("query_original_sha256")
+    with pytest.raises(ValueError, match="SHA lengths"):
+        select_weights(write_probe(tmp_path, value))
+
+
+def test_same_original_identity_is_rejected_even_with_different_hashes(tmp_path):
+    value = probe()
+    value["rows"][0]["reference_original_identity"] = (
+        value["rows"][0]["query_original_identity"]
+    )
+    with pytest.raises(ValueError, match="self-reference"):
+        select_weights(write_probe(tmp_path, value))
 
 
 def test_relative_probe_reference_remains_portable(tmp_path, monkeypatch):
@@ -198,6 +244,7 @@ def test_expected_context_and_runner_validation_accept_same_bound_selection(
         "initial_checkpoint_sha256": "a" * 64,
         "training": {"amp": True, "clip_grad": 1},
         "model": {"hidden_dim": 256}, "backend": {"matmul_tf32": False},
+        "data": {"reference_policy": REFERENCE_POLICY},
     }
     result = select_weights(write_probe(tmp_path, value), config)
     assert result["starting_checkpoint_sha256"] == sha256_file(checkpoint)
@@ -225,6 +272,7 @@ def test_context_mismatches_rejected(tmp_path, change):
         "initial_checkpoint_sha256": "a" * 64,
         "training": {"amp": True}, "model": {"hidden_dim": 256},
         "backend": {"matmul_tf32": False},
+        "data": {"reference_policy": REFERENCE_POLICY},
     }
     if change == "stage":
         config["stage"] = "ib"

@@ -13,6 +13,7 @@
     ]
   },
   "data": {
+    "reference_policy": "distinct-original-reference-v1",
     "root": "fontdata_example",
     "train_json": [
       "fontdata_example/train_json_dual_v1/train_dual.json"

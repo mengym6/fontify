@@ -14,6 +14,8 @@ from pathlib import Path
 
 POLICY_SCHEMA = "runc-v2-gradient-selection-v1"
 PROBE_SCHEMA = "runc-v2-runtime-v1"
+REFERENCE_POLICY = "distinct-original-reference-v1"
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def sha256_file(path):
@@ -197,6 +199,12 @@ def _geometry_policy(rows, prefix, epsilon, maximum):
 def _validate_context(probe, expected_config):
     if expected_config is None:
         return
+    if (expected_config.get("data", {}).get("reference_policy")
+            != REFERENCE_POLICY):
+        raise ValueError("Expected reference policy is absent or obsolete")
+    if (expected_config["data"]["reference_policy"]
+            != probe["metadata"]["reference_policy"]):
+        raise ValueError("Expected reference policy differs from probe")
     if expected_config["stage"] != probe["stage"]:
         raise ValueError("Expected configuration stage differs from probe")
     if (expected_config["initial_checkpoint_sha256"]
@@ -214,6 +222,65 @@ def _validate_context(probe, expected_config):
         if name in probe.get(
                 "backend", {}) and probe["backend"][name] != value:
             raise ValueError(f"Expected backend setting differs: {name}")
+
+
+def _validate_reference_rows(probe):
+    """Reject old/self-reference probes before any mathematical selection."""
+    if probe.get("metadata", {}).get("reference_policy") != REFERENCE_POLICY:
+        raise ValueError("Probe reference policy is absent or obsolete")
+    for row in probe["rows"]:
+        query = row.get("query_original_identity")
+        reference = row.get("reference_original_identity")
+        if (not isinstance(query, list) or not isinstance(reference, list)
+                or not query or len(query) != len(reference)):
+            raise ValueError("Probe lacks aligned query/reference identities")
+        if any(not isinstance(item, str) or not item for item in
+               query + reference):
+            raise ValueError("Probe query/reference identities must be nonempty")
+        for name in ("target_path", "reference_path"):
+            if (not isinstance(row.get(name), list)
+                    or len(row[name]) != len(query)):
+                raise ValueError("Probe identity/path batch lengths differ")
+        policy = row.get("reference_policy")
+        if isinstance(policy, list):
+            valid_policy = (len(policy) == len(query)
+                            and all(item == REFERENCE_POLICY for item in policy))
+        else:
+            valid_policy = policy == REFERENCE_POLICY
+        if not valid_policy:
+            raise ValueError("Probe row reference policy is absent or obsolete")
+        if any(left == right for left, right in zip(query, reference)):
+            raise ValueError("Probe contains a self-reference original identity")
+        for kind in ("original", "target"):
+            qkey, rkey = f"query_{kind}_sha256", f"reference_{kind}_sha256"
+            qhash, rhash = row.get(qkey), row.get(rkey)
+            if (not isinstance(qhash, list) or not isinstance(rhash, list)
+                    or len(qhash) != len(query) or len(rhash) != len(query)):
+                raise ValueError("Probe query/reference SHA lengths differ")
+            if any(not isinstance(item, str) or not item
+                   for item in qhash + rhash):
+                raise ValueError("Probe query/reference SHA must be nonempty")
+            if any(len(item) != 64 or any(
+                    char not in "0123456789abcdef" for char in item
+            ) for item in qhash + rhash):
+                raise ValueError("Probe query/reference SHA must be SHA256")
+            if any(left == right for left, right in zip(qhash, rhash)):
+                raise ValueError(f"Probe contains identical {kind} image SHA")
+        for side in ("query", "reference"):
+            for identity, checksum in zip(
+                    row[f"{side}_original_identity"],
+                    row[f"{side}_original_sha256"]):
+                if identity.rsplit(":", 1)[-1] != checksum:
+                    raise ValueError("Probe original identity and SHA disagree")
+
+
+def _portable_probe_reference(requested, resolved):
+    if requested.is_absolute():
+        try:
+            return str(resolved.relative_to(ROOT))
+        except ValueError:
+            pass
+    return str(requested)
 
 
 def select_weights(probe_path, expected_config=None, max_coefficient=1000.0,
@@ -240,6 +307,7 @@ def select_weights(probe_path, expected_config=None, max_coefficient=1000.0,
             raise ValueError(f"Probe lacks a valid {name}")
     if type(probe.get("amp")) is not bool or not probe.get("model_config"):
         raise ValueError("Probe must record AMP and model configuration")
+    _validate_reference_rows(probe)
     authors = set(probe.get("authors", []))
     if len(authors) != 9 or {row.get("author")
                              for row in probe["rows"]} != authors:
@@ -351,6 +419,12 @@ def select_weights(probe_path, expected_config=None, max_coefficient=1000.0,
             "batch": row["batch"], "author": row["author"],
             "target_path": row.get("target_path", []),
             "reference_path": row.get("reference_path", []),
+            "query_original_identity": row["query_original_identity"],
+            "reference_original_identity": row["reference_original_identity"],
+            **{f"{side}_{kind}_sha256": row[f"{side}_{kind}_sha256"]
+               for side in ("query", "reference")
+               for kind in ("original", "target")},
+            "reference_policy": REFERENCE_POLICY,
             "geometry": family,
             "parameter_groups": {
                 name: _diagnostics(measurement, leaf)
@@ -377,12 +451,15 @@ def select_weights(probe_path, expected_config=None, max_coefficient=1000.0,
         "schema": POLICY_SCHEMA,
         "status": "selected_from_measured_gradients",
         "stage": stage,
-        "source_probe": str(requested_probe_path),
+        "source_probe": _portable_probe_reference(
+            requested_probe_path, probe_path
+        ),
         "source_probe_sha256": hashlib.sha256(probe_bytes).hexdigest(),
         "initial_checkpoint_sha256": probe["metadata"][
             "initial_checkpoint_sha256"
         ],
         "starting_checkpoint_sha256": probe["metadata"]["checkpoint_sha256"],
+        "reference_policy": REFERENCE_POLICY,
         "source_sha": probe["metadata"].get("source_sha"),
         "amp": probe["amp"], "model_config": probe["model_config"],
         "backend": probe.get("backend", {}),

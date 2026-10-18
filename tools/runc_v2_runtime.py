@@ -22,6 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "runc-v2-runtime-v1"
+REFERENCE_POLICY = "distinct-original-reference-v1"
 STAGES = ("ia0", "ia1", "ib", "ic")
 MEAN = (0.485, 0.456, 0.406)
 STD = (0.229, 0.224, 0.225)
@@ -55,6 +56,8 @@ def validate_config(config, command="train"):
         raise ValueError("checkpoint is required")
     if not config.get("initial_checkpoint_sha256"):
         raise ValueError("verified initial_checkpoint_sha256 is required")
+    if config.get("data", {}).get("reference_policy") != REFERENCE_POLICY:
+        raise ValueError(f"data.reference_policy must be {REFERENCE_POLICY}")
     if any(key in config for key in ("lowpass", "j_coefficients")):
         raise ValueError("Run C v1 loss configuration cannot enter v2")
     if config.get("model", {}).get("unfreeze_blocks", [2, 5, 8, 11]) != [2, 5, 8, 11]:
@@ -108,6 +111,8 @@ def validate_stage_gate(config):
         raise ValueError("formal IB/IC requires a main-agent stage_gate_record")
     record = json.loads(path.read_text(encoding="utf-8"))
     _finite_tree(record)
+    if record.get("reference_policy") != REFERENCE_POLICY:
+        raise ValueError("stage gate lacks clean reference-policy lineage")
     expected = "ia1" if stage == "ib" else "ib"
     if (
         record.get("status") != "technical_gate_passed"
@@ -115,7 +120,7 @@ def validate_stage_gate(config):
         or record.get("stage") != stage
     ):
         raise ValueError("stage gate is not a passed preceding-stage technical review")
-    checkpoint_sha = sha256_file(config["checkpoint"])
+    checkpoint_sha = stage_start_binding(config)["stage_start_checkpoint_sha256"]
     if (
         checkpoint_sha == config["initial_checkpoint_sha256"]
         or record.get("checkpoint_sha256") != checkpoint_sha
@@ -126,6 +131,9 @@ def validate_stage_gate(config):
     for item in record["supporting_evaluations"]:
         if sha256_file(item["path"]) != item["sha256"]:
             raise ValueError("stage gate evaluation evidence SHA mismatch")
+        evidence = json.loads(Path(item["path"]).read_text(encoding="utf-8"))
+        if evidence.get("metadata", {}).get("reference_policy") != REFERENCE_POLICY:
+            raise ValueError("stage gate evaluation lacks clean reference policy")
     return {"sha256": sha256_file(path), "record": record}
 
 
@@ -140,6 +148,69 @@ def _finite_tree(value):
             _finite_tree(child)
 
 
+def stage_start_binding(config):
+    """Bind a resume to the original measured start saved by the same stage."""
+    current = Path(config["checkpoint"])
+    current_sha = sha256_file(current)
+    explicit = config.get("stage_start_checkpoint")
+    if not config.get("resume_optimizer", False):
+        start = Path(explicit) if explicit else current
+        start_sha = sha256_file(start)
+        if start_sha != current_sha:
+            raise ValueError("fresh stage_start_checkpoint differs from its checkpoint")
+        return {
+            "stage_start_checkpoint": str(start),
+            "stage_start_checkpoint_sha256": start_sha,
+        }
+
+    import torch
+
+    if not explicit:
+        raise ValueError("optimizer resume requires explicit stage_start_checkpoint")
+    saved = torch.load(current, map_location="cpu", weights_only=False, mmap=True)
+    assert_clean_checkpoint_lineage(saved)
+    if (
+        saved.get("experiment") != "runc_v2"
+        or saved.get("stage") != config["stage"]
+        or saved.get("optimizer") is None
+    ):
+        raise ValueError("optimizer resume requires a same-stage safe v2 snapshot")
+    previous = saved["runc_v2_runtime"]
+    metadata = saved["runc_v2_metadata"]
+    if previous.get("stage") != config["stage"]:
+        raise ValueError("saved runtime stage differs from optimizer resume stage")
+    if metadata.get("initial_checkpoint_sha256") != config["initial_checkpoint_sha256"]:
+        raise ValueError("optimizer resume changed initial checkpoint lineage")
+    if previous.get("weights") != config.get("weights"):
+        raise ValueError("optimizer resume changed selected loss weights")
+    previous_start = previous.get("stage_start_checkpoint")
+    if not previous_start:
+        if previous.get("resume_optimizer"):
+            raise ValueError("saved resume lost its original stage-start checkpoint")
+        previous_start = previous["checkpoint"]
+    expected_sha = metadata.get("stage_start_checkpoint_sha256")
+    if not expected_sha and not previous.get("resume_optimizer"):
+        expected_sha = metadata.get("checkpoint_sha256")
+    if (
+        not expected_sha
+        or sha256_file(previous_start) != expected_sha
+        or sha256_file(explicit) != expected_sha
+    ):
+        raise ValueError("optimizer resume stage-start checkpoint SHA mismatch")
+    expected_calibration = metadata.get("calibration", {}).get("calibration_sha256")
+    if (
+        not expected_calibration
+        or sha256_file(previous["calibration_record"]) != expected_calibration
+        or sha256_file(config["calibration_record"]) != expected_calibration
+    ):
+        raise ValueError("optimizer resume changed its saved calibration file SHA")
+    return {
+        "stage_start_checkpoint": str(explicit),
+        "stage_start_checkpoint_sha256": expected_sha,
+        "resumed_from_checkpoint_sha256": current_sha,
+    }
+
+
 def validate_calibration(config):
     """Bind selected weights to a real, finite, nine-source gradient probe."""
     path = Path(config["calibration_record"])
@@ -147,6 +218,9 @@ def validate_calibration(config):
     _finite_tree(record)
     if record.get("status") != "selected_from_measured_gradients":
         raise ValueError("calibration requires selected_from_measured_gradients status")
+    policy = config.get("data", {}).get("reference_policy")
+    if policy != REFERENCE_POLICY or record.get("reference_policy") != policy:
+        raise ValueError("calibration reference policy is absent or unsafe")
     if record.get("stage") != config["stage"]:
         raise ValueError("calibration stage differs from training stage")
     if record.get("initial_checkpoint_sha256") != config["initial_checkpoint_sha256"]:
@@ -162,6 +236,10 @@ def validate_calibration(config):
         raise ValueError("calibration source probe SHA mismatch")
     probe_record = json.loads(source.read_text(encoding="utf-8"))
     _finite_tree(probe_record)
+    if probe_record.get("metadata", {}).get("reference_policy") != policy:
+        raise ValueError("calibration probe lacks a safe distinct-original policy")
+    for row in probe_record.get("rows", []):
+        assert_distinct_references(row)
     if (
         probe_record.get("status") != "measured"
         or probe_record.get("stage") != config["stage"]
@@ -174,8 +252,10 @@ def validate_calibration(config):
         != config["initial_checkpoint_sha256"]
     ):
         raise ValueError("probe initial checkpoint differs from training")
-    if probe_record["metadata"].get("checkpoint_sha256") != sha256_file(
-        config["checkpoint"]
+    binding = stage_start_binding(config)
+    if (
+        probe_record["metadata"].get("checkpoint_sha256")
+        != binding["stage_start_checkpoint_sha256"]
     ):
         raise ValueError("probe was measured at a different training start checkpoint")
     if probe_record.get("amp") != config["training"]["amp"]:
@@ -226,6 +306,8 @@ def validate_calibration(config):
         "source_probe_sha256": record["source_probe_sha256"],
         "selected_weights": record["selected_weights"],
         "rationale": record["rationale"],
+        "reference_policy": policy,
+        **binding,
     }
 
 
@@ -296,6 +378,14 @@ def source_record(config):
     for name in ("fixed_pairs", "jt_manifest"):
         if data.get(name):
             paths.append(data[name])
+    calibration = (
+        validate_calibration(config) if config.get("calibration_record") else None
+    )
+    stage_start_sha = (
+        calibration["stage_start_checkpoint_sha256"]
+        if calibration
+        else sha256_file(config["checkpoint"])
+    )
     return {
         "source_sha": git("rev-parse", "HEAD"),
         "branch": git("branch", "--show-current"),
@@ -307,10 +397,10 @@ def source_record(config):
         },
         "checkpoint_sha256": sha256_file(config["checkpoint"]),
         "initial_checkpoint_sha256": config["initial_checkpoint_sha256"],
+        "reference_policy": config["data"]["reference_policy"],
+        "stage_start_checkpoint_sha256": stage_start_sha,
         "data_file_sha256": {str(path): sha256_file(path) for path in paths},
-        "calibration": validate_calibration(config)
-        if config.get("calibration_record")
-        else None,
+        "calibration": calibration,
         "stage_gate": validate_stage_gate(config)
         if config.get("_formal_training")
         else None,
@@ -345,6 +435,9 @@ def load_model(config, device):
     """Only ckpt14 may initialize stage I; v2 snapshots reload strictly."""
     import torch
 
+    if config.get("data", {}).get("reference_policy") != REFERENCE_POLICY:
+        raise ValueError("model loading requires the safe reference policy")
+
     import models_train
     from util.checkpoint import checkpoint_args
     from util.runc_v2 import (
@@ -357,6 +450,8 @@ def load_model(config, device):
     saved = torch.load(config["checkpoint"], map_location="cpu", weights_only=False)
     actual_sha = sha256_file(config["checkpoint"])
     is_v2 = bool(saved.get("runc_v2_config"))
+    if is_v2:
+        assert_clean_checkpoint_lineage(saved)
     architecture = config.get("architecture", ARCHITECTURE)
     args = checkpoint_args(saved)
     if args.get("model", architecture) != architecture:
@@ -446,7 +541,88 @@ def load_model(config, device):
 def build_dataset(config, validation=False):
     from data.runc_v2_dataset import build_runc_v2_dataset
 
-    return build_runc_v2_dataset(config, validation=validation)
+    dataset = build_runc_v2_dataset(config, validation=validation)
+    assert_dataset_reference_policy(dataset)
+    return dataset
+
+
+def assert_dataset_reference_policy(dataset):
+    """Fail before sampling when the dataset lacks the audited policy."""
+    if getattr(dataset, "reference_policy", None) != REFERENCE_POLICY:
+        raise ValueError("dataset lacks the distinct-original reference policy")
+
+
+def assert_clean_checkpoint_lineage(saved):
+    """Reject old run1 adapted weights even if their ckpt14 SHA matches."""
+    metadata_policy = saved.get("runc_v2_metadata", {}).get("reference_policy")
+    runtime_policy = (
+        saved.get("runc_v2_runtime", {}).get("data", {}).get("reference_policy")
+    )
+    if metadata_policy != REFERENCE_POLICY or runtime_policy != REFERENCE_POLICY:
+        raise ValueError("adapted checkpoint lacks clean reference-policy lineage")
+
+
+def assert_distinct_references(batch):
+    """Reject upper-reference GT leakage using sealed originals and targets."""
+    fields = (
+        "query_original_identity",
+        "reference_original_identity",
+        "query_original_sha256",
+        "reference_original_sha256",
+        "query_target_sha256",
+        "reference_target_sha256",
+    )
+    values = {}
+    for name in fields:
+        value = batch.get(name)
+        items = [value] if isinstance(value, str) else value
+        if (
+            not isinstance(items, (list, tuple))
+            or not items
+            or any(not isinstance(item, str) or not item.strip() for item in items)
+        ):
+            raise ValueError(f"missing or invalid reference-safety metadata: {name}")
+        values[name] = list(items)
+    count = len(values[fields[0]])
+    if any(len(items) != count for items in values.values()):
+        raise ValueError("reference identity/hash metadata cardinality mismatch")
+    policy = batch.get("reference_policy")
+    policies = [policy] * count if isinstance(policy, str) else policy
+    if (
+        not isinstance(policies, (list, tuple))
+        or len(policies) != count
+        or any(item != REFERENCE_POLICY for item in policies)
+    ):
+        raise ValueError("batch lacks the distinct-original reference policy")
+    image = batch.get("image")
+    if image is not None:
+        expected = image.shape[0] if image.ndim == 4 else 1
+        if expected != count:
+            raise ValueError("reference metadata differs from actual image batch size")
+    for name in ("target_path", "reference_path"):
+        paths = batch.get(name)
+        if paths is not None:
+            paths = [paths] if isinstance(paths, str) else paths
+            if not isinstance(paths, (list, tuple)) or len(paths) != count:
+                raise ValueError(
+                    "reference path/identity metadata cardinality mismatch"
+                )
+    for index in range(count):
+        for name in fields[2:]:
+            value = values[name][index]
+            if len(value) != 64 or any(
+                char not in "0123456789abcdef" for char in value
+            ):
+                raise ValueError(f"reference image SHA256 is invalid: {name}")
+        for query, reference in zip(fields[::2], fields[1::2]):
+            if values[query][index] == values[reference][index]:
+                raise ValueError(f"self-reference GT leakage: identical {query}")
+        for prefix in ("query", "reference"):
+            identity = values[f"{prefix}_original_identity"][index]
+            original_sha = values[f"{prefix}_original_sha256"][index]
+            if identity.rsplit(":", 1)[-1] != original_sha:
+                raise ValueError("original identity and sealed SHA256 disagree")
+    return {"reference_policy": REFERENCE_POLICY, **values}
 
 
 def to_device(batch, device):
@@ -463,11 +639,16 @@ def to_device(batch, device):
 def collate_indices(dataset, indices, device, seed=0):
     import torch
 
+    assert_dataset_reference_policy(dataset)
     rows = [
         dataset.get_pair(index, augmentation_seed=seed + within)
         for within, index in enumerate(indices)
     ]
-    return to_device(torch.utils.data.default_collate(rows), device)
+    for row in rows:
+        assert_distinct_references(row)
+    batch = torch.utils.data.default_collate(rows)
+    assert_distinct_references(batch)
+    return to_device(batch, device)
 
 
 def safe_target(batch):
@@ -494,6 +675,7 @@ def wrap_forward(model):
 
 
 def call_model(wrapped, batch, render=True):
+    assert_distinct_references(batch)
     return wrapped(batch["image"], safe_target(batch), render=render)
 
 
@@ -649,6 +831,7 @@ def author_probe_indices(dataset, batch_size, repeats=1):
 def probe(config, model, dataset, output, device):
     import torch
 
+    assert_dataset_reference_policy(dataset)
     training_mode(model, config["stage"])
     wrapped = wrap_forward(model)
     cases = author_probe_indices(
@@ -699,6 +882,7 @@ def probe(config, model, dataset, output, device):
                 "indices": indices,
                 "target_path": batch["target_path"],
                 "reference_path": batch["reference_path"],
+                **assert_distinct_references(batch),
                 "losses": scalar_losses(losses),
                 "gradients": measurements,
                 "weighted_preclip": before,
@@ -998,6 +1182,7 @@ def evaluate(
     """Fixed 101 JT pairs are primary; per-instance and unique-target coexist."""
     import torch
 
+    assert_dataset_reference_policy(dataset)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     render = config["stage"] in ("ib", "ic")
@@ -1239,6 +1424,7 @@ def train(config, model, saved, dataset, output, device, rank, world, smoke=Fals
     import torch
     import torch.distributed as dist
 
+    assert_dataset_reference_policy(dataset)
     settings = config["training"]
     training_mode(model, config["stage"])
     optimizer, parameter_names = build_optimizer(model, settings)
@@ -1309,6 +1495,7 @@ def train(config, model, saved, dataset, output, device, rank, world, smoke=Fals
         tick = time.monotonic()
         optimizer.zero_grad(set_to_none=True)
         logs = []
+        reference_trace = []
         warmup = settings.get("warmup_steps", 0)
         fraction = min(1.0, step / warmup) if warmup else 1.0
         for group in optimizer.param_groups:
@@ -1323,6 +1510,7 @@ def train(config, model, saved, dataset, output, device, rank, world, smoke=Fals
             )
             if not bool(batch["has_jt"].all()):
                 raise ValueError("BF-only query reached Run C v2 stage I")
+            reference_trace.append(assert_distinct_references(batch))
             counts.update(batch.get("original_identity", batch["target_path"]))
             sync = (
                 wrapped.no_sync()
@@ -1359,6 +1547,8 @@ def train(config, model, saved, dataset, output, device, rank, world, smoke=Fals
             "gradient_groups_preclip": before,
             "gradient_groups_postclip": after,
             "effective_batch": effective,
+            "reference_policy": REFERENCE_POLICY,
+            "reference_identities_rank0": reference_trace,
             "lr": {group["name"]: group["lr"] for group in optimizer.param_groups},
             "peak_cuda_allocated": torch.cuda.max_memory_allocated(device)
             if device.type == "cuda"
@@ -1491,6 +1681,7 @@ def condition_response(model, batch):
 
     from util.runc_v2 import render_runc_v2, runc_v2_forward
 
+    assert_distinct_references(batch)
     model.eval()
     with torch.no_grad():
         result = runc_v2_forward(
@@ -1606,7 +1797,13 @@ def accumulation_equivalence(config, model, batch):
         for index in range(count):
             part = {
                 key: value[index : index + 1]
-                if (torch.is_tensor(value) and value.ndim and value.shape[0] == count)
+                if (
+                    torch.is_tensor(value)
+                    and value.ndim
+                    and value.shape[0] == count
+                    or isinstance(value, (list, tuple))
+                    and len(value) == count
+                )
                 else value
                 for key, value in batch.items()
             }
@@ -1658,7 +1855,7 @@ def stage2_interface_smoke(config, model, output, device):
     import torch
     import torch.nn.functional as functional
 
-    from tools.structure_first import build_dataset as build_bf_dataset
+    from data.runc_v2_dataset import build_runc_v2_refine_dataset
     from util.dual_loss import DualJietiLoss
     from util.runc_v2 import (
         enable_runc_v2_refiner,
@@ -1668,7 +1865,8 @@ def stage2_interface_smoke(config, model, output, device):
 
     bf_config = copy.deepcopy(config)
     bf_config["stage"] = "refine"
-    dataset = build_bf_dataset(bf_config)
+    dataset = build_runc_v2_refine_dataset(bf_config, validation=False)
+    assert_dataset_reference_policy(dataset)
     pools = {"dual": [], "bf_only": []}
     for index, row in enumerate(dataset.pairs):
         pools["dual" if row["has_jt"] else "bf_only"].append(index)
