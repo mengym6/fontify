@@ -1,6 +1,6 @@
 {
-  "status": "running",
-  "time_utc": "2026-10-18T11:44:38.889383+00:00",
+  "status": "stage_a_complete_pending_head_gate",
+  "time_utc": "2026-10-18T12:03:06.807486+00:00",
   "controller_pid": 478029,
   "records": [
     {
@@ -216,8 +216,11 @@
       ],
       "started_utc": "2026-10-18T11:44:38.886949+00:00",
       "world_size": 2,
-      "pid": 479588
+      "pid": 479588,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T12:03:06.805909+00:00"
     }
   ],
-  "active": "train_ia1"
+  "final_checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/checkpoint-step-000400.pth",
+  "next_action": "Review all Head snapshots before IB; no BF training"
 }

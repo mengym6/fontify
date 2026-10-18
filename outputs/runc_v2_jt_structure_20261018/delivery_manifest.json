@@ -338,8 +338,18 @@
     },
     {
       "path": "outputs/runc_v2_jt_structure_20261018/clean_run2/pipeline.json",
+      "bytes": 7042,
+      "sha256": "fbb4564f19d1a5898d8a5655677d33c91ef90a17135df362555d738ad548638f"
+    },
+    {
+      "path": "outputs/runc_v2_jt_structure_20261018/clean_run2/pipeline_capture_during_ia1.json",
       "bytes": 6787,
       "sha256": "8720dd85dbcd9202ba47c2d67c54d744984812f0348997d5ce306065806f752f"
+    },
+    {
+      "path": "outputs/runc_v2_jt_structure_20261018/clean_run2/pipeline_observation_provenance.md",
+      "bytes": 1279,
+      "sha256": "51c975c86804ea492d7eb867f162e79c9275372ea2725db5cdcbde5f1327da40"
     },
     {
       "path": "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia0/config.json",

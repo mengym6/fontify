@@ -1,0 +1,7 @@
+# 阶段A状态归档纠正
+
+最终同步回读发现：本地pipeline.json来自IA1刚启动的副本，status=running、时间11:44:38.889383 UTC，最后子进程PID479588尚无结束字段。它被0f7dfa6报告提交带入Git并覆盖了服务器原完成状态文件，这是归档错误，不是训练未完成。该旧文件现完整保留为pipeline_capture_during_ia1.json，实测SHA为8720dd85dbcd9202ba47c2d67c54d744984812f0348997d5ce306065806f752f。
+
+此前主控已通过SSH读取原服务器完整pipeline：status=stage_a_complete_pending_head_gate，最终写入时间2026-10-18T12:03:06.807486+00:00，train_ia1 PID479588 exit0、ended_utc=2026-10-18T12:03:06.805909+00:00，final_checkpoint为IA1 step400。最初读取的11个子进程全部exit0，其余10条与中途副本相同。
+
+pipeline.json现依据该已观察的真实完成记录恢复相应字段，而非重新运行控制器或从训练损失推测退出码。另已重新实查server原train.jsonl末步400、freeze_sha exact_unchanged=true、step400评测存在、端点SHA及后续IB校验均一致；这些证据不依赖被覆盖的状态文件。训练日志、模型和评测未被覆盖或重跑。此次恢复保留完整来源说明，防止将旧status=running误判为应续训。

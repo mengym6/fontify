@@ -1,0 +1,223 @@
+{
+  "status": "running",
+  "time_utc": "2026-10-18T11:44:38.889383+00:00",
+  "controller_pid": 478029,
+  "records": [
+    {
+      "name": "tiny_ia0",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "tools.runc_v2_health",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/health_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/tiny_ia0",
+        "--device",
+        "cuda:0",
+        "--steps",
+        "12"
+      ],
+      "started_utc": "2026-10-18T11:39:06.219417+00:00",
+      "world_size": 1,
+      "pid": 478039,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:39:33.314292+00:00"
+    },
+    {
+      "name": "smoke_ia1_fp32",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "tools.runc_v2",
+        "smoke",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/smoke_ia1_fp32_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/smoke_ia1_fp32"
+      ],
+      "started_utc": "2026-10-18T11:39:33.316410+00:00",
+      "world_size": 1,
+      "pid": 478163,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:40:00.343458+00:00"
+    },
+    {
+      "name": "smoke_ia1_ddp_bf16",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "-m",
+        "tools.runc_v2",
+        "smoke",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/smoke_ia1_ddp_bf16_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/smoke_ia1_ddp_bf16"
+      ],
+      "started_utc": "2026-10-18T11:40:00.345680+00:00",
+      "world_size": 2,
+      "pid": 478299,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:40:31.959102+00:00"
+    },
+    {
+      "name": "smoke_ib_fp32",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "tools.runc_v2",
+        "smoke",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/smoke_ib_fp32_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/smoke_ib_fp32"
+      ],
+      "started_utc": "2026-10-18T11:40:31.961365+00:00",
+      "world_size": 1,
+      "pid": 478472,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:40:57.359229+00:00"
+    },
+    {
+      "name": "smoke_ib_ddp_bf16",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "-m",
+        "tools.runc_v2",
+        "smoke",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/smoke_ib_ddp_bf16_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/smoke_ib_ddp_bf16"
+      ],
+      "started_utc": "2026-10-18T11:40:57.361608+00:00",
+      "world_size": 2,
+      "pid": 478589,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:41:28.742734+00:00"
+    },
+    {
+      "name": "probe_ia0",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "tools.runc_v2",
+        "probe",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia0_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia0"
+      ],
+      "started_utc": "2026-10-18T11:41:28.745135+00:00",
+      "world_size": 1,
+      "pid": 478773,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:41:58.287415+00:00"
+    },
+    {
+      "name": "selection_ia0",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "tools/calibrate_runc_v2.py",
+        "--probe",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia0/gradient_probe.json",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia0_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/selection_ia0.json"
+      ],
+      "started_utc": "2026-10-18T11:41:58.288879+00:00",
+      "world_size": 1,
+      "pid": 478904,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:41:59.999606+00:00"
+    },
+    {
+      "name": "train_ia0",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "-m",
+        "tools.runc_v2",
+        "train",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/train_ia0_config.json",
+        "--output",
+        "models/runc_v2_jt_structure_20261018/clean_run2/ia0"
+      ],
+      "started_utc": "2026-10-18T11:42:00.008893+00:00",
+      "world_size": 2,
+      "pid": 478911,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:44:01.725616+00:00"
+    },
+    {
+      "name": "probe_ia1",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "tools.runc_v2",
+        "probe",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia1_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia1"
+      ],
+      "started_utc": "2026-10-18T11:44:01.728217+00:00",
+      "world_size": 1,
+      "pid": 479430,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:44:38.135690+00:00"
+    },
+    {
+      "name": "selection_ia1",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "tools/calibrate_runc_v2.py",
+        "--probe",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia1/gradient_probe.json",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia1_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/selection_ia1.json"
+      ],
+      "started_utc": "2026-10-18T11:44:38.137939+00:00",
+      "world_size": 1,
+      "pid": 479584,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T11:44:38.876042+00:00"
+    },
+    {
+      "name": "train_ia1",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "-m",
+        "tools.runc_v2",
+        "train",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2/train_ia1_config.json",
+        "--output",
+        "models/runc_v2_jt_structure_20261018/clean_run2/ia1"
+      ],
+      "started_utc": "2026-10-18T11:44:38.886949+00:00",
+      "world_size": 2,
+      "pid": 479588
+    }
+  ],
+  "active": "train_ia1"
+}
