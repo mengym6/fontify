@@ -219,7 +219,8 @@ def _validate_context(probe, expected_config):
 def select_weights(probe_path, expected_config=None, max_coefficient=1000.0,
                    min_gradient=1e-12):
     """Select IA/IB policy and return a SHA-bound, auditable record."""
-    probe_path = Path(probe_path).resolve()
+    requested_probe_path = Path(probe_path)
+    probe_path = requested_probe_path.resolve()
     probe_bytes = probe_path.read_bytes()
     probe = json.loads(probe_bytes)
     _finite_tree(probe)
@@ -376,7 +377,7 @@ def select_weights(probe_path, expected_config=None, max_coefficient=1000.0,
         "schema": POLICY_SCHEMA,
         "status": "selected_from_measured_gradients",
         "stage": stage,
-        "source_probe": str(probe_path),
+        "source_probe": str(requested_probe_path),
         "source_probe_sha256": hashlib.sha256(probe_bytes).hexdigest(),
         "initial_checkpoint_sha256": probe["metadata"][
             "initial_checkpoint_sha256"

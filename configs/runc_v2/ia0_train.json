@@ -80,5 +80,5 @@
   "purpose": "IA0 very short head-only health trajectory before IA1, not final structure acceptance",
   "probe_batch_size": 2,
   "probe_repeats": 2,
-  "calibration_record": "outputs/runc_v2_jt_structure_20261018/calibration_ia0.json"
+  "calibration_record": "outputs/runc_v2_jt_structure_20261018/calibration_ia0_portable.json"
 }

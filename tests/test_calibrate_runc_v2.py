@@ -101,6 +101,14 @@ def median_ratio(result, name):
     return result["achieved_ratios"][name]["median"]
 
 
+def test_relative_probe_reference_remains_portable(tmp_path, monkeypatch):
+    path = write_probe(tmp_path, probe())
+    monkeypatch.chdir(tmp_path)
+    result = select_weights(path.name)
+    assert result["source_probe"] == path.name
+    assert result["source_probe_sha256"] == sha256_file(path)
+
+
 def test_ia_policy_matches_analytic_orthogonal_gradients(tmp_path):
     result = select_weights(write_probe(tmp_path, probe()))
     weights = result["selected_weights"]
