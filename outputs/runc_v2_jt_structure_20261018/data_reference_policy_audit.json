@@ -1,0 +1,222 @@
+{
+  "reference_policy": "distinct-original-reference-v1",
+  "training_queries": 740,
+  "candidate_summary": {
+    "queries": 740,
+    "empty_queries": 0,
+    "minimum_candidates": 5,
+    "maximum_candidates": 161
+  },
+  "total_candidate_edges": 54494,
+  "bad_candidate_or_64seed_picks": [],
+  "by_author_pool": {
+    "Caoqb/dual": {
+      "queries": 46,
+      "minimum_candidates": 45,
+      "maximum_candidates": 45
+    },
+    "Caoqb/jt_only": {
+      "queries": 8,
+      "minimum_candidates": 7,
+      "maximum_candidates": 7
+    },
+    "Dongqc/jt_only": {
+      "queries": 12,
+      "minimum_candidates": 11,
+      "maximum_candidates": 11
+    },
+    "Dongqc/dual": {
+      "queries": 56,
+      "minimum_candidates": 55,
+      "maximum_candidates": 55
+    },
+    "Liugq/dual": {
+      "queries": 51,
+      "minimum_candidates": 50,
+      "maximum_candidates": 50
+    },
+    "Liugq/jt_only": {
+      "queries": 45,
+      "minimum_candidates": 44,
+      "maximum_candidates": 44
+    },
+    "Longmen/dual": {
+      "queries": 43,
+      "minimum_candidates": 42,
+      "maximum_candidates": 42
+    },
+    "Longmen/jt_only": {
+      "queries": 8,
+      "minimum_candidates": 7,
+      "maximum_candidates": 7
+    },
+    "Ouyx/dual": {
+      "queries": 54,
+      "minimum_candidates": 53,
+      "maximum_candidates": 53
+    },
+    "Ouyx/jt_only": {
+      "queries": 10,
+      "minimum_candidates": 9,
+      "maximum_candidates": 9
+    },
+    "Sushi/dual": {
+      "queries": 24,
+      "minimum_candidates": 23,
+      "maximum_candidates": 23
+    },
+    "Sushi/jt_only": {
+      "queries": 6,
+      "minimum_candidates": 5,
+      "maximum_candidates": 5
+    },
+    "Yanzq/dual": {
+      "queries": 69,
+      "minimum_candidates": 68,
+      "maximum_candidates": 68
+    },
+    "Yanzq/jt_only": {
+      "queries": 162,
+      "minimum_candidates": 161,
+      "maximum_candidates": 161
+    },
+    "Zhangqb/dual": {
+      "queries": 42,
+      "minimum_candidates": 41,
+      "maximum_candidates": 41
+    },
+    "Zhangqb/jt_only": {
+      "queries": 9,
+      "minimum_candidates": 8,
+      "maximum_candidates": 8
+    },
+    "Zhaomf/dual": {
+      "queries": 81,
+      "minimum_candidates": 80,
+      "maximum_candidates": 80
+    },
+    "Zhaomf/jt_only": {
+      "queries": 14,
+      "minimum_candidates": 13,
+      "maximum_candidates": 13
+    }
+  },
+  "primary_validation": {
+    "queries": 101,
+    "unique_original_targets": 77,
+    "fixed_pair_file_unchanged": true,
+    "validated_gt_instances": 216
+  },
+  "refine_training": {
+    "queries": 818,
+    "pools": {
+      "dual": 466,
+      "bf_only": 352
+    },
+    "candidate_summary": {
+      "queries": 818,
+      "empty_queries": 0,
+      "minimum_candidates": 23,
+      "maximum_candidates": 80
+    },
+    "BF_annotation_requested": 11,
+    "base_sampler": "unchanged data.dual_dataset.DualDataset._bf_mask via StructureFirstDataset",
+    "reference_rng_sequence_changes": true,
+    "same_character_distinct_originals_remain_allowed": true
+  },
+  "old_fixed_validation": {
+    "counts": {
+      "BF": 139,
+      "JT": 101
+    },
+    "collision_count": 11,
+    "JT_collisions": 0,
+    "BF_collisions": 11,
+    "collisions": [
+      {
+        "kind": "BF",
+        "query": "font/train/new/CaoqbBF/images_text_denoised/竟.png",
+        "reference": "font/train/new/CaoqbBF/images_text_denoised/竟.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/DongqcBF/images_text_denoised/未.png",
+        "reference": "font/train/new/DongqcBF/images_text_denoised/未.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/DongqcBF/images_text_denoised/夘.png",
+        "reference": "font/train/new/DongqcBF/images_text_denoised/夘.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/LiugqBF/images_text_denoised/成.png",
+        "reference": "font/train/new/LiugqBF/images_text_denoised/成.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/LiugqBF/images_text_denoised/御.png",
+        "reference": "font/train/new/LiugqBF/images_text_denoised/御.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/LongmenBF/images_text_denoised/峰.png",
+        "reference": "font/train/new/LongmenBF/images_text_denoised/峰.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/LongmenBF/images_text_denoised/下.png",
+        "reference": "font/train/new/LongmenBF/images_text_denoised/下.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/OuyxBF/images_text_denoised/裳.png",
+        "reference": "font/train/new/OuyxBF/images_text_denoised/裳.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/SushiBF/images_text_denoised/月.png",
+        "reference": "font/train/new/SushiBF/images_text_denoised/月.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/SushiBF/images_text_denoised/惜.png",
+        "reference": "font/train/new/SushiBF/images_text_denoised/惜.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      },
+      {
+        "kind": "BF",
+        "query": "font/train/new/ZhaomfBF/images_text_denoised/期.png",
+        "reference": "font/train/new/ZhaomfBF/images_text_denoised/期.png",
+        "same_original_sha256": true,
+        "same_target_sha256": true
+      }
+    ]
+  },
+  "verification": {
+    "data_oracle_tests_passed": 17,
+    "real_data_integration_tests_skipped": 0,
+    "Python39_grammar": "passed",
+    "ruff_E_F_I": "passed",
+    "pycodestyle_max88": "passed"
+  }
+}

@@ -1,0 +1,5474 @@
+{
+  "schema": "runc-v2-gradient-selection-v1",
+  "status": "selected_from_measured_gradients",
+  "stage": "ia0",
+  "source_probe": "outputs/runc_v2_jt_structure_20261018/clean_run2/probe_ia0/gradient_probe.json",
+  "source_probe_sha256": "ff4f56915ccbc5e20e6500da5e47c17d3e297c077f600f4da8e2598d4945a6ae",
+  "initial_checkpoint_sha256": "339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+  "starting_checkpoint_sha256": "339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+  "reference_policy": "distinct-original-reference-v1",
+  "source_sha": "c54cf5086a5fa8e4467da489f4bab3e27838e165",
+  "amp": true,
+  "model_config": {
+    "schema": "runc-v2-jt-structure-v1",
+    "experiment": "runc_v2",
+    "stage": "ia0",
+    "head_width": 256,
+    "head_heads": 4,
+    "slots": 4,
+    "classes": 20,
+    "hidden_dim": 256,
+    "num_heads": 4,
+    "num_layers": 1,
+    "unfreeze_blocks": [
+      2,
+      5,
+      8,
+      11
+    ],
+    "encoder_width": 768,
+    "feature_width": 3072,
+    "grid_size": 28,
+    "patch_size": 16,
+    "output_size": 448,
+    "density_size": 112,
+    "tap_indices": [
+      2,
+      5,
+      8,
+      11
+    ]
+  },
+  "backend": {
+    "torch": "2.3.0+cu121",
+    "cuda": "12.1",
+    "cudnn": 8902,
+    "device": "cuda:0",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false,
+    "deterministic_algorithms": false
+  },
+  "selected_weights": {
+    "head": 1.0,
+    "head_geo": 2.4819514079302687,
+    "head_logsigma": 1.0122664871403142,
+    "head_centroid": 24.671616309802268,
+    "head_shape": 1.0,
+    "density": 0.0,
+    "occupancy": 0.0,
+    "occupancy_dice": 0.0,
+    "j_coarse": 0.0,
+    "j_centroid": 1.0,
+    "j_logsigma": 1.0,
+    "j_shape": 1.0
+  },
+  "selected_leaf_coefficients": {
+    "head_logsigma": 2.51239623295853,
+    "head_centroid": 61.23375283602912,
+    "head_shape": 2.4819514079302687,
+    "head": 1.0
+  },
+  "rationale": "CPU selection from measured parameter-gradient Grams only. Geometry uses shape=1 and cross-batch median raw-norm ratios for logsigma:relative-centroid:shape approximately 2:1:1; centroid uses eligible multi-part batches only. The common multiplier uses each batch's actual Gram composite, targeting geometry/Head=1 for IA or J/density=0.5 for IB. IB targets occupancy-BCE/density=1 and leaves Dice disabled. These are conservative starting policies, not demonstrated optimal weights or evidence of training benefit.",
+  "policy": {
+    "geometry_ratio": [
+      2,
+      1,
+      1
+    ],
+    "geometry_anchor": "shape",
+    "geometry_to_anchor": 1.0,
+    "anchor": "head",
+    "occupancy_to_density": null,
+    "max_coefficient": 1000.0,
+    "min_gradient": 1e-12,
+    "bound_interpretation": "numerical stop bound, not an optimum range"
+  },
+  "selection_details": {
+    "shape_anchor": 1.0,
+    "target_norm_ratio": [
+      2,
+      1,
+      1
+    ],
+    "valid_geometry_batches": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "relative_eligible_batches": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "per_batch_sigma_anchor_ratios": [
+      0.9750541459824498,
+      0.979313123959092,
+      1.2783497933880723,
+      1.2245907133279166,
+      1.1566039527672611,
+      1.1924767255261737,
+      1.2934417673471215,
+      0.4140801322919332,
+      1.0235356834295215,
+      0.3305362841936054,
+      0.6684504649736098,
+      1.0528591100537765,
+      1.3848855855949334,
+      0.8063510165465979,
+      1.0909000545337764,
+      0.8859738471523773,
+      1.0009972908511071,
+      0.7069543492488951
+    ],
+    "per_batch_centroid_anchor_ratios": [
+      17.42677036323182,
+      23.74331329600355,
+      73.27868414570746,
+      34.600214134519,
+      21.46840852169635,
+      27.186794245824842,
+      47.61353334987763,
+      7.756597227274033,
+      30.710368473541386,
+      6.6201607178765,
+      10.746471892596498,
+      49.02760463481415,
+      18.394498154157827,
+      20.90422802610552,
+      29.24488095331886,
+      28.894989730653112,
+      25.59991932360099,
+      15.61743957506439
+    ],
+    "coefficient_rule": "median(target_ratio * raw_shape_norm / raw_term_norm)",
+    "common_candidates": [
+      3.2401842610188245,
+      3.6277704495656384,
+      2.0452967669857647,
+      1.9239744739221811,
+      2.5775828742975846,
+      1.9509725232972415,
+      1.6947278371655365,
+      3.9253705414850293,
+      2.5422754351332872,
+      3.4120432796592355,
+      3.2131191491548616,
+      2.3670336989567042,
+      1.6556880229456425,
+      2.3321418386438597,
+      2.123543878439353,
+      2.4216273807272506,
+      2.7721464066296075,
+      2.5925907089308504
+    ]
+  },
+  "achieved_ratios": {
+    "geometry_to_anchor": {
+      "count": 18,
+      "median": 1.0005910860838485,
+      "min": 0.6322846166240672,
+      "max": 1.4990453355545914
+    },
+    "sigma_to_shape": {
+      "count": 18,
+      "median": 2.0002479019784127,
+      "min": 1.4618774253548958,
+      "max": 6.124994655941604
+    },
+    "centroid_to_shape_eligible": {
+      "count": 18,
+      "median": 1.0014177498207926,
+      "min": 0.3366820324003797,
+      "max": 3.726739781887954
+    },
+    "occupancy_to_density": {
+      "count": 0,
+      "median": null,
+      "min": null,
+      "max": null
+    }
+  },
+  "authors": [
+    "Caoqb",
+    "Dongqc",
+    "Liugq",
+    "Longmen",
+    "Ouyx",
+    "Sushi",
+    "Yanzq",
+    "Zhangqb",
+    "Zhaomf"
+  ],
+  "rows": [
+    {
+      "batch": 0,
+      "author": "Caoqb",
+      "target_path": [
+        "font/train/new/CaoqbBF/images_text_denoised/述.png",
+        "font/train/new/CaoqbBF/images_text_denoised/計.png"
+      ],
+      "reference_path": [
+        "font/train/new/CaoqbBF/images_text_denoised/泉.png",
+        "font/train/new/CaoqbBF/images_text_denoised/季.png"
+      ],
+      "query_original_identity": [
+        "Caoqb:09bf95837a38dc7e1749ec0657802fd23d0409a57f6af3ea27f7c2f1d2a96d18",
+        "Caoqb:2ff9d42c737037c68771e1620875d98fdb76d19588a455fa8a87fd31569e3d72"
+      ],
+      "reference_original_identity": [
+        "Caoqb:351bf92626dd88af63d63cffbe21fbc1d53c96fdcd9c8b0a9ad8f2132bcfc190",
+        "Caoqb:e5c1fc13cf061cb5fed973c95a857bf2b54c4c546840fc51c44533c2b8c595ff"
+      ],
+      "query_original_sha256": [
+        "09bf95837a38dc7e1749ec0657802fd23d0409a57f6af3ea27f7c2f1d2a96d18",
+        "2ff9d42c737037c68771e1620875d98fdb76d19588a455fa8a87fd31569e3d72"
+      ],
+      "query_target_sha256": [
+        "77319c029cf1bf3326ba45f1190a5079ae5281dca6ddfd9ca66b7d247aa2b071",
+        "50fc1f40ea04b1d3644f57aca0366ededcbaa6a3ed43e05eb99c5e72aef6e1f5"
+      ],
+      "reference_original_sha256": [
+        "351bf92626dd88af63d63cffbe21fbc1d53c96fdcd9c8b0a9ad8f2132bcfc190",
+        "e5c1fc13cf061cb5fed973c95a857bf2b54c4c546840fc51c44533c2b8c595ff"
+      ],
+      "reference_target_sha256": [
+        "2413d7fa95a080803e344ae0484141e23cb51f4f9f052d554013a1f7bfc3b1e4",
+        "c1b5e47b80b15b9b380d0f603d96409a84dcf18ff51a8c403679fae52517d4dd"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            167.4697527548558,
+            9.924655383394281,
+            -0.1853386481790551,
+            4.956190580490745
+          ],
+          [
+            9.924655383394281,
+            6.4015155479745545,
+            -0.0167469596817319,
+            2.923501803516757
+          ],
+          [
+            -0.1853386481790551,
+            -0.0167469596817319,
+            0.005010100792448957,
+            -0.005300738821894108
+          ],
+          [
+            4.956190580490745,
+            2.923501803516757,
+            -0.005300738821894108,
+            1.521529159610198
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            -0.0,
+            0.0
+          ],
+          [
+            0.0,
+            40.40722926401778,
+            -2.576410053697491,
+            18.22992047847453
+          ],
+          [
+            -0.0,
+            -2.576410053697491,
+            18.785736085376804,
+            -0.8056020406001714
+          ],
+          [
+            0.0,
+            18.22992047847453,
+            -0.8056020406001714,
+            9.372745592617079
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 6.356668094530167,
+          "head_centroid": 4.334251502321572,
+          "head_shape": 3.061494013160418
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.3031138938968504,
+          "head_centroid:head": -0.20233665683272722,
+          "head_centroid:head_logsigma": -0.09351286026926206,
+          "head_shape:head": 0.31048431714428687,
+          "head_shape:head_logsigma": 0.9367459493962225,
+          "head_shape:head_centroid": -0.06071178959743509
+        },
+        "composite_norm": 9.912695279809896,
+        "sum_term_norms": 13.752413610012157,
+        "composite_over_sum_norms": 0.720796767819226
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              167.4697527548558,
+              9.924655383394281,
+              -0.1853386481790551,
+              4.956190580490745
+            ],
+            [
+              9.924655383394281,
+              6.4015155479745545,
+              -0.0167469596817319,
+              2.923501803516757
+            ],
+            [
+              -0.1853386481790551,
+              -0.0167469596817319,
+              0.005010100792448957,
+              -0.005300738821894108
+            ],
+            [
+              4.956190580490745,
+              2.923501803516757,
+              -0.005300738821894108,
+              1.521529159610198
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              167.4697527548558,
+              24.93466679865139,
+              -11.348980973560018,
+              12.30102418921974
+            ],
+            [
+              24.93466679865139,
+              40.40722926401778,
+              -2.576410053697491,
+              18.22992047847453
+            ],
+            [
+              -11.348980973560018,
+              -2.576410053697491,
+              18.785736085376804,
+              -0.8056020406001714
+            ],
+            [
+              12.30102418921974,
+              18.22992047847453,
+              -0.8056020406001714,
+              9.372745592617079
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.941010499758347,
+            "head_logsigma": 6.356668094530167,
+            "head_centroid": 4.334251502321572,
+            "head_shape": 3.061494013160418
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.3031138938968504,
+            "head_centroid:head": -0.20233665683272722,
+            "head_centroid:head_logsigma": -0.09351286026926206,
+            "head_shape:head": 0.31048431714428687,
+            "head_shape:head_logsigma": 0.9367459493962225,
+            "head_shape:head_centroid": -0.06071178959743509
+          },
+          "composite_norm": 17.818661579755183,
+          "sum_term_norms": 26.693424109770504,
+          "composite_over_sum_norms": 0.6675300068840954
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              167.46477433638552,
+              9.924707672736929,
+              -0.1853296123962629,
+              4.9562702507245895
+            ],
+            [
+              9.924707672736929,
+              6.401360859998931,
+              -0.01675167434654734,
+              2.9234321392266054
+            ],
+            [
+              -0.1853296123962629,
+              -0.01675167434654734,
+              0.00501031418160694,
+              -0.005302939653534483
+            ],
+            [
+              4.9562702507245895,
+              2.9234321392266054,
+              -0.005302939653534483,
+              1.5214862654230235
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              167.46477433638552,
+              24.93479817019888,
+              -11.34842767866984,
+              12.3012219268688
+            ],
+            [
+              24.93479817019888,
+              40.406252852658845,
+              -2.5771353739980802,
+              18.22948607666635
+            ],
+            [
+              -11.34842767866984,
+              -2.5771353739980807,
+              18.786536203492467,
+              -0.8059365212301508
+            ],
+            [
+              12.3012219268688,
+              18.22948607666635,
+              -0.8059365212301508,
+              9.372481360872817
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.940818147875563,
+            "head_logsigma": 6.356591291931459,
+            "head_centroid": 4.334343803102433,
+            "head_shape": 3.0614508588041747
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.30312365879406444,
+            "head_centroid:head": -0.20232549107109607,
+            "head_centroid:head_logsigma": -0.09353832456141471,
+            "head_shape:head": 0.3104982999861043,
+            "head_shape:head_logsigma": 0.9367481497123562,
+            "head_shape:head_centroid": -0.060736559456225934
+          },
+          "composite_norm": 17.818475185971486,
+          "sum_term_norms": 26.69320410171363,
+          "composite_over_sum_norms": 0.6675285259152381
+        }
+      },
+      "selected_preclip_norm": 17.818661579755183,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.16836281370361028
+    },
+    {
+      "batch": 1,
+      "author": "Dongqc",
+      "target_path": [
+        "font/train/new/DongqcJT/images_text_denoised/待.png",
+        "font/train/new/DongqcBF/images_text_denoised/莫.png"
+      ],
+      "reference_path": [
+        "font/train/new/DongqcJT/images_text_denoised/蒼.png",
+        "font/train/new/DongqcBF/images_text_denoised/伊.png"
+      ],
+      "query_original_identity": [
+        "Dongqc:c5206e47bcfe829e973b5a06fc5649ff8a65ce0c7298127977971e2fad55f30e",
+        "Dongqc:aa0208be7c69f050ed62dba4ff2715c452282f3cf4d4a88d7bb38091a913f515"
+      ],
+      "reference_original_identity": [
+        "Dongqc:36e8242701025bac47042a1f8ac962c12a19ae0e123635c62533051ddb3067b3",
+        "Dongqc:99807f43bad52e3c58a7eaffbb4d8ec6bce6a6370793f9660ab9ad4c7b4e516a"
+      ],
+      "query_original_sha256": [
+        "c5206e47bcfe829e973b5a06fc5649ff8a65ce0c7298127977971e2fad55f30e",
+        "aa0208be7c69f050ed62dba4ff2715c452282f3cf4d4a88d7bb38091a913f515"
+      ],
+      "query_target_sha256": [
+        "33b5573d47e82c444e02f65fd7eb5f31b6578195aa3801cccd87abe011c1b593",
+        "256b021cceef67682a3aaf06c6b6d8b12854b5e38f04c1f238a465a0912bb8e3"
+      ],
+      "reference_original_sha256": [
+        "36e8242701025bac47042a1f8ac962c12a19ae0e123635c62533051ddb3067b3",
+        "99807f43bad52e3c58a7eaffbb4d8ec6bce6a6370793f9660ab9ad4c7b4e516a"
+      ],
+      "reference_target_sha256": [
+        "4f3b4e3e36aaf40fa08fe4630e3c1a3adb0611761bc9c3446c87a7545373794f",
+        "4ba0d48bc98fe6d73eca5486d8134657f00d8f886362ca5479d56f4787e05a39"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            278.4825158879976,
+            9.701973605900548,
+            0.1989297958187981,
+            4.694827234492749
+          ],
+          [
+            9.701973605900548,
+            7.997628455224444,
+            0.017262043169842423,
+            3.7935847116954484
+          ],
+          [
+            0.1989297958187981,
+            0.017262043169842423,
+            0.003401431552041978,
+            0.00880950991494317
+          ],
+          [
+            4.694827234492749,
+            3.7935847116954484,
+            0.00880950991494317,
+            1.917539779525768
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            50.48210914069172,
+            2.655652274523348,
+            23.655448934347937
+          ],
+          [
+            0.0,
+            2.655652274523348,
+            12.753914161854702,
+            1.3388622610215137
+          ],
+          [
+            0.0,
+            23.655448934347937,
+            1.3388622610215137,
+            11.812203797541734
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 7.105076293798099,
+          "head_centroid": 3.571262264501825,
+          "head_shape": 3.4368886798297287
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.20557983337928637,
+          "head_centroid:head": 0.20439487494673583,
+          "head_centroid:head_logsigma": 0.10465999707169248,
+          "head_shape:head": 0.20316479637517093,
+          "head_shape:head_logsigma": 0.9687171381479018,
+          "head_shape:head_centroid": 0.10908089424172202
+        },
+        "composite_norm": 11.417011607240914,
+        "sum_term_norms": 14.113227238129653,
+        "composite_over_sum_norms": 0.8089582499171852
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              278.4825158879976,
+              9.701973605900548,
+              0.1989297958187981,
+              4.694827234492749
+            ],
+            [
+              9.701973605900548,
+              7.997628455224444,
+              0.017262043169842423,
+              3.7935847116954484
+            ],
+            [
+              0.1989297958187981,
+              0.017262043169842423,
+              0.003401431552041978,
+              0.00880950991494317
+            ],
+            [
+              4.694827234492749,
+              3.7935847116954484,
+              0.00880950991494317,
+              1.917539779525768
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              278.4825158879976,
+              24.375201939727624,
+              12.181217948890023,
+              11.652333064638647
+            ],
+            [
+              24.375201939727624,
+              50.48210914069172,
+              2.655652274523348,
+              23.655448934347937
+            ],
+            [
+              12.181217948890023,
+              2.655652274523348,
+              12.753914161854702,
+              1.3388622610215137
+            ],
+            [
+              11.652333064638647,
+              23.655448934347937,
+              1.3388622610215137,
+              11.812203797541734
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 16.687795417250225,
+            "head_logsigma": 7.105076293798099,
+            "head_centroid": 3.571262264501825,
+            "head_shape": 3.4368886798297287
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.20557983337928637,
+            "head_centroid:head": 0.20439487494673583,
+            "head_centroid:head_logsigma": 0.10465999707169248,
+            "head_shape:head": 0.20316479637517093,
+            "head_shape:head_logsigma": 0.9687171381479018,
+            "head_shape:head_centroid": 0.10908089424172202
+          },
+          "composite_norm": 22.47772621584274,
+          "sum_term_norms": 30.801022655379878,
+          "composite_over_sum_norms": 0.7297720750163682
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              278.4813278696238,
+              9.70156743098687,
+              0.19889883050669166,
+              4.694694284903761
+            ],
+            [
+              9.70156743098687,
+              7.997744236731236,
+              0.01726430583029165,
+              3.7936088190485044
+            ],
+            [
+              0.19889883050669166,
+              0.01726430583029165,
+              0.003401478795462126,
+              0.008810827326358905
+            ],
+            [
+              4.694694284903761,
+              3.7936088190485044,
+              0.008810827326358905,
+              1.917540964177661
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              278.4813278696238,
+              24.374181467404576,
+              12.179321826622006,
+              11.652003090219075
+            ],
+            [
+              24.374181467404576,
+              50.48283996917358,
+              2.6560003700129338,
+              23.655599259252348
+            ],
+            [
+              12.179321826622006,
+              2.6560003700129338,
+              12.754091304483053,
+              1.339062480153315
+            ],
+            [
+              11.652003090219075,
+              23.655599259252348,
+              1.3390624801533153,
+              11.812211095095476
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 16.68775982178626,
+            "head_logsigma": 7.105127723635485,
+            "head_centroid": 3.5712870655385647,
+            "head_shape": 3.4368897414807296
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.20557017721862392,
+            "head_centroid:head": 0.20436207563968134,
+            "head_centroid:head_logsigma": 0.1046722310324355,
+            "head_shape:head": 0.20315941367907195,
+            "head_shape:head_logsigma": 0.9687159828681832,
+            "head_shape:head_centroid": 0.10909641532809014
+          },
+          "composite_norm": 22.47760679489043,
+          "sum_term_norms": 30.80106435244104,
+          "composite_over_sum_norms": 0.7297672099149081
+        }
+      },
+      "selected_preclip_norm": 22.47772621584274,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.13346545692355402
+    },
+    {
+      "batch": 2,
+      "author": "Liugq",
+      "target_path": [
+        "font/train/new/LiugqBF/images_text_denoised/柱.png",
+        "font/train/new/LiugqBF/images_text_denoised/捨.png"
+      ],
+      "reference_path": [
+        "font/train/new/LiugqBF/images_text_denoised/紫.png",
+        "font/train/new/LiugqBF/images_text_denoised/紫.png"
+      ],
+      "query_original_identity": [
+        "Liugq:f57c2bace4011d819920de3e2e8243238a2fa325607b5dd0ccebc265707442d6",
+        "Liugq:f61c6f6d232a3fb73929db6508434179fc4e96f773c536f6700d5f590f44cd0f"
+      ],
+      "reference_original_identity": [
+        "Liugq:5cabf320d3e4a3c280fe6a0d486b269d7da306b9da5dcdd119cc7d5f70cd8349",
+        "Liugq:5cabf320d3e4a3c280fe6a0d486b269d7da306b9da5dcdd119cc7d5f70cd8349"
+      ],
+      "query_original_sha256": [
+        "f57c2bace4011d819920de3e2e8243238a2fa325607b5dd0ccebc265707442d6",
+        "f61c6f6d232a3fb73929db6508434179fc4e96f773c536f6700d5f590f44cd0f"
+      ],
+      "query_target_sha256": [
+        "7589e75ccbd7f00627bc13125bcb98e23d634597212f2b49b4a4c0c784497f9e",
+        "be68f90058c3f4bcf6555191559c75bcce74fd8ac6dbbc7e82cb647a20eec847"
+      ],
+      "reference_original_sha256": [
+        "5cabf320d3e4a3c280fe6a0d486b269d7da306b9da5dcdd119cc7d5f70cd8349",
+        "5cabf320d3e4a3c280fe6a0d486b269d7da306b9da5dcdd119cc7d5f70cd8349"
+      ],
+      "reference_target_sha256": [
+        "9ac7dd8f226116dff5159b32e8ff8a9b6fac2584755be7b854868edd28ac6f20",
+        "9ac7dd8f226116dff5159b32e8ff8a9b6fac2584755be7b854868edd28ac6f20"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            103.19281902988769,
+            12.614459186848762,
+            -0.014271445151188722,
+            7.929914144148654
+          ],
+          [
+            12.614459186848762,
+            9.039089629188538,
+            -0.0013627177491724873,
+            5.645241922950362
+          ],
+          [
+            -0.014271445151188722,
+            -0.0013627177491724873,
+            0.0006877154612267844,
+            -0.0013462913026685425
+          ],
+          [
+            7.929914144148654,
+            5.645241922950362,
+            -0.0013462913026685425,
+            3.692870791984845
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            -0.0,
+            0.0
+          ],
+          [
+            0.0,
+            57.05595249240478,
+            -0.20964519984781665,
+            35.201726646222625
+          ],
+          [
+            -0.0,
+            -0.20964519984781665,
+            2.5786389718767673,
+            -0.20460827388671277
+          ],
+          [
+            0.0,
+            35.201726646222625,
+            -0.20460827388671274,
+            22.74838981630011
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 7.553539070687645,
+          "head_centroid": 1.605814114982418,
+          "head_shape": 4.7695272109822495
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.4130299561675643,
+          "head_centroid:head": -0.05357211843252575,
+          "head_centroid:head_logsigma": -0.017283797605741807,
+          "head_shape:head": 0.4062203636929458,
+          "head_shape:head_logsigma": 0.9770980698123076,
+          "head_shape:head_centroid": -0.026714840754917486
+        },
+        "composite_norm": 12.327121627758762,
+        "sum_term_norms": 13.928880396652312,
+        "composite_over_sum_norms": 0.885004485408711
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              103.19281902988769,
+              12.614459186848762,
+              -0.014271445151188722,
+              7.929914144148654
+            ],
+            [
+              12.614459186848762,
+              9.039089629188538,
+              -0.0013627177491724873,
+              5.645241922950362
+            ],
+            [
+              -0.014271445151188722,
+              -0.0013627177491724873,
+              0.0006877154612267844,
+              -0.0013462913026685425
+            ],
+            [
+              7.929914144148654,
+              5.645241922950362,
+              -0.0013462913026685425,
+              3.692870791984845
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              103.19281902988769,
+              31.692519741847953,
+              -0.8738941450008364,
+              19.681661574835903
+            ],
+            [
+              31.692519741847953,
+              57.05595249240478,
+              -0.20964519984781665,
+              35.201726646222625
+            ],
+            [
+              -0.8738941450008364,
+              -0.20964519984781665,
+              2.5786389718767673,
+              -0.20460827388671277
+            ],
+            [
+              19.681661574835903,
+              35.201726646222625,
+              -0.20460827388671274,
+              22.74838981630011
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 10.158386635184137,
+            "head_logsigma": 7.553539070687645,
+            "head_centroid": 1.605814114982418,
+            "head_shape": 4.7695272109822495
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.4130299561675643,
+            "head_centroid:head": -0.05357211843252575,
+            "head_centroid:head_logsigma": -0.017283797605741807,
+            "head_shape:head": 0.4062203636929458,
+            "head_shape:head_logsigma": 0.9770980698123076,
+            "head_shape:head_centroid": -0.026714840754917486
+          },
+          "composite_norm": 18.871971836530797,
+          "sum_term_norms": 24.08726703183645,
+          "composite_over_sum_norms": 0.783483315545407
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              103.19304663976254,
+              12.614638934377808,
+              -0.014284227042236086,
+              7.929941971182245
+            ],
+            [
+              12.614638934377808,
+              9.039327628786168,
+              -0.0013662707404580032,
+              5.645284359963597
+            ],
+            [
+              -0.014284227042236086,
+              -0.0013662707404580032,
+              0.0006876474685873768,
+              -0.0013486931560507814
+            ],
+            [
+              7.929941971182245,
+              5.645284359963597,
+              -0.0013486931560507814,
+              3.692816880237231
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              103.19304663976254,
+              31.69297133886281,
+              -0.8746768281580077,
+              19.681730640181105
+            ],
+            [
+              31.69297133886281,
+              57.05745477795483,
+              -0.21019180428484102,
+              35.20199126838762
+            ],
+            [
+              -0.8746768281580077,
+              -0.21019180428484102,
+              2.5783840285467683,
+              -0.20497330564001515
+            ],
+            [
+              19.681730640181105,
+              35.20199126838762,
+              -0.20497330564001517,
+              22.748057715471383
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 10.158397838230325,
+            "head_logsigma": 7.55363851252857,
+            "head_centroid": 1.6057347316872634,
+            "head_shape": 4.769492395996809
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.41302994854300745,
+            "head_centroid:head": -0.05362269076549359,
+            "head_centroid:head_logsigma": -0.01732948991497457,
+            "head_shape:head": 0.4062243063927681,
+            "head_shape:head_logsigma": 0.9770996839018261,
+            "head_shape:head_centroid": -0.026764019844398124
+          },
+          "composite_norm": 18.8719539470727,
+          "sum_term_norms": 24.087263478442967,
+          "composite_over_sum_norms": 0.7834826884325097
+        }
+      },
+      "selected_preclip_norm": 18.871971836530797,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.1589659006481161
+    },
+    {
+      "batch": 3,
+      "author": "Longmen",
+      "target_path": [
+        "font/train/new/LongmenBF/images_text_denoised/林.png",
+        "font/train/new/LongmenBF/images_text_denoised/改.png"
+      ],
+      "reference_path": [
+        "font/train/new/LongmenBF/images_text_denoised/益.png",
+        "font/train/new/LongmenBF/images_text_denoised/作.png"
+      ],
+      "query_original_identity": [
+        "Longmen:5844fcb677e121882722db287917f9ce4248405b0c2d3955b210206353ca3f16",
+        "Longmen:021ee4f4af9ba367f6c269aa3f9141a43acfca2a14d68b6237a863484368490d"
+      ],
+      "reference_original_identity": [
+        "Longmen:4809e74922ebbd96ca4302c2b9ec50f099665c18e18771eeaa8cec8936d83986",
+        "Longmen:88c2884d684c0cc243435f9ea34eed9ceefbbec82107299913a2d7ccd72f735c"
+      ],
+      "query_original_sha256": [
+        "5844fcb677e121882722db287917f9ce4248405b0c2d3955b210206353ca3f16",
+        "021ee4f4af9ba367f6c269aa3f9141a43acfca2a14d68b6237a863484368490d"
+      ],
+      "query_target_sha256": [
+        "09735b729cd6af1149dc45c9e53d783bcc87042a23944fe4c70d4f7a00687787",
+        "b5d4811256bd3def4888c20dd5f875f17953e2fca348552e60d377d33492a9d9"
+      ],
+      "reference_original_sha256": [
+        "4809e74922ebbd96ca4302c2b9ec50f099665c18e18771eeaa8cec8936d83986",
+        "88c2884d684c0cc243435f9ea34eed9ceefbbec82107299913a2d7ccd72f735c"
+      ],
+      "reference_target_sha256": [
+        "10241ae62588c84f79bc689998839f6e4d9c8b4218f20ce4c375a5687aba7777",
+        "6538a9f674cc4c7258daaff40466261817d0d392fa73db55a87899f315a8d8d4"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            120.06199796720557,
+            15.326825586361394,
+            0.20852271607054784,
+            9.142502512645478
+          ],
+          [
+            15.326825586361394,
+            10.717647822593904,
+            0.02914724140326097,
+            6.488930157228822
+          ],
+          [
+            0.20852271607054784,
+            0.02914724140326097,
+            0.003356323710814485,
+            0.016178680872724005
+          ],
+          [
+            9.142502512645478,
+            6.488930157228822,
+            0.016178680872724005,
+            4.018106228162196
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            67.65123813150414,
+            4.48411217415335,
+            40.462667276058895
+          ],
+          [
+            0.0,
+            4.484112174153351,
+            12.58477904146792,
+            2.458822960952478
+          ],
+          [
+            0.0,
+            40.46266727605889,
+            2.4588229609524777,
+            24.75186702982596
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 8.225037272347413,
+          "head_centroid": 3.5475032123266526,
+          "head_shape": 4.975124825552215
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.4272673342574763,
+          "head_centroid:head": 0.3284873650357398,
+          "head_centroid:head_logsigma": 0.1536794495426647,
+          "head_shape:head": 0.41624746169788557,
+          "head_shape:head_logsigma": 0.9888095484238042,
+          "head_shape:head_centroid": 0.1393158345806931
+        },
+        "composite_norm": 14.13503056328947,
+        "sum_term_norms": 16.74766531022628,
+        "composite_over_sum_norms": 0.8440000621852939
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              120.06199796720557,
+              15.326825586361394,
+              0.20852271607054784,
+              9.142502512645478
+            ],
+            [
+              15.326825586361394,
+              10.717647822593904,
+              0.02914724140326097,
+              6.488930157228822
+            ],
+            [
+              0.20852271607054784,
+              0.02914724140326097,
+              0.003356323710814485,
+              0.016178680872724005
+            ],
+            [
+              9.142502512645478,
+              6.488930157228822,
+              0.016178680872724005,
+              4.018106228162196
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              120.06199796720557,
+              38.50705886638678,
+              12.768628456561403,
+              22.691246983266463
+            ],
+            [
+              38.50705886638678,
+              67.65123813150414,
+              4.48411217415335,
+              40.462667276058895
+            ],
+            [
+              12.768628456561403,
+              4.484112174153351,
+              12.58477904146792,
+              2.458822960952478
+            ],
+            [
+              22.691246983266463,
+              40.46266727605889,
+              2.4588229609524777,
+              24.75186702982596
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 10.957280591789441,
+            "head_logsigma": 8.225037272347413,
+            "head_centroid": 3.5475032123266526,
+            "head_shape": 4.975124825552215
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.4272673342574763,
+            "head_centroid:head": 0.3284873650357398,
+            "head_centroid:head_logsigma": 0.1536794495426647,
+            "head_shape:head": 0.41624746169788557,
+            "head_shape:head_logsigma": 0.9888095484238042,
+            "head_shape:head_centroid": 0.1393158345806931
+          },
+          "composite_norm": 21.62856804332553,
+          "sum_term_norms": 27.704945902015723,
+          "composite_over_sum_norms": 0.7806753393354182
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              120.06153369814001,
+              15.326880099869697,
+              0.2085242710668005,
+              9.142324956122593
+            ],
+            [
+              15.326880099869697,
+              10.717796072137048,
+              0.029151732013009912,
+              6.48893037205022
+            ],
+            [
+              0.2085242710668005,
+              0.029151732013009912,
+              0.0033563172978783307,
+              0.0161792820125779
+            ],
+            [
+              9.142324956122593,
+              6.48893037205022,
+              0.0161792820125779,
+              4.01804518293136
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              120.06153369814001,
+              38.50719582591969,
+              12.768723674817599,
+              22.690806296604503
+            ],
+            [
+              38.50719582591969,
+              67.65217390260916,
+              4.48480302504953,
+              40.46266861560895
+            ],
+            [
+              12.768723674817599,
+              4.48480302504953,
+              12.58475499569896,
+              2.4589143217059988
+            ],
+            [
+              22.690806296604503,
+              40.46266861560895,
+              2.4589143217059983,
+              24.75149098614999
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 10.95725940635431,
+            "head_logsigma": 8.225094157674377,
+            "head_centroid": 3.54749982321338,
+            "head_shape": 4.975087033022637
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.42726672501629204,
+            "head_centroid:head": 0.32849076357925056,
+            "head_centroid:head_logsigma": 0.15370221019605904,
+            "head_shape:head": 0.41624334444781286,
+            "head_shape:head_logsigma": 0.988810253779998,
+            "head_shape:head_centroid": 0.139322202474696
+          },
+          "composite_norm": 21.628596281358867,
+          "sum_term_norms": 27.704940420264705,
+          "composite_over_sum_norms": 0.780676513043092
+        }
+      },
+      "selected_preclip_norm": 21.62856804332553,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.13870543782605088
+    },
+    {
+      "batch": 4,
+      "author": "Ouyx",
+      "target_path": [
+        "font/train/new/OuyxBF/images_text_denoised/昃.png",
+        "font/train/new/OuyxBF/images_text_denoised/吊.png"
+      ],
+      "reference_path": [
+        "font/train/new/OuyxBF/images_text_denoised/制.png",
+        "font/train/new/OuyxBF/images_text_denoised/黄.png"
+      ],
+      "query_original_identity": [
+        "Ouyx:26434c9fee8b876b37db642963e3df772864d2bf743c4b737078376d4a56decd",
+        "Ouyx:e0f6441e6cbea4765e4c7be4baf1b831a061dfdca259480b972fe14d8b3e0894"
+      ],
+      "reference_original_identity": [
+        "Ouyx:1d4fb04522714eb7bbb4fccb2eb86e7bb327b9317557e7709031d87b23dc7520",
+        "Ouyx:5ed667a4ac36a4b511adb96cad44dd7248e8ba154d6ce1aafda65c49ba96e1e7"
+      ],
+      "query_original_sha256": [
+        "26434c9fee8b876b37db642963e3df772864d2bf743c4b737078376d4a56decd",
+        "e0f6441e6cbea4765e4c7be4baf1b831a061dfdca259480b972fe14d8b3e0894"
+      ],
+      "query_target_sha256": [
+        "395d2a2fd4544122244ee5d2aa25e3e22354dc93664bf777632c9d295d6d8d4a",
+        "077512573bbffd0e268e70da8610ac440b1a815de6a7d804224ed0354b30cdda"
+      ],
+      "reference_original_sha256": [
+        "1d4fb04522714eb7bbb4fccb2eb86e7bb327b9317557e7709031d87b23dc7520",
+        "5ed667a4ac36a4b511adb96cad44dd7248e8ba154d6ce1aafda65c49ba96e1e7"
+      ],
+      "reference_target_sha256": [
+        "784ef1bd176ec12132ed6be60e3d62520ece08fae3e05d6fa7a9453e98375a53",
+        "4fc61d5da8a8110aee5ecb8cb53c98db002e60e7b01cd650ad6860b4d3e6abfe"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            165.17489242696502,
+            11.74994463092537,
+            0.15075260921437028,
+            6.291473912130243
+          ],
+          [
+            11.74994463092537,
+            7.869680951973024,
+            0.0239475769446027,
+            4.358315992920797
+          ],
+          [
+            0.15075260921437028,
+            0.0239475769446027,
+            0.0057104032414116435,
+            0.013571011514800946
+          ],
+          [
+            6.291473912130243,
+            4.358315992920797,
+            0.013571011514800946,
+            2.631882394003185
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            49.67448724882979,
+            3.6841778552241675,
+            27.176912932099203
+          ],
+          [
+            0.0,
+            3.6841778552241675,
+            21.41157088015456,
+            2.0625114605109793
+          ],
+          [
+            0.0,
+            27.1769129320992,
+            2.0625114605109798,
+            16.21261344409564
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 7.048013000046878,
+          "head_centroid": 4.627263865412752,
+          "head_shape": 4.0264889723052315
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.32590066067012,
+          "head_centroid:head": 0.15522420088844036,
+          "head_centroid:head_logsigma": 0.11296648764399668,
+          "head_shape:head": 0.30174990661671286,
+          "head_shape:head_logsigma": 0.9576502195361517,
+          "head_shape:head_centroid": 0.11069948258943342
+        },
+        "composite_norm": 12.375212162575181,
+        "sum_term_norms": 15.701765837764862,
+        "composite_over_sum_norms": 0.7881414288328723
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              165.17489242696502,
+              11.74994463092537,
+              0.15075260921437028,
+              6.291473912130243
+            ],
+            [
+              11.74994463092537,
+              7.869680951973024,
+              0.0239475769446027,
+              4.358315992920797
+            ],
+            [
+              0.15075260921437028,
+              0.0239475769446027,
+              0.0057104032414116435,
+              0.013571011514800946
+            ],
+            [
+              6.291473912130243,
+              4.358315992920797,
+              0.013571011514800946,
+              2.631882394003185
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              165.17489242696502,
+              29.520516628208206,
+              9.231148012019236,
+              15.615132534168213
+            ],
+            [
+              29.520516628208206,
+              49.67448724882979,
+              3.6841778552241675,
+              27.176912932099203
+            ],
+            [
+              9.231148012019236,
+              3.6841778552241675,
+              21.41157088015456,
+              2.0625114605109793
+            ],
+            [
+              15.615132534168213,
+              27.1769129320992,
+              2.0625114605109798,
+              16.21261344409564
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.852038454150572,
+            "head_logsigma": 7.048013000046878,
+            "head_centroid": 4.627263865412752,
+            "head_shape": 4.0264889723052315
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.32590066067012,
+            "head_centroid:head": 0.15522420088844036,
+            "head_centroid:head_logsigma": 0.11296648764399668,
+            "head_shape:head": 0.30174990661671286,
+            "head_shape:head_logsigma": 0.9576502195361517,
+            "head_shape:head_centroid": 0.11069948258943342
+          },
+          "composite_norm": 20.665293679125515,
+          "sum_term_norms": 28.553804291915434,
+          "composite_over_sum_norms": 0.7237317125191817
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              165.17608716220093,
+              11.750008815929391,
+              0.15076047725300867,
+              6.2913619683953925
+            ],
+            [
+              11.750008815929391,
+              7.869386084622548,
+              0.023947564143287137,
+              4.358171038226846
+            ],
+            [
+              0.15076047725300867,
+              0.023947564143287137,
+              0.005710618991063204,
+              0.013572936514793799
+            ],
+            [
+              6.2913619683953925,
+              4.358171038226846,
+              0.013572936514793799,
+              2.6318123616855473
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              165.17608716220093,
+              29.52067788637052,
+              9.231629801552524,
+              15.614854695257891
+            ],
+            [
+              29.52067788637052,
+              49.67262600635622,
+              3.6841758858256175,
+              27.176009046033343
+            ],
+            [
+              9.231629801552524,
+              3.684175885825617,
+              21.412379849112,
+              2.062804020468092
+            ],
+            [
+              15.614854695257891,
+              27.176009046033343,
+              2.062804020468092,
+              16.212182039220924
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.852084934445498,
+            "head_logsigma": 7.047880958582956,
+            "head_centroid": 4.627351277903159,
+            "head_shape": 4.026435401098709
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.32590736801669096,
+            "head_centroid:head": 0.15522880851192325,
+            "head_centroid:head_logsigma": 0.11296640965339444,
+            "head_shape:head": 0.30174746098430283,
+            "head_shape:head_logsigma": 0.9576490508549779,
+            "head_shape:head_centroid": 0.11071456648958132
+          },
+          "composite_norm": 20.66527468309836,
+          "sum_term_norms": 28.553752572030323,
+          "composite_over_sum_norms": 0.7237323581538954
+        }
+      },
+      "selected_preclip_norm": 20.665293679125515,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.14517093473635792
+    },
+    {
+      "batch": 5,
+      "author": "Sushi",
+      "target_path": [
+        "font/train/new/SushiBF/images_text_denoised/窮.png",
+        "font/train/new/SushiBF/images_text_denoised/苦.png"
+      ],
+      "reference_path": [
+        "font/train/new/SushiBF/images_text_denoised/途.png",
+        "font/train/new/SushiBF/images_text_denoised/寒.png"
+      ],
+      "query_original_identity": [
+        "Sushi:c0dd3013f4f2e2fe07397ab98f5d2643d9ffae7688ca63655e2777acadb60663",
+        "Sushi:225b79fe790aff7360bec096a623b950e51d4d3c8e6ca5200b82c96689f18b94"
+      ],
+      "reference_original_identity": [
+        "Sushi:5f09d886fa09fcd02b0ad994312bf937e0852e1dbc30e6f3348c8d6e42bcb639",
+        "Sushi:b1635e2a6d040bf50f5438c2cc3f6fea069a3c53c33791b14e1b268edb1e8c27"
+      ],
+      "query_original_sha256": [
+        "c0dd3013f4f2e2fe07397ab98f5d2643d9ffae7688ca63655e2777acadb60663",
+        "225b79fe790aff7360bec096a623b950e51d4d3c8e6ca5200b82c96689f18b94"
+      ],
+      "query_target_sha256": [
+        "c32c7980b44b907014bb013b183dcd09df6cfb699d5fa425c484eee1269a1f5d",
+        "900b8da82f37f23aae100b3ec177a6c28007a390487bb0d3b1ede2d8108178dd"
+      ],
+      "reference_original_sha256": [
+        "5f09d886fa09fcd02b0ad994312bf937e0852e1dbc30e6f3348c8d6e42bcb639",
+        "b1635e2a6d040bf50f5438c2cc3f6fea069a3c53c33791b14e1b268edb1e8c27"
+      ],
+      "reference_target_sha256": [
+        "02c6e3868668b19707136da1c0123611e67b5dc3916961762e7beb26eeb2a503",
+        "05d01e8f98f8ca1ec14c13d16dc1fd297daa5c2c69fffe200218589d301cbf2c"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            146.4126334075163,
+            13.675431697307772,
+            0.1231638321883688,
+            7.843712155436663
+          ],
+          [
+            13.675431697307772,
+            13.628966352128941,
+            -0.004881434133623408,
+            8.027289575529949
+          ],
+          [
+            0.1231638321883688,
+            -0.004881434133623408,
+            0.00655521212449478,
+            -0.006937542039320954
+          ],
+          [
+            7.843712155436663,
+            8.027289575529949,
+            -0.006937542039320954,
+            4.845100062680814
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            86.02787322703652,
+            -0.7509766678454697,
+            50.055331056600025
+          ],
+          [
+            0.0,
+            -0.7509766678454697,
+            24.579243024415806,
+            -1.054362082610469
+          ],
+          [
+            0.0,
+            50.05533105660003,
+            -1.054362082610469,
+            29.84621751837766
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 9.275121197431142,
+          "head_centroid": 4.957745760364866,
+          "head_shape": 5.463169182661073
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.3061401629896774,
+          "head_centroid:head": 0.125718891301788,
+          "head_centroid:head_logsigma": -0.016331369279517553,
+          "head_shape:head": 0.2944970823056482,
+          "head_shape:head_logsigma": 0.9878388334648674,
+          "head_shape:head_centroid": -0.03892789117969639
+        },
+        "composite_norm": 15.393288095209488,
+        "sum_term_norms": 19.696036140457082,
+        "composite_over_sum_norms": 0.7815424375461295
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              146.4126334075163,
+              13.675431697307772,
+              0.1231638321883688,
+              7.843712155436663
+            ],
+            [
+              13.675431697307772,
+              13.628966352128941,
+              -0.004881434133623408,
+              8.027289575529949
+            ],
+            [
+              0.1231638321883688,
+              -0.004881434133623408,
+              0.00655521212449478,
+              -0.006937542039320954
+            ],
+            [
+              7.843712155436663,
+              8.027289575529949,
+              -0.006937542039320954,
+              4.845100062680814
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              146.4126334075163,
+              34.358103080397726,
+              7.5417836585607425,
+              19.467712427585788
+            ],
+            [
+              34.358103080397726,
+              86.02787322703652,
+              -0.7509766678454697,
+              50.055331056600025
+            ],
+            [
+              7.5417836585607425,
+              -0.7509766678454697,
+              24.579243024415806,
+              -1.054362082610469
+            ],
+            [
+              19.467712427585788,
+              50.05533105660003,
+              -1.054362082610469,
+              29.84621751837766
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.100108818003097,
+            "head_logsigma": 9.275121197431142,
+            "head_centroid": 4.957745760364866,
+            "head_shape": 5.463169182661073
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.3061401629896774,
+            "head_centroid:head": 0.125718891301788,
+            "head_centroid:head_logsigma": -0.016331369279517553,
+            "head_shape:head": 0.2944970823056482,
+            "head_shape:head_logsigma": 0.9878388334648674,
+            "head_shape:head_centroid": -0.03892789117969639
+          },
+          "composite_norm": 22.496691981771963,
+          "sum_term_norms": 31.79614495846018,
+          "composite_over_sum_norms": 0.7075289161991992
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              146.41268853939346,
+              13.676363977091341,
+              0.12314140865398304,
+              7.844004343332244
+            ],
+            [
+              13.676363977091341,
+              13.629160271214118,
+              -0.004885524762304971,
+              8.02726512220255
+            ],
+            [
+              0.12314140865398304,
+              -0.004885524762304971,
+              0.006554917719581055,
+              -0.006939824684285112
+            ],
+            [
+              7.844004343332244,
+              8.02726512220255,
+              -0.006939824684285112,
+              4.844990765643132
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              146.41268853939346,
+              34.36044533661403,
+              7.540410581398455,
+              19.468437623744606
+            ],
+            [
+              34.36044533661403,
+              86.02909727044853,
+              -0.751605984274327,
+              50.055178574322305
+            ],
+            [
+              7.540410581398455,
+              -0.7516059842743269,
+              24.578139131851447,
+              -1.0547089971638697
+            ],
+            [
+              19.468437623744606,
+              50.05517857432231,
+              -1.0547089971638697,
+              29.84554423957669
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.100111096159136,
+            "head_logsigma": 9.275187182501954,
+            "head_centroid": 4.957634429024739,
+            "head_shape": 5.463107562512081
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.30615879742008384,
+            "head_centroid:head": 0.12569880161845404,
+            "head_centroid:head_logsigma": -0.016345305692750934,
+            "head_shape:head": 0.29451131908489564,
+            "head_shape:head_logsigma": 0.9878399386636478,
+            "head_shape:head_centroid": -0.03894201325052569
+          },
+          "composite_norm": 22.496706057788828,
+          "sum_term_norms": 31.79604027019791,
+          "composite_over_sum_norms": 0.7075316884308626
+        }
+      },
+      "selected_preclip_norm": 22.496691981771963,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.13335293928684103
+    },
+    {
+      "batch": 6,
+      "author": "Yanzq",
+      "target_path": [
+        "font/train/new/YanzqBF/images_text_denoised/妙.png",
+        "font/train/new/YanzqJT/images_text_denoised/禪.png"
+      ],
+      "reference_path": [
+        "font/train/new/YanzqBF/images_text_denoised/尚.png",
+        "font/train/new/YanzqJT/images_text_denoised/衜.png"
+      ],
+      "query_original_identity": [
+        "Yanzq:708f1c4e0d8e3f5e1985760fcb67cc8b885c079ced64dca37d4d4da10345d889",
+        "Yanzq:508e91d701975491a9d72ed83ddd44b0fe5e6d175866f7bc59f78856405e05bf"
+      ],
+      "reference_original_identity": [
+        "Yanzq:e20cee1deaf841826439ef9520f3b31d8e3c733164c0bcf459a9306a31368b8a",
+        "Yanzq:5ca5f6ee67e67dab518e4e52a4449c608d243b4160377dbfc42c9f5999ba9270"
+      ],
+      "query_original_sha256": [
+        "708f1c4e0d8e3f5e1985760fcb67cc8b885c079ced64dca37d4d4da10345d889",
+        "508e91d701975491a9d72ed83ddd44b0fe5e6d175866f7bc59f78856405e05bf"
+      ],
+      "query_target_sha256": [
+        "aace7b13c808f487c4313cb04d448473bc1d042b625ed5eb4a0e8710076a66b0",
+        "b2bf10045a2544ea1709859b2d3c5a612e0574939bfd00a8348588eb93434d99"
+      ],
+      "reference_original_sha256": [
+        "e20cee1deaf841826439ef9520f3b31d8e3c733164c0bcf459a9306a31368b8a",
+        "5ca5f6ee67e67dab518e4e52a4449c608d243b4160377dbfc42c9f5999ba9270"
+      ],
+      "reference_target_sha256": [
+        "c3b1077edc6707fdc7d16c82dff4166ac27a14e33d91de1180c3c47a915bfa41",
+        "9fb08f8f5e6bded3001b8c17cab77bcf514943830edc31b1cb4fc8e0d252d554"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            94.09214865694048,
+            15.832726158444245,
+            -0.004018814124145287,
+            10.084403525303912
+          ],
+          [
+            15.832726158444245,
+            12.215688755515657,
+            -0.022630232702086306,
+            7.713465948778321
+          ],
+          [
+            -0.004018814124145287,
+            -0.022630232702086306,
+            0.002253673026868047,
+            -0.014658214395224745
+          ],
+          [
+            10.084403525303912,
+            7.713465948778321,
+            -0.014658214395224745,
+            5.109186185899716
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            -0.0,
+            0.0
+          ],
+          [
+            0.0,
+            77.10707448303884,
+            -3.4815130721768877,
+            48.0984382121808
+          ],
+          [
+            -0.0,
+            -3.4815130721768877,
+            8.450310374849963,
+            -2.2277436834981192
+          ],
+          [
+            0.0,
+            48.0984382121808,
+            -2.2277436834981192,
+            31.473009901446694
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 8.781063402745641,
+          "head_centroid": 2.9069417563566637,
+          "head_shape": 5.61008109579948
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.46700338436505284,
+          "head_centroid:head": -0.008727216974750311,
+          "head_centroid:head_logsigma": -0.136390646172227,
+          "head_shape:head": 0.45993626899432327,
+          "head_shape:head_logsigma": 0.9763706651260701,
+          "head_shape:head_centroid": -0.13660284721720037
+        },
+        "composite_norm": 14.205940928792682,
+        "sum_term_norms": 17.298086254901786,
+        "composite_over_sum_norms": 0.8212435017062724
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              94.09214865694048,
+              15.832726158444245,
+              -0.004018814124145287,
+              10.084403525303912
+            ],
+            [
+              15.832726158444245,
+              12.215688755515657,
+              -0.022630232702086306,
+              7.713465948778321
+            ],
+            [
+              -0.004018814124145287,
+              -0.022630232702086306,
+              0.002253673026868047,
+              -0.014658214395224745
+            ],
+            [
+              10.084403525303912,
+              7.713465948778321,
+              -0.014658214395224745,
+              5.109186185899716
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              94.09214865694048,
+              39.7780815579393,
+              -0.24608707077185535,
+              25.02899952776501
+            ],
+            [
+              39.7780815579393,
+              77.10707448303884,
+              -3.4815130721768877,
+              48.0984382121808
+            ],
+            [
+              -0.24608707077185535,
+              -3.4815130721768877,
+              8.450310374849963,
+              -2.2277436834981192
+            ],
+            [
+              25.02899952776501,
+              48.0984382121808,
+              -2.2277436834981192,
+              31.473009901446694
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 9.700110754880095,
+            "head_logsigma": 8.781063402745641,
+            "head_centroid": 2.9069417563566637,
+            "head_shape": 5.61008109579948
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.46700338436505284,
+            "head_centroid:head": -0.008727216974750311,
+            "head_centroid:head_logsigma": -0.136390646172227,
+            "head_shape:head": 0.45993626899432327,
+            "head_shape:head_logsigma": 0.9763706651260701,
+            "head_shape:head_centroid": -0.13660284721720037
+          },
+          "composite_norm": 20.61608339038122,
+          "sum_term_norms": 26.99819700978188,
+          "composite_over_sum_norms": 0.7636096359661233
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              94.09244361566198,
+              15.832792434867713,
+              -0.004028423644876877,
+              10.084110119742206
+            ],
+            [
+              15.832792434867713,
+              12.21544727258356,
+              -0.022634642931494864,
+              7.713254806725672
+            ],
+            [
+              -0.004028423644876877,
+              -0.022634642931494864,
+              0.002253756744579824,
+              -0.014661676322275441
+            ],
+            [
+              10.084110119742206,
+              7.713254806725672,
+              -0.014661676322275441,
+              5.1089933229990265
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              94.09244361566198,
+              39.778248070575955,
+              -0.24667549778920625,
+              25.028271309418038
+            ],
+            [
+              39.778248070575955,
+              77.10555021021197,
+              -3.4821915570841937,
+              48.097121605218284
+            ],
+            [
+              -0.24667549778920625,
+              -3.4821915570841937,
+              8.450624280478664,
+              -2.228269824398503
+            ],
+            [
+              25.028271309418038,
+              48.09712160521828,
+              -2.228269824398503,
+              31.471821850011068
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 9.70012595875239,
+            "head_logsigma": 8.780976609137047,
+            "head_centroid": 2.9069957482732347,
+            "head_shape": 5.609975209393626
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.46700922328382977,
+            "head_centroid:head": -0.008747908724422132,
+            "head_centroid:head_logsigma": -0.13641604095081325,
+            "head_shape:head": 0.4599308471547441,
+            "head_shape:head_logsigma": 0.9763720175628507,
+            "head_shape:head_centroid": -0.13663515076829494
+          },
+          "composite_norm": 20.61585429149722,
+          "sum_term_norms": 26.998073525556297,
+          "composite_over_sum_norms": 0.7636046428269155
+        }
+      },
+      "selected_preclip_norm": 20.61608339038122,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.14551745562882717
+    },
+    {
+      "batch": 7,
+      "author": "Zhangqb",
+      "target_path": [
+        "font/train/new/ZhangqbBF/images_text_denoised/利.png",
+        "font/train/new/ZhangqbBF/images_text_denoised/忠.png"
+      ],
+      "reference_path": [
+        "font/train/new/ZhangqbBF/images_text_denoised/景.png",
+        "font/train/new/ZhangqbBF/images_text_denoised/拾.png"
+      ],
+      "query_original_identity": [
+        "Zhangqb:7eed9d82a67d45c29a83c77f4b008a327bebfb3a59ace3e1d85e109cc76bafe9",
+        "Zhangqb:ac21a313643bd4a00ee39f37c9dc971bdf4fe3ed09e36db04a199bb94e82af5b"
+      ],
+      "reference_original_identity": [
+        "Zhangqb:2869f811d8f36990186c11c8adb349603283bde803b79c2584e52d03d7cccb5e",
+        "Zhangqb:c944c9f4acf9afbc115430fc8f52b24f71845d0223c4ac86a99d3d9ee2c772f1"
+      ],
+      "query_original_sha256": [
+        "7eed9d82a67d45c29a83c77f4b008a327bebfb3a59ace3e1d85e109cc76bafe9",
+        "ac21a313643bd4a00ee39f37c9dc971bdf4fe3ed09e36db04a199bb94e82af5b"
+      ],
+      "query_target_sha256": [
+        "ee0d111e34fef640d338dbc0004e7426d587c995d4247061651e80eec502eb00",
+        "35df7006190e26b2d210f4af0afaf3a2caa4367be6d38bb0e977de9462ac6e13"
+      ],
+      "reference_original_sha256": [
+        "2869f811d8f36990186c11c8adb349603283bde803b79c2584e52d03d7cccb5e",
+        "c944c9f4acf9afbc115430fc8f52b24f71845d0223c4ac86a99d3d9ee2c772f1"
+      ],
+      "reference_target_sha256": [
+        "c9250636744201b687d3b9e4899625150c6b09e35920ad4309b4d4c9b4da51fa",
+        "5616102e79ff85d02827481e39a2f2e2ba5d009231f78a92a762435a5dc11d31"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            149.24416797966296,
+            9.776497039723267,
+            0.12513284549278225,
+            -1.484401863615716
+          ],
+          [
+            9.776497039723267,
+            6.083836736340345,
+            0.010276923423750972,
+            0.025344858205762932
+          ],
+          [
+            0.12513284549278225,
+            0.010276923423750972,
+            0.004334548484383333,
+            -0.0002432053090669628
+          ],
+          [
+            -1.484401863615716,
+            0.025344858205762932,
+            -0.0002432053090669628,
+            0.2607872450205626
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            -0.0
+          ],
+          [
+            0.0,
+            38.40199777190874,
+            1.581037354434775,
+            0.15804154766502185
+          ],
+          [
+            0.0,
+            1.581037354434775,
+            16.252703737940795,
+            -0.036962148080167116
+          ],
+          [
+            -0.0,
+            0.15804154766502185,
+            -0.036962148080167116,
+            1.6064710202487569
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 6.196934546363123,
+          "head_centroid": 4.031464217618804,
+          "head_shape": 1.2674663783504305
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.3244485316555133,
+          "head_centroid:head": 0.15557890240984143,
+          "head_centroid:head_logsigma": 0.06328523723058074,
+          "head_shape:head": -0.2379357133673114,
+          "head_shape:head_logsigma": 0.02012138714440407,
+          "head_shape:head_centroid": -0.007233657557977521
+        },
+        "composite_norm": 7.724338550202053,
+        "sum_term_norms": 11.495865142332358,
+        "composite_over_sum_norms": 0.6719232049580992
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              149.24416797966296,
+              9.776497039723267,
+              0.12513284549278225,
+              -1.484401863615716
+            ],
+            [
+              9.776497039723267,
+              6.083836736340345,
+              0.010276923423750972,
+              0.025344858205762932
+            ],
+            [
+              0.12513284549278225,
+              0.010276923423750972,
+              0.004334548484383333,
+              -0.0002432053090669628
+            ],
+            [
+              -1.484401863615716,
+              0.025344858205762932,
+              -0.0002432053090669628,
+              0.2607872450205626
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              149.24416797966296,
+              24.56243433413096,
+              7.662353732574049,
+              -3.684213295335341
+            ],
+            [
+              24.56243433413096,
+              38.40199777190874,
+              1.581037354434775,
+              0.15804154766502185
+            ],
+            [
+              7.662353732574049,
+              1.581037354434775,
+              16.252703737940795,
+              -0.036962148080167116
+            ],
+            [
+              -3.684213295335341,
+              0.15804154766502185,
+              -0.036962148080167116,
+              1.6064710202487569
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.216553031836066,
+            "head_logsigma": 6.196934546363123,
+            "head_centroid": 4.031464217618804,
+            "head_shape": 1.2674663783504305
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.3244485316555133,
+            "head_centroid:head": 0.15557890240984143,
+            "head_centroid:head_logsigma": 0.06328523723058074,
+            "head_shape:head": -0.2379357133673114,
+            "head_shape:head_logsigma": 0.02012138714440407,
+            "head_shape:head_centroid": -0.007233657557977521
+          },
+          "composite_norm": 16.309222040322457,
+          "sum_term_norms": 23.712418174168423,
+          "composite_over_sum_norms": 0.6877924436272476
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              149.24354344005587,
+              9.776365024632042,
+              0.12511751139464877,
+              -1.484517793750797
+            ],
+            [
+              9.776365024632042,
+              6.084054130296522,
+              0.010273212511968666,
+              0.025347754390164567
+            ],
+            [
+              0.12511751139464877,
+              0.010273212511968666,
+              0.004334462650642135,
+              -0.00024161728300475804
+            ],
+            [
+              -1.484517793750797,
+              0.025347754390164567,
+              -0.00024161728300475804,
+              0.2607584310271811
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              149.24354344005587,
+              24.56210265991307,
+              7.66141476819898,
+              -3.6845010282973267
+            ],
+            [
+              24.56210265991307,
+              38.403369991871664,
+              1.5804664549637057,
+              0.1580596072438698
+            ],
+            [
+              7.66141476819898,
+              1.580466454963706,
+              16.252381898106396,
+              -0.036720801151140105
+            ],
+            [
+              -3.6845010282973267,
+              0.15805960724386983,
+              -0.0367208011511401,
+              1.606293523663978
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.21652747060538,
+            "head_logsigma": 6.197045263016211,
+            "head_centroid": 4.031424301423307,
+            "head_shape": 1.2673963561822237
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.32443903283187375,
+            "head_centroid:head": 0.15556170310179046,
+            "head_centroid:head_logsigma": 0.06326188157460723,
+            "head_shape:head": -0.23796794048963688,
+            "head_shape:head_logsigma": 0.020124438696845288,
+            "head_shape:head_centroid": -0.0071868930856212295
+          },
+          "composite_norm": 16.309115002827106,
+          "sum_term_norms": 23.71239339122712,
+          "composite_over_sum_norms": 0.6877886484820631
+        }
+      },
+      "selected_preclip_norm": 16.309222040322457,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.18394500930718125
+    },
+    {
+      "batch": 8,
+      "author": "Zhaomf",
+      "target_path": [
+        "font/train/new/ZhaomfBF/images_text_denoised/其1.png",
+        "font/train/new/ZhaomfJT/images_text_denoised/清.png"
+      ],
+      "reference_path": [
+        "font/train/new/ZhaomfBF/images_text_denoised/袂.png",
+        "font/train/new/ZhaomfJT/images_text_denoised/黄.png"
+      ],
+      "query_original_identity": [
+        "Zhaomf:35e83496e4b5bb159fce3e501d84f2a0b93fd4ac0f343bcaefc6c6fe83a40218",
+        "Zhaomf:9b3dc2fd3f96be0e46f7097237c4d7d415ed660debd90752de9950522f55f8f7"
+      ],
+      "reference_original_identity": [
+        "Zhaomf:8b480f68119b778d809318dfd8da17f4e3fbb5875bfe584de125ef07039a2e15",
+        "Zhaomf:5156f29ec1250fd3b38f2f6d1992e322c4e8a604c10e52c6d37d8d08909854d5"
+      ],
+      "query_original_sha256": [
+        "35e83496e4b5bb159fce3e501d84f2a0b93fd4ac0f343bcaefc6c6fe83a40218",
+        "9b3dc2fd3f96be0e46f7097237c4d7d415ed660debd90752de9950522f55f8f7"
+      ],
+      "query_target_sha256": [
+        "ae75e4eef80c7c45eec2affe17a9f4311600eda3ee7e0391f19c3b5b011d0735",
+        "1f2b71fdd321f9941f398ae859e128982bb715afc69f0200d5cb70493ac95eb6"
+      ],
+      "reference_original_sha256": [
+        "8b480f68119b778d809318dfd8da17f4e3fbb5875bfe584de125ef07039a2e15",
+        "5156f29ec1250fd3b38f2f6d1992e322c4e8a604c10e52c6d37d8d08909854d5"
+      ],
+      "reference_target_sha256": [
+        "baa971101ebe94b3cd26716cc36b48de4c60428c9c98d421f31921114542b432",
+        "61a48ea37977e0819df86c63b1d2e4ba1a2df1fd84aa4e51f5db6278b65a9637"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            160.5478789200124,
+            10.667803110943396,
+            0.22795125105581437,
+            4.870908774291564
+          ],
+          [
+            10.667803110943396,
+            9.381469402241741,
+            0.02340350734623553,
+            4.685786566879376
+          ],
+          [
+            0.22795125105581437,
+            0.02340350734623553,
+            0.002605234355376379,
+            0.010722165203457479
+          ],
+          [
+            4.870908774291564,
+            4.685786566879376,
+            0.010722165203457479,
+            2.457066163108884
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            59.217099783455325,
+            3.600476311195648,
+            29.21890329965229
+          ],
+          [
+            0.0,
+            3.6004763111956475,
+            9.768515059501377,
+            1.6295460798558945
+          ],
+          [
+            0.0,
+            29.218903299652286,
+            1.6295460798558945,
+            15.135730988519
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 7.695264763700814,
+          "head_centroid": 3.1254623753136714,
+          "head_shape": 3.890466680042254
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.27487628475178305,
+          "head_centroid:head": 0.35246524175926797,
+          "head_centroid:head_logsigma": 0.14970010877966936,
+          "head_shape:head": 0.24524450437756576,
+          "head_shape:head_logsigma": 0.9759748899206215,
+          "head_shape:head_centroid": 0.1340141544319379
+        },
+        "composite_norm": 12.370092853850506,
+        "sum_term_norms": 14.711193819056739,
+        "composite_over_sum_norms": 0.8408626115595328
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              160.5478789200124,
+              10.667803110943396,
+              0.22795125105581437,
+              4.870908774291564
+            ],
+            [
+              10.667803110943396,
+              9.381469402241741,
+              0.02340350734623553,
+              4.685786566879376
+            ],
+            [
+              0.22795125105581437,
+              0.02340350734623553,
+              0.002605234355376379,
+              0.010722165203457479
+            ],
+            [
+              4.870908774291564,
+              4.685786566879376,
+              0.010722165203457479,
+              2.457066163108884
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              160.5478789200124,
+              26.801748349877478,
+              13.95831056581536,
+              12.089358890252846
+            ],
+            [
+              26.801748349877478,
+              59.217099783455325,
+              3.600476311195648,
+              29.21890329965229
+            ],
+            [
+              13.95831056581536,
+              3.6004763111956475,
+              9.768515059501377,
+              1.6295460798558945
+            ],
+            [
+              12.089358890252846,
+              29.218903299652286,
+              1.6295460798558945,
+              15.135730988519
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.670748948661734,
+            "head_logsigma": 7.695264763700814,
+            "head_centroid": 3.1254623753136714,
+            "head_shape": 3.890466680042254
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.27487628475178305,
+            "head_centroid:head": 0.35246524175926797,
+            "head_centroid:head_logsigma": 0.14970010877966936,
+            "head_shape:head": 0.24524450437756576,
+            "head_shape:head_logsigma": 0.9759748899206215,
+            "head_shape:head_centroid": 0.1340141544319379
+          },
+          "composite_norm": 20.47598377965726,
+          "sum_term_norms": 27.381942767718474,
+          "composite_over_sum_norms": 0.7477914899375624
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              160.54749498046203,
+              10.667284549527267,
+              0.22796616959939886,
+              4.8700656209395845
+            ],
+            [
+              10.667284549527267,
+              9.381437838734705,
+              0.023404531041305576,
+              4.685610513338776
+            ],
+            [
+              0.22796616959939886,
+              0.023404531041305576,
+              0.0026053067251985834,
+              0.010723642850973159
+            ],
+            [
+              4.8700656209395845,
+              4.685610513338776,
+              0.010723642850973159,
+              2.456874078348527
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              160.54749498046203,
+              26.800445518129035,
+              13.959224084225886,
+              12.0872662246038
+            ],
+            [
+              26.800445518129035,
+              59.21690055034316,
+              3.600633799976926,
+              29.217805492207386
+            ],
+            [
+              13.959224084225886,
+              3.6006337999769253,
+              9.76878641539556,
+              1.6297706515418269
+            ],
+            [
+              12.0872662246038,
+              29.217805492207386,
+              1.6297706515418269,
+              15.13454773049225
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.670733798026934,
+            "head_logsigma": 7.695251818514008,
+            "head_centroid": 3.1255057855322486,
+            "head_shape": 3.890314605593261
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.27486371407038246,
+            "head_centroid:head": 0.35248383502379066,
+            "head_centroid:head_logsigma": 0.14970482938510102,
+            "head_shape:head": 0.2452119308837153,
+            "head_shape:head_logsigma": 0.97597801252215,
+            "head_shape:head_centroid": 0.1340360009977275
+          },
+          "composite_norm": 20.475791101153156,
+          "sum_term_norms": 27.38180600766645,
+          "composite_over_sum_norms": 0.747788188091767
+        }
+      },
+      "selected_preclip_norm": 20.47598377965726,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.14651310688087565
+    },
+    {
+      "batch": 9,
+      "author": "Caoqb",
+      "target_path": [
+        "font/train/new/CaoqbJT/images_text_denoised/部.png",
+        "font/train/new/CaoqbBF/images_text_denoised/在.png"
+      ],
+      "reference_path": [
+        "font/train/new/CaoqbJT/images_text_denoised/毖.png",
+        "font/train/new/CaoqbBF/images_text_denoised/泉.png"
+      ],
+      "query_original_identity": [
+        "Caoqb:b2ae69905d799f5b591e322fc888ac0e13cfbdb664b5f81262ac2eca1ef79a31",
+        "Caoqb:e7a37f2bb9f52e878f4bda8c0273dde95d3ba039f10504088310930c9e4b6d93"
+      ],
+      "reference_original_identity": [
+        "Caoqb:6ea998da2a6d1945fec505c260eb386ded334051b4ada05526d69c5a2a9821af",
+        "Caoqb:351bf92626dd88af63d63cffbe21fbc1d53c96fdcd9c8b0a9ad8f2132bcfc190"
+      ],
+      "query_original_sha256": [
+        "b2ae69905d799f5b591e322fc888ac0e13cfbdb664b5f81262ac2eca1ef79a31",
+        "e7a37f2bb9f52e878f4bda8c0273dde95d3ba039f10504088310930c9e4b6d93"
+      ],
+      "query_target_sha256": [
+        "fde22ced5ae1d48c077772e482cf5ffc667f681fd306a7607c27a66716e8cfee",
+        "1b18b420807fae4832e63ad31729c64192293c0d1cad0369b908d4fb71af3b5e"
+      ],
+      "reference_original_sha256": [
+        "6ea998da2a6d1945fec505c260eb386ded334051b4ada05526d69c5a2a9821af",
+        "351bf92626dd88af63d63cffbe21fbc1d53c96fdcd9c8b0a9ad8f2132bcfc190"
+      ],
+      "reference_target_sha256": [
+        "ab2fcabf50f43a2f2cfe708f0ca7a0c2755ae8577c2662cdfe084026ec54c231",
+        "2413d7fa95a080803e344ae0484141e23cb51f4f9f052d554013a1f7bfc3b1e4"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            165.8651783587452,
+            11.750522957610485,
+            0.27348255222919016,
+            0.9178944942996736
+          ],
+          [
+            11.750522957610485,
+            7.8954003365103915,
+            0.01852393411983222,
+            0.9540189503660947
+          ],
+          [
+            0.27348255222919016,
+            0.01852393411983222,
+            0.004920569606165853,
+            0.0018112262519147937
+          ],
+          [
+            0.9178944942996736,
+            0.9540189503660947,
+            0.0018112262519147937,
+            0.2156514812786714
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            49.83683147180988,
+            2.8497859317369643,
+            5.948923848519855
+          ],
+          [
+            0.0,
+            2.8497859317369643,
+            18.450032412616366,
+            0.2752687150901295
+          ],
+          [
+            0.0,
+            5.948923848519856,
+            0.2752687150901295,
+            1.3284309787489297
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 7.059520626204719,
+          "head_centroid": 4.295350091973455,
+          "head_shape": 1.152575801736671
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.32470764014863424,
+          "head_centroid:head": 0.30272223724206326,
+          "head_centroid:head_logsigma": 0.09398065337319797,
+          "head_shape:head": 0.15347545587525094,
+          "head_shape:head_logsigma": 0.7311284787717349,
+          "head_shape:head_centroid": 0.055601792359674884
+        },
+        "composite_norm": 9.368204302526129,
+        "sum_term_norms": 12.507446519914845,
+        "composite_over_sum_norms": 0.7490101426865754
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              165.8651783587452,
+              11.750522957610485,
+              0.27348255222919016,
+              0.9178944942996736
+            ],
+            [
+              11.750522957610485,
+              7.8954003365103915,
+              0.01852393411983222,
+              0.9540189503660947
+            ],
+            [
+              0.27348255222919016,
+              0.01852393411983222,
+              0.004920569606165853,
+              0.0018112262519147937
+            ],
+            [
+              0.9178944942996736,
+              0.9540189503660947,
+              0.0018112262519147937,
+              0.2156514812786714
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              165.8651783587452,
+              29.52196961399331,
+              16.746363008168654,
+              2.278169532458517
+            ],
+            [
+              29.52196961399331,
+              49.83683147180988,
+              2.8497859317369643,
+              5.948923848519855
+            ],
+            [
+              16.746363008168654,
+              2.8497859317369643,
+              18.450032412616366,
+              0.2752687150901295
+            ],
+            [
+              2.278169532458517,
+              5.948923848519856,
+              0.2752687150901295,
+              1.3284309787489297
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.878865569557949,
+            "head_logsigma": 7.059520626204719,
+            "head_centroid": 4.295350091973455,
+            "head_shape": 1.152575801736671
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.32470764014863424,
+            "head_centroid:head": 0.30272223724206326,
+            "head_centroid:head_logsigma": 0.09398065337319797,
+            "head_shape:head": 0.15347545587525094,
+            "head_shape:head_logsigma": 0.7311284787717349,
+            "head_shape:head_centroid": 0.055601792359674884
+          },
+          "composite_norm": 18.72755815694762,
+          "sum_term_norms": 25.386312089472792,
+          "composite_over_sum_norms": 0.7377029830462681
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              165.86398121191496,
+              11.749958857065678,
+              0.2734989382498514,
+              0.9176402671249235
+            ],
+            [
+              11.749958857065678,
+              7.895101731237645,
+              0.018523375135267806,
+              0.9539823638549514
+            ],
+            [
+              0.2734989382498514,
+              0.018523375135267806,
+              0.004920677356819836,
+              0.0018118351558290002
+            ],
+            [
+              0.9176402671249235,
+              0.9539823638549514,
+              0.0018118351558290002,
+              0.21564598143126013
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              165.86398121191496,
+              29.520552369909527,
+              16.74736638570779,
+              2.2775385529642116
+            ],
+            [
+              29.520552369909527,
+              49.83494663506694,
+              2.849699935623103,
+              5.948695708011126
+            ],
+            [
+              16.74736638570779,
+              2.849699935623103,
+              18.45043643150393,
+              0.2753612558193177
+            ],
+            [
+              2.2775385529642116,
+              5.948695708011125,
+              0.2753612558193177,
+              1.3283970992335365
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.878819092289284,
+            "head_logsigma": 7.05938712885665,
+            "head_centroid": 4.295397121513205,
+            "head_shape": 1.1525611043383064
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.3246993639988978,
+            "head_centroid:head": 0.3027381530632908,
+            "head_centroid:head_logsigma": 0.09397856559328396,
+            "head_shape:head": 0.15343545841019415,
+            "head_shape:head_logsigma": 0.7311235887722203,
+            "head_shape:head_centroid": 0.055620585033433916
+          },
+          "composite_norm": 18.72741812941094,
+          "sum_term_norms": 25.386164446997444,
+          "composite_over_sum_norms": 0.7377017575266644
+        }
+      },
+      "selected_preclip_norm": 18.72755815694762,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.16019173321253571
+    },
+    {
+      "batch": 10,
+      "author": "Dongqc",
+      "target_path": [
+        "font/train/new/DongqcBF/images_text_denoised/畔.png",
+        "font/train/new/DongqcBF/images_text_denoised/江.png"
+      ],
+      "reference_path": [
+        "font/train/new/DongqcBF/images_text_denoised/適.png",
+        "font/train/new/DongqcBF/images_text_denoised/室.png"
+      ],
+      "query_original_identity": [
+        "Dongqc:53f0ba34f34b8a7cd5e1f9cef6328dad45599584793d722fa14e5607a102ed4c",
+        "Dongqc:f982c3813ef9a146396a57a61df1951e0572e604d8b1ed7339281ffffb4f2fb7"
+      ],
+      "reference_original_identity": [
+        "Dongqc:5dbf9ab8da433c9d0ba2aa4fe40d917e51b810965aabeb1f4326f404ef8d5202",
+        "Dongqc:40bf3248f6628d9782e0beb2e0ca37bf629dd981c462c647b4f2b9756d101928"
+      ],
+      "query_original_sha256": [
+        "53f0ba34f34b8a7cd5e1f9cef6328dad45599584793d722fa14e5607a102ed4c",
+        "f982c3813ef9a146396a57a61df1951e0572e604d8b1ed7339281ffffb4f2fb7"
+      ],
+      "query_target_sha256": [
+        "e229a4cf4fd48339c7ede26ab95caa82aeab9de17a10d469e87b7f22c1506813",
+        "f701f7d909fcddde8134385b009f84b13ce355cef1397064dc1cf544cd22806c"
+      ],
+      "reference_original_sha256": [
+        "5dbf9ab8da433c9d0ba2aa4fe40d917e51b810965aabeb1f4326f404ef8d5202",
+        "40bf3248f6628d9782e0beb2e0ca37bf629dd981c462c647b4f2b9756d101928"
+      ],
+      "reference_target_sha256": [
+        "b2546b93e15bbe3cca2fd75d4a5b24f9fc95c2795f6be39641447ca7524ca43e",
+        "e9a94a479fcee74868b2662d1452ac7675b01818e36e28bb4dd48a9219740816"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            154.4708564821849,
+            11.935844295868833,
+            0.0005643445078931109,
+            4.103605692069735
+          ],
+          [
+            11.935844295868833,
+            6.322829187492459,
+            0.004154646613459878,
+            1.9383585522482791
+          ],
+          [
+            0.0005643445078931109,
+            0.004154646613459878,
+            0.006115867998522262,
+            -0.0015713685828529639
+          ],
+          [
+            4.103605692069735,
+            1.9383585522482791,
+            -0.0015713685828529639,
+            0.7063011567647166
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            39.91055034726389,
+            0.6391651683591617,
+            12.086916527210755
+          ],
+          [
+            0.0,
+            0.6391651683591617,
+            22.93189037761487,
+            -0.2388153386566979
+          ],
+          [
+            0.0,
+            12.086916527210755,
+            -0.2388153386566979,
+            4.350873601280715
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 6.317479746486244,
+          "head_centroid": 4.788725339546514,
+          "head_shape": 2.0858747808247537
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.38192153113958327,
+          "head_centroid:head": 0.0005806199767029257,
+          "head_centroid:head_logsigma": 0.021127558508125012,
+          "head_shape:head": 0.39286866175935103,
+          "head_shape:head_logsigma": 0.9172409411524995,
+          "head_shape:head_centroid": -0.023908595004841344
+        },
+        "composite_norm": 9.600408691299862,
+        "sum_term_norms": 13.192079866857512,
+        "composite_over_sum_norms": 0.7277403402793965
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              154.4708564821849,
+              11.935844295868833,
+              0.0005643445078931109,
+              4.103605692069735
+            ],
+            [
+              11.935844295868833,
+              6.322829187492459,
+              0.004154646613459878,
+              1.9383585522482791
+            ],
+            [
+              0.0005643445078931109,
+              0.004154646613459878,
+              0.006115867998522262,
+              -0.0015713685828529639
+            ],
+            [
+              4.103605692069735,
+              1.9383585522482791,
+              -0.0015713685828529639,
+              0.7063011567647166
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              154.4708564821849,
+              29.987570246120416,
+              0.034556932110697235,
+              10.184949925023142
+            ],
+            [
+              29.987570246120416,
+              39.91055034726389,
+              0.6391651683591617,
+              12.086916527210755
+            ],
+            [
+              0.034556932110697235,
+              0.6391651683591617,
+              22.93189037761487,
+              -0.2388153386566979
+            ],
+            [
+              10.184949925023142,
+              12.086916527210755,
+              -0.2388153386566979,
+              4.350873601280715
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.428630515152701,
+            "head_logsigma": 6.317479746486244,
+            "head_centroid": 4.788725339546514,
+            "head_shape": 2.0858747808247537
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.38192153113958327,
+            "head_centroid:head": 0.0005806199767029257,
+            "head_centroid:head_logsigma": 0.021127558508125012,
+            "head_shape:head": 0.39286866175935103,
+            "head_shape:head_logsigma": 0.9172409411524995,
+            "head_shape:head_centroid": -0.023908595004841344
+          },
+          "composite_norm": 18.084602780505833,
+          "sum_term_norms": 25.620710382010213,
+          "composite_over_sum_norms": 0.7058587568752224
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              154.46894600658197,
+              11.935707145727633,
+              0.0005673713302982719,
+              4.103424667707216
+            ],
+            [
+              11.935707145727633,
+              6.322782179027882,
+              0.004154175810965444,
+              1.9383864725593591
+            ],
+            [
+              0.0005673713302982719,
+              0.004154175810965444,
+              0.006116067085975646,
+              -0.0015719158894572371
+            ],
+            [
+              4.103424667707216,
+              1.9383864725593591,
+              -0.0015719158894572371,
+              0.7063174256854055
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              154.46894600658197,
+              29.987225670622315,
+              0.03474227580573342,
+              10.18450063135172
+            ],
+            [
+              29.987225670622315,
+              39.91025362349727,
+              0.6390927384791705,
+              12.087090628369205
+            ],
+            [
+              0.03474227580573342,
+              0.6390927384791706,
+              22.932636870452463,
+              -0.2388985178760579
+            ],
+            [
+              10.18450063135172,
+              12.087090628369205,
+              -0.2388985178760579,
+              4.350973819179084
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.428553657066537,
+            "head_logsigma": 6.317456262096104,
+            "head_centroid": 4.788803281661553,
+            "head_shape": 2.085898803676507
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.3819209241409777,
+            "head_centroid:head": 0.0005837282003969311,
+            "head_centroid:head_logsigma": 0.021124899041467932,
+            "head_shape:head": 0.392849235928963,
+            "head_shape:head_logsigma": 0.917246999106191,
+            "head_shape:head_centroid": -0.023916257640946896
+          },
+          "composite_norm": 18.084532539527114,
+          "sum_term_norms": 25.620712004500703,
+          "composite_over_sum_norms": 0.7058559706049646
+        }
+      },
+      "selected_preclip_norm": 18.084602780505833,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.16588697227200525
+    },
+    {
+      "batch": 11,
+      "author": "Liugq",
+      "target_path": [
+        "font/train/new/LiugqJT/images_text_denoised/無.png",
+        "font/train/new/LiugqBF/images_text_denoised/家.png"
+      ],
+      "reference_path": [
+        "font/train/new/LiugqJT/images_text_denoised/都.png",
+        "font/train/new/LiugqBF/images_text_denoised/丞.png"
+      ],
+      "query_original_identity": [
+        "Liugq:24a37e99a59746f365337e0b8c4ad2b7d11799d114d9c7bc37879511c0272927",
+        "Liugq:3a5822322e8c63e04ae35728ab094be3ad1cfbe1506b4d043b9940f0da2f0634"
+      ],
+      "reference_original_identity": [
+        "Liugq:3f9d854eb848de8f296a7491c94dccb3a371d60518594108e0eac203321e5325",
+        "Liugq:8776de55fab0a95a32673564f2bdfbef4ee32924f300ef6c9e4ebf1b64ba3194"
+      ],
+      "query_original_sha256": [
+        "24a37e99a59746f365337e0b8c4ad2b7d11799d114d9c7bc37879511c0272927",
+        "3a5822322e8c63e04ae35728ab094be3ad1cfbe1506b4d043b9940f0da2f0634"
+      ],
+      "query_target_sha256": [
+        "ca9852031c37f998432a66efc9950d0b29889d3555bd0d24129149ed5d3a253a",
+        "fba20da32be92e24c5f6fb58446ac0c9b4c6801379ea7d8e5f1136dd419c6502"
+      ],
+      "reference_original_sha256": [
+        "3f9d854eb848de8f296a7491c94dccb3a371d60518594108e0eac203321e5325",
+        "8776de55fab0a95a32673564f2bdfbef4ee32924f300ef6c9e4ebf1b64ba3194"
+      ],
+      "reference_target_sha256": [
+        "3802d731a518a1b2f9b1d8f2c1c3f2d7774f560eecd5840f21ab68d6f7afcc50",
+        "7076468e49f9849ca6f0673f8bbb81ad1b90b741209be9dc33abd8cb2ab11f0a"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            167.3563212595177,
+            13.904139300283987,
+            0.028232895546286718,
+            6.530183548764995
+          ],
+          [
+            13.904139300283987,
+            12.305816072926689,
+            0.0029408765096686773,
+            6.301589402321923
+          ],
+          [
+            0.028232895546286718,
+            0.0029408765096686773,
+            0.0014187621588791083,
+            0.0016569271810292774
+          ],
+          [
+            6.530183548764995,
+            6.301589402321923,
+            0.0016569271810292774,
+            3.4102871368938423
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            77.67597026252824,
+            0.452434588139499,
+            39.29447676554786
+          ],
+          [
+            0.0,
+            0.452434588139499,
+            5.319751555655733,
+            0.25181846588059287
+          ],
+          [
+            0.0,
+            39.29447676554787,
+            0.25181846588059287,
+            21.00765110546373
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 8.813397203265506,
+          "head_centroid": 2.3064586611634152,
+          "head_shape": 4.583410422978039
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.3063852402873242,
+          "head_centroid:head": 0.0579401429958275,
+          "head_centroid:head_logsigma": 0.022257007920432986,
+          "head_shape:head": 0.27334356519769337,
+          "head_shape:head_logsigma": 0.9727459219307811,
+          "head_shape:head_centroid": 0.023820624914936393
+        },
+        "composite_norm": 13.564690654887182,
+        "sum_term_norms": 15.70326628740696,
+        "composite_over_sum_norms": 0.8638133243505663
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              167.3563212595177,
+              13.904139300283987,
+              0.028232895546286718,
+              6.530183548764995
+            ],
+            [
+              13.904139300283987,
+              12.305816072926689,
+              0.0029408765096686773,
+              6.301589402321923
+            ],
+            [
+              0.028232895546286718,
+              0.0029408765096686773,
+              0.0014187621588791083,
+              0.0016569271810292774
+            ],
+            [
+              6.530183548764995,
+              6.301589402321923,
+              0.0016569271810292774,
+              3.4102871368938423
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              167.3563212595177,
+              34.93270720056414,
+              1.7288061477267482,
+              16.207598252900357
+            ],
+            [
+              34.93270720056414,
+              77.67597026252824,
+              0.452434588139499,
+              39.29447676554786
+            ],
+            [
+              1.7288061477267482,
+              0.452434588139499,
+              5.319751555655733,
+              0.25181846588059287
+            ],
+            [
+              16.207598252900357,
+              39.29447676554787,
+              0.25181846588059287,
+              21.00765110546373
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.93662712068017,
+            "head_logsigma": 8.813397203265506,
+            "head_centroid": 2.3064586611634152,
+            "head_shape": 4.583410422978039
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.3063852402873242,
+            "head_centroid:head": 0.0579401429958275,
+            "head_centroid:head_logsigma": 0.022257007920432986,
+            "head_shape:head": 0.27334356519769337,
+            "head_shape:head_logsigma": 0.9727459219307811,
+            "head_shape:head_centroid": 0.023820624914936393
+          },
+          "composite_norm": 21.37978898456867,
+          "sum_term_norms": 28.63989340808713,
+          "composite_over_sum_norms": 0.74650379035739
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              167.35452625905555,
+              13.903817734248548,
+              0.02822729817211367,
+              6.530202165778007
+            ],
+            [
+              13.903817734248548,
+              12.305884839769703,
+              0.0029343825688422642,
+              6.301534234065542
+            ],
+            [
+              0.02822729817211367,
+              0.0029343825688422642,
+              0.001418783156659019,
+              0.001652653149075034
+            ],
+            [
+              6.530202165778007,
+              6.301534234065542,
+              0.001652653149075034,
+              3.4102233172223606
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              167.35452625905555,
+              34.93189929926806,
+              1.7284633995001049,
+              16.207644459422017
+            ],
+            [
+              34.93189929926806,
+              77.67640432811328,
+              0.45143553787895896,
+              39.29413275586552
+            ],
+            [
+              1.7284633995001049,
+              0.45143553787895896,
+              5.319830288353562,
+              0.251168901927412
+            ],
+            [
+              16.207644459422017,
+              39.29413275586552,
+              0.251168901927412,
+              21.00725797100369
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.936557743814834,
+            "head_logsigma": 8.813421828558603,
+            "head_centroid": 2.306475728975608,
+            "head_shape": 4.583367536103087
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.3063789414210042,
+            "head_centroid:head": 0.05792853793790101,
+            "head_centroid:head_logsigma": 0.022207634385733407,
+            "head_shape:head": 0.27334836809821805,
+            "head_shape:head_logsigma": 0.972743789922965,
+            "head_shape:head_centroid": 0.023759226279069522
+          },
+          "composite_norm": 21.379604943830234,
+          "sum_term_norms": 28.639822837452133,
+          "composite_over_sum_norms": 0.7464992037545793
+        }
+      },
+      "selected_preclip_norm": 21.37978898456867,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.14031943917525638
+    },
+    {
+      "batch": 12,
+      "author": "Longmen",
+      "target_path": [
+        "font/train/new/LongmenBF/images_text_denoised/悼.png",
+        "font/train/new/LongmenJT/images_text_denoised/神.png"
+      ],
+      "reference_path": [
+        "font/train/new/LongmenBF/images_text_denoised/財.png",
+        "font/train/new/LongmenJT/images_text_denoised/容.png"
+      ],
+      "query_original_identity": [
+        "Longmen:da3d25e3bf8a612d7101fa4336576aa558fd74b0c72085dcb76222698d3c9377",
+        "Longmen:cfd49d4a2df8525b52a2b8167c02b0116f69461e686f5e77595356b48d36f3f2"
+      ],
+      "reference_original_identity": [
+        "Longmen:77ff2d107578a786fdc853ec81a8ff503215171fa85019825b87fa249874a532",
+        "Longmen:4a0a1d11e3250a18bacbafb1938565cf07cf4b2292fc72eb6e3a7e52b58590cf"
+      ],
+      "query_original_sha256": [
+        "da3d25e3bf8a612d7101fa4336576aa558fd74b0c72085dcb76222698d3c9377",
+        "cfd49d4a2df8525b52a2b8167c02b0116f69461e686f5e77595356b48d36f3f2"
+      ],
+      "query_target_sha256": [
+        "efb288fba2764fec0c89b3c5305126bec3cda8f52c45eddd4ee3ec9ca6b2f27c",
+        "5393c9f1ee9d128049de4007882c1950854aef339c90a73c4f1696c2fb8410d8"
+      ],
+      "reference_original_sha256": [
+        "77ff2d107578a786fdc853ec81a8ff503215171fa85019825b87fa249874a532",
+        "4a0a1d11e3250a18bacbafb1938565cf07cf4b2292fc72eb6e3a7e52b58590cf"
+      ],
+      "reference_target_sha256": [
+        "51c7623ea0554dabf88c68b5f8eb5af51e889b0acac87b07ec8c7b6ebed2be8c",
+        "96aff6197f493863a69f8ff5bb53a54f51def89597d5887c948e7f95aa867069"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            115.6602380247341,
+            14.152768875154152,
+            0.147501063697824,
+            9.63178181428222
+          ],
+          [
+            14.152768875154152,
+            11.178205054404202,
+            0.004446722865064756,
+            7.592783121131163
+          ],
+          [
+            0.147501063697824,
+            0.004446722865064756,
+            0.01584032118512635,
+            0.0028802210389380356
+          ],
+          [
+            9.63178181428222,
+            7.592783121131163,
+            0.0028802210389380356,
+            5.359692462934532
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            70.55833747625982,
+            0.6840991865560256,
+            47.34590289700546
+          ],
+          [
+            0.0,
+            0.6840991865560255,
+            59.394432491233836,
+            0.43773368662576595
+          ],
+          [
+            0.0,
+            47.345902897005466,
+            0.43773368662576595,
+            33.01614930772827
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 8.399901039670635,
+          "head_centroid": 7.7067783470938,
+          "head_shape": 5.745968091429701
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.39360747494970955,
+          "head_centroid:head": 0.1089735551942644,
+          "head_centroid:head_logsigma": 0.010567494631832349,
+          "head_shape:head": 0.3868518337572959,
+          "head_shape:head_logsigma": 0.9809458258772762,
+          "head_shape:head_centroid": 0.009884936673270346
+        },
+        "composite_norm": 16.121550509042127,
+        "sum_term_norms": 21.852647478194136,
+        "composite_over_sum_norms": 0.7377390096613768
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              115.6602380247341,
+              14.152768875154152,
+              0.147501063697824,
+              9.63178181428222
+            ],
+            [
+              14.152768875154152,
+              11.178205054404202,
+              0.004446722865064756,
+              7.592783121131163
+            ],
+            [
+              0.147501063697824,
+              0.004446722865064756,
+              0.01584032118512635,
+              0.0028802210389380356
+            ],
+            [
+              9.63178181428222,
+              7.592783121131163,
+              0.0028802210389380356,
+              5.359692462934532
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              115.6602380247341,
+              35.557363207870026,
+              9.032043677523943,
+              23.905614434834916
+            ],
+            [
+              35.557363207870026,
+              70.55833747625982,
+              0.6840991865560256,
+              47.34590289700546
+            ],
+            [
+              9.032043677523943,
+              0.6840991865560255,
+              59.394432491233836,
+              0.43773368662576595
+            ],
+            [
+              23.905614434834916,
+              47.345902897005466,
+              0.43773368662576595,
+              33.01614930772827
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 10.754544993849535,
+            "head_logsigma": 8.399901039670635,
+            "head_centroid": 7.7067783470938,
+            "head_shape": 5.745968091429701
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.39360747494970955,
+            "head_centroid:head": 0.1089735551942644,
+            "head_centroid:head_logsigma": 0.010567494631832349,
+            "head_shape:head": 0.3868518337572959,
+            "head_shape:head_logsigma": 0.9809458258772762,
+            "head_shape:head_centroid": 0.009884936673270346
+          },
+          "composite_norm": 22.63967030415391,
+          "sum_term_norms": 32.60719247204367,
+          "composite_over_sum_norms": 0.6943152288736424
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              115.6603294824954,
+              14.152844974522395,
+              0.14749240616007597,
+              9.631569788801897
+            ],
+            [
+              14.152844974522395,
+              11.178355735201762,
+              0.004456865479908756,
+              7.59269452203722
+            ],
+            [
+              0.14749240616007597,
+              0.004456865479908756,
+              0.015839847316590938,
+              0.0028873355105734078
+            ],
+            [
+              9.631569788801897,
+              7.59269452203722,
+              0.0028873355105734078,
+              5.359481932035948
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              115.6603294824954,
+              35.55755439963613,
+              9.031513543997312,
+              23.90508819789551
+            ],
+            [
+              35.55755439963613,
+              70.55928859377052,
+              0.6856595614151928,
+              47.34535042447574
+            ],
+            [
+              9.031513543997312,
+              0.6856595614151929,
+              59.392655686811295,
+              0.43881493832667506
+            ],
+            [
+              23.90508819789551,
+              47.34535042447575,
+              0.43881493832667506,
+              33.01485241996286
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 10.754549245900332,
+            "head_logsigma": 8.399957654284366,
+            "head_centroid": 7.7066630707986254,
+            "head_shape": 5.745855238340317
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.39360678287681644,
+            "head_centroid:head": 0.10896874586684915,
+            "head_centroid:head_logsigma": 0.010591685273646791,
+            "head_shape:head": 0.38685076290010584,
+            "head_shape:head_logsigma": 0.9809470341807125,
+            "head_shape:head_centroid": 0.00990969643906365
+          },
+          "composite_norm": 22.639679509978343,
+          "sum_term_norms": 32.60702520932364,
+          "composite_over_sum_norms": 0.694319072796152
+        }
+      },
+      "selected_preclip_norm": 22.63967030415391,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.13251076361520875
+    },
+    {
+      "batch": 13,
+      "author": "Ouyx",
+      "target_path": [
+        "font/train/new/OuyxBF/images_text_denoised/致.png",
+        "font/train/new/OuyxBF/images_text_denoised/龍.png"
+      ],
+      "reference_path": [
+        "font/train/new/OuyxBF/images_text_denoised/官.png",
+        "font/train/new/OuyxBF/images_text_denoised/宿.png"
+      ],
+      "query_original_identity": [
+        "Ouyx:9f33c10beb4945ab9ddd61e1f12602e0af4221e030f9aa54d805001cc3a34b79",
+        "Ouyx:263c6c17d0e2f202b15e096a91e7e2ca8d3a375456b64ca0063dcb5372195cd2"
+      ],
+      "reference_original_identity": [
+        "Ouyx:4b5f019f595da42a12fcb7eee2b93aa2741fd8cfa78cfea8aae93371e6a39329",
+        "Ouyx:f3235aef926be04a18e2b807a6ab7384fa7ba55c46b57e708c97ee2bfc0be155"
+      ],
+      "query_original_sha256": [
+        "9f33c10beb4945ab9ddd61e1f12602e0af4221e030f9aa54d805001cc3a34b79",
+        "263c6c17d0e2f202b15e096a91e7e2ca8d3a375456b64ca0063dcb5372195cd2"
+      ],
+      "query_target_sha256": [
+        "834763bde09227b2a6ad45ba92b5b045cd47633d9fa209ff0031a4c680367779",
+        "04c400173294b37c8fe0dd5335142858fb7aefe67ba4bfe7d5690fbf44401998"
+      ],
+      "reference_original_sha256": [
+        "4b5f019f595da42a12fcb7eee2b93aa2741fd8cfa78cfea8aae93371e6a39329",
+        "f3235aef926be04a18e2b807a6ab7384fa7ba55c46b57e708c97ee2bfc0be155"
+      ],
+      "reference_target_sha256": [
+        "e38468c4563b3f0bb9542010e1c01d77559fde7a5ba31a262e7ece750d3a6d37",
+        "4a92297287bad96ab1cfc00de30d7b6138f6f11a7d676024c02160772c40533e"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            144.2162139762495,
+            13.880903825782752,
+            -0.11523994042172347,
+            5.459145323830057
+          ],
+          [
+            13.880903825782752,
+            13.281300955852203,
+            -0.03926941768023973,
+            5.210091447254882
+          ],
+          [
+            -0.11523994042172347,
+            -0.03926941768023973,
+            0.0049403831754571415,
+            -0.017144280397840994
+          ],
+          [
+            5.459145323830057,
+            5.210091447254882,
+            -0.017144280397840994,
+            2.1588819844724867
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            -0.0,
+            0.0
+          ],
+          [
+            0.0,
+            83.83336236953113,
+            -6.041342693657971,
+            32.488282598212656
+          ],
+          [
+            -0.0,
+            -6.041342693657971,
+            18.52432482688804,
+            -2.605574003396565
+          ],
+          [
+            0.0,
+            32.488282598212656,
+            -2.605574003396565,
+            13.298891761054941
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 9.156056048841725,
+          "head_centroid": 4.303989408315039,
+          "head_shape": 3.6467645606832013
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.31716875042608095,
+          "head_centroid:head": -0.13652609328695497,
+          "head_centroid:head_logsigma": -0.15330412306561428,
+          "head_shape:head": 0.309387782215824,
+          "head_shape:head_logsigma": 0.9729949494717853,
+          "head_shape:head_centroid": -0.16600627054078165
+        },
+        "composite_norm": 12.780426861407657,
+        "sum_term_norms": 17.106810017839965,
+        "composite_over_sum_norms": 0.7470958552809959
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              144.2162139762495,
+              13.880903825782752,
+              -0.11523994042172347,
+              5.459145323830057
+            ],
+            [
+              13.880903825782752,
+              13.281300955852203,
+              -0.03926941768023973,
+              5.210091447254882
+            ],
+            [
+              -0.11523994042172347,
+              -0.03926941768023973,
+              0.0049403831754571415,
+              -0.017144280397840994
+            ],
+            [
+              5.459145323830057,
+              5.210091447254882,
+              -0.017144280397840994,
+              2.1588819844724867
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              144.2162139762495,
+              34.874330481956235,
+              -7.056574028622537,
+              13.549333422575954
+            ],
+            [
+              34.874330481956235,
+              83.83336236953113,
+              -6.041342693657971,
+              32.488282598212656
+            ],
+            [
+              -7.056574028622537,
+              -6.041342693657971,
+              18.52432482688804,
+              -2.605574003396565
+            ],
+            [
+              13.549333422575954,
+              32.488282598212656,
+              -2.605574003396565,
+              13.298891761054941
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.009005536523393,
+            "head_logsigma": 9.156056048841725,
+            "head_centroid": 4.303989408315039,
+            "head_shape": 3.6467645606832013
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.31716875042608095,
+            "head_centroid:head": -0.13652609328695497,
+            "head_centroid:head_logsigma": -0.15330412306561428,
+            "head_shape:head": 0.309387782215824,
+            "head_shape:head_logsigma": 0.9729949494717853,
+            "head_shape:head_centroid": -0.16600627054078165
+          },
+          "composite_norm": 19.75575117498343,
+          "sum_term_norms": 29.11581555436336,
+          "composite_over_sum_norms": 0.6785230225853245
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              144.21510633800244,
+              13.881110775527759,
+              -0.11524610458215534,
+              5.459290084409076
+            ],
+            [
+              13.881110775527759,
+              13.281295805883474,
+              -0.03927556553744305,
+              5.210057250760798
+            ],
+            [
+              -0.11524610458215534,
+              -0.03927556553744305,
+              0.004940620418516006,
+              -0.017145683464550143
+            ],
+            [
+              5.459290084409076,
+              5.210057250760798,
+              -0.017145683464550143,
+              2.1588533361086775
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              144.21510633800244,
+              34.874850421716005,
+              -7.056951483298863,
+              13.549692711298862
+            ],
+            [
+              34.874850421716005,
+              83.83332986223414,
+              -6.042288501219962,
+              32.48806936100273
+            ],
+            [
+              -7.056951483298863,
+              -6.042288501219962,
+              18.525214386934145,
+              -2.605787240351255
+            ],
+            [
+              13.549692711298862,
+              32.48806936100272,
+              -2.605787240351255,
+              13.29871528476204
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.008959419450232,
+            "head_logsigma": 9.156054273661452,
+            "head_centroid": 4.3040927484121605,
+            "head_shape": 3.646740364320175
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.31717475859076255,
+            "head_centroid:head": -0.13653064221553876,
+            "head_centroid:head_logsigma": -0.1533244720834922,
+            "head_shape:head": 0.3093992272956128,
+            "head_shape:head_logsigma": 0.9729952076965301,
+            "head_shape:head_centroid": -0.16601697172332716
+          },
+          "composite_norm": 19.7556963028446,
+          "sum_term_norms": 29.11584680584402,
+          "composite_over_sum_norms": 0.6785204096787361
+        }
+      },
+      "selected_preclip_norm": 19.75575117498343,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.15185451433498914
+    },
+    {
+      "batch": 14,
+      "author": "Sushi",
+      "target_path": [
+        "font/train/new/SushiBF/images_text_denoised/瑟.png",
+        "font/train/new/SushiBF/images_text_denoised/首.png"
+      ],
+      "reference_path": [
+        "font/train/new/SushiBF/images_text_denoised/菜.png",
+        "font/train/new/SushiBF/images_text_denoised/窮.png"
+      ],
+      "query_original_identity": [
+        "Sushi:5c68e21af2349a01e496e7a37d1d2c9a8ddc56ab0389db9e671e11b002baedcb",
+        "Sushi:231b28c5e1ae74e9d73c353504645b656ac3b942d5d5139e30f7e98b86542e3e"
+      ],
+      "reference_original_identity": [
+        "Sushi:69002cd21c844ff71d38089604b632d81648ae9dcbf39a7373b548611389d9e8",
+        "Sushi:c0dd3013f4f2e2fe07397ab98f5d2643d9ffae7688ca63655e2777acadb60663"
+      ],
+      "query_original_sha256": [
+        "5c68e21af2349a01e496e7a37d1d2c9a8ddc56ab0389db9e671e11b002baedcb",
+        "231b28c5e1ae74e9d73c353504645b656ac3b942d5d5139e30f7e98b86542e3e"
+      ],
+      "query_target_sha256": [
+        "5b8ebd9484f5fdface039f7442d3fd16ea648701e366467ac313a65fe5a59e2a",
+        "e50cb0e8a2c501115c6ddf37d7b57b38ecc5a09693cfc29186471c0f7aba8de2"
+      ],
+      "reference_original_sha256": [
+        "69002cd21c844ff71d38089604b632d81648ae9dcbf39a7373b548611389d9e8",
+        "c0dd3013f4f2e2fe07397ab98f5d2643d9ffae7688ca63655e2777acadb60663"
+      ],
+      "reference_target_sha256": [
+        "d794456f06a8da7bae72a471350b9ad3bb434cdaa4c99d8e1dc780a8b4ee7d5f",
+        "c32c7980b44b907014bb013b183dcd09df6cfb699d5fa425c484eee1269a1f5d"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            156.75637342380878,
+            14.42502549990013,
+            0.06529491771173124,
+            7.332854134217541
+          ],
+          [
+            14.42502549990013,
+            13.345503780003526,
+            -0.0015624813408989802,
+            7.198600844298994
+          ],
+          [
+            0.06529491771173124,
+            -0.0015624813408989802,
+            0.004642428167222573,
+            -0.0041572216820251195
+          ],
+          [
+            7.332854134217541,
+            7.198600844298994,
+            -0.0041572216820251195,
+            3.970497329292158
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            84.23861925212992,
+            -0.24037751997445306,
+            44.88792200845929
+          ],
+          [
+            0.0,
+            -0.24037751997445303,
+            17.407120925831418,
+            -0.6318112215666559
+          ],
+          [
+            0.0,
+            44.887922008459284,
+            -0.6318112215666559,
+            24.458592271182606
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 9.17815990556549,
+          "head_centroid": 4.172184191263781,
+          "head_shape": 4.945562887193186
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.31538170703187846,
+          "head_centroid:head": 0.07654100827095257,
+          "head_centroid:head_logsigma": -0.006277327065027486,
+          "head_shape:head": 0.2939259890146476,
+          "head_shape:head_logsigma": 0.9889131514681877,
+          "head_shape:head_centroid": -0.030620207773582576
+        },
+        "composite_norm": 14.633379615898042,
+        "sum_term_norms": 18.29590698402246,
+        "composite_over_sum_norms": 0.7998171191336485
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              156.75637342380878,
+              14.42502549990013,
+              0.06529491771173124,
+              7.332854134217541
+            ],
+            [
+              14.42502549990013,
+              13.345503780003526,
+              -0.0015624813408989802,
+              7.198600844298994
+            ],
+            [
+              0.06529491771173124,
+              -0.0015624813408989802,
+              0.004642428167222573,
+              -0.0041572216820251195
+            ],
+            [
+              7.332854134217541,
+              7.198600844298994,
+              -0.0041572216820251195,
+              3.970497329292158
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              156.75637342380878,
+              36.241379726279824,
+              3.9982528526090104,
+              18.199787642568516
+            ],
+            [
+              36.241379726279824,
+              84.23861925212992,
+              -0.24037751997445306,
+              44.88792200845929
+            ],
+            [
+              3.9982528526090104,
+              -0.24037751997445303,
+              17.407120925831418,
+              -0.6318112215666559
+            ],
+            [
+              18.199787642568516,
+              44.887922008459284,
+              -0.6318112215666559,
+              24.458592271182606
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.520238552991264,
+            "head_logsigma": 9.17815990556549,
+            "head_centroid": 4.172184191263781,
+            "head_shape": 4.945562887193186
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.31538170703187846,
+            "head_centroid:head": 0.07654100827095257,
+            "head_centroid:head_logsigma": -0.006277327065027486,
+            "head_shape:head": 0.2939259890146476,
+            "head_shape:head_logsigma": 0.9889131514681877,
+            "head_shape:head_centroid": -0.030620207773582576
+          },
+          "composite_norm": 22.085538545611783,
+          "sum_term_norms": 30.81614553701372,
+          "composite_over_sum_norms": 0.7166872482181303
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              156.75730745183182,
+              14.425028806414616,
+              0.06527797433464766,
+              7.33307853823942
+            ],
+            [
+              14.425028806414616,
+              13.345262911560383,
+              -0.0015746153187825573,
+              7.1984674224581795
+            ],
+            [
+              0.06527797433464766,
+              -0.0015746153187825573,
+              0.004642493209373391,
+              -0.004160448607006428
+            ],
+            [
+              7.33307853823942,
+              7.1984674224581795,
+              -0.004160448607006428,
+              3.9704125607407548
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              156.75730745183182,
+              36.241388033554365,
+              3.997215346044467,
+              18.200344602446563
+            ],
+            [
+              36.241388033554365,
+              84.23709885804018,
+              -0.24224425299374208,
+              44.88709003717567
+            ],
+            [
+              3.997215346044467,
+              -0.24224425299374205,
+              17.407364806090577,
+              -0.6323016470407556
+            ],
+            [
+              18.200344602446563,
+              44.88709003717567,
+              -0.6323016470407558,
+              24.458070089887862
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.520275853663602,
+            "head_logsigma": 9.178077078453862,
+            "head_centroid": 4.17221341809004,
+            "head_shape": 4.945510094003232
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.3153836858708827,
+            "head_centroid:head": 0.07652038263491401,
+            "head_centroid:head_logsigma": -0.006326088547840893,
+            "head_shape:head": 0.2939372459403852,
+            "head_shape:head_logsigma": 0.9889143032982776,
+            "head_shape:head_centroid": -0.030644088294990213
+          },
+          "composite_norm": 22.08535318812501,
+          "sum_term_norms": 30.816076444210736,
+          "composite_over_sum_norms": 0.7166828401437871
+        }
+      },
+      "selected_preclip_norm": 22.085538545611783,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.13583549225228542
+    },
+    {
+      "batch": 15,
+      "author": "Yanzq",
+      "target_path": [
+        "font/train/new/YanzqJT/images_text_denoised/卿.png",
+        "font/train/new/YanzqJT/images_text_denoised/垤.png"
+      ],
+      "reference_path": [
+        "font/train/new/YanzqJT/images_text_denoised/相.png",
+        "font/train/new/YanzqJT/images_text_denoised/龍.png"
+      ],
+      "query_original_identity": [
+        "Yanzq:9d2b50169aa66422da481b447f49b9818d5c321fbd5b2affa2e9462b4e1ef723",
+        "Yanzq:c15b604a36a1895d5e11597175b4f4703bd5bd94da61a045af9fbc27f430ee0d"
+      ],
+      "reference_original_identity": [
+        "Yanzq:f974b9c2c01b07f63200ddc204a43ac19c096a01bbd0f8ec274d48abac6ba65e",
+        "Yanzq:b27db6f69040575e31c9d03a2a7204158bc53d64c316dded1ea0969200e8fe31"
+      ],
+      "query_original_sha256": [
+        "9d2b50169aa66422da481b447f49b9818d5c321fbd5b2affa2e9462b4e1ef723",
+        "c15b604a36a1895d5e11597175b4f4703bd5bd94da61a045af9fbc27f430ee0d"
+      ],
+      "query_target_sha256": [
+        "9c40c7e75892962d5343a1086bc6753e6786f40a7202975bcc04c4159d635f79",
+        "3e84344d16726e9a3fd0b73f8dd8afbfabbe969245a14eeb4d72a300cab1acac"
+      ],
+      "reference_original_sha256": [
+        "f974b9c2c01b07f63200ddc204a43ac19c096a01bbd0f8ec274d48abac6ba65e",
+        "b27db6f69040575e31c9d03a2a7204158bc53d64c316dded1ea0969200e8fe31"
+      ],
+      "reference_target_sha256": [
+        "b46a08075ac1e2895e954c4a5aa1f3c82943a94cd77fd0006947f2d1f5b39b1f",
+        "0d0b1534de69f9b23ddb7e18033e18837b8b39a9c969ee0bb48b62046889f40c"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            134.14347186260693,
+            10.57179209853507,
+            -0.04659615921522686,
+            4.263153321945595
+          ],
+          [
+            10.57179209853507,
+            10.681005355545437,
+            -0.015381930586670478,
+            4.625106260954652
+          ],
+          [
+            -0.04659615921522686,
+            -0.015381930586670478,
+            0.002510434282878768,
+            -0.005865793839601674
+          ],
+          [
+            4.263153321945595,
+            4.625106260954652,
+            -0.005865793839601674,
+            2.096012874800266
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            -0.0,
+            0.0
+          ],
+          [
+            0.0,
+            67.41994593893968,
+            -2.3664092684240807,
+            28.840522431103977
+          ],
+          [
+            -0.0,
+            -2.366409268424081,
+            9.413055315957134,
+            -0.8914786496185952
+          ],
+          [
+            0.0,
+            28.84052243110398,
+            -0.8914786496185954,
+            12.911612840457042
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 8.210964982201524,
+          "head_centroid": 3.068070291886601,
+          "head_shape": 3.5932732766179982
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.27929153710666627,
+          "head_centroid:head": -0.08029544712051755,
+          "head_centroid:head_logsigma": -0.09393562996616557,
+          "head_shape:head": 0.25424311908923897,
+          "head_shape:head_logsigma": 0.9775042979869628,
+          "head_shape:head_centroid": -0.08086403227535992
+        },
+        "composite_norm": 11.870546875417176,
+        "sum_term_norms": 14.872308550706123,
+        "composite_over_sum_norms": 0.798164376091671
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              134.14347186260693,
+              10.57179209853507,
+              -0.04659615921522686,
+              4.263153321945595
+            ],
+            [
+              10.57179209853507,
+              10.681005355545437,
+              -0.015381930586670478,
+              4.625106260954652
+            ],
+            [
+              -0.04659615921522686,
+              -0.015381930586670478,
+              0.002510434282878768,
+              -0.005865793839601674
+            ],
+            [
+              4.263153321945595,
+              4.625106260954652,
+              -0.005865793839601674,
+              2.096012874800266
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              134.14347186260693,
+              26.560530643980265,
+              -2.853257696493462,
+              10.58093938962547
+            ],
+            [
+              26.560530643980265,
+              67.41994593893968,
+              -2.3664092684240807,
+              28.840522431103977
+            ],
+            [
+              -2.853257696493462,
+              -2.366409268424081,
+              9.413055315957134,
+              -0.8914786496185952
+            ],
+            [
+              10.58093938962547,
+              28.84052243110398,
+              -0.8914786496185954,
+              12.911612840457042
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 11.582032285510472,
+            "head_logsigma": 8.210964982201524,
+            "head_centroid": 3.068070291886601,
+            "head_shape": 3.5932732766179982
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.27929153710666627,
+            "head_centroid:head": -0.08029544712051755,
+            "head_centroid:head_logsigma": -0.09393562996616557,
+            "head_shape:head": 0.25424311908923897,
+            "head_shape:head_logsigma": 0.9775042979869628,
+            "head_shape:head_centroid": -0.08086403227535992
+          },
+          "composite_norm": 18.53725383270963,
+          "sum_term_norms": 26.454340836216595,
+          "composite_over_sum_norms": 0.7007263551746377
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              134.1419508726567,
+              10.571804182478218,
+              -0.04659161846826887,
+              4.263569948166662
+            ],
+            [
+              10.571804182478218,
+              10.681108760445738,
+              -0.015385197039387677,
+              4.625153635847568
+            ],
+            [
+              -0.04659161846826887,
+              -0.015385197039387677,
+              0.002510476824836294,
+              -0.005867902024483507
+            ],
+            [
+              4.263569948166662,
+              4.625153635847568,
+              -0.005867902024483507,
+              2.0960381483277786
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              134.1419508726567,
+              26.560561003633506,
+              -2.8529796495165454,
+              10.58197343566143
+            ],
+            [
+              26.560561003633506,
+              67.4205986446126,
+              -2.3669117907792105,
+              28.84081784413553
+            ],
+            [
+              -2.8529796495165454,
+              -2.36691179077921,
+              9.413214830110592,
+              -0.8917990498684156
+            ],
+            [
+              10.58197343566143,
+              28.84081784413553,
+              -0.8917990498684156,
+              12.91176852747895
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 11.581966623706732,
+            "head_logsigma": 8.211004728083683,
+            "head_centroid": 3.0680962876204836,
+            "head_shape": 3.5932949402295034
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.2792920878028759,
+            "head_centroid:head": -0.08028739731450012,
+            "head_centroid:head_logsigma": -0.09395432693431546,
+            "head_shape:head": 0.2542678741287226,
+            "head_shape:head_logsigma": 0.9775036855230855,
+            "head_shape:head_centroid": -0.08089192197178112
+          },
+          "composite_norm": 18.537282876985813,
+          "sum_term_norms": 26.454362579640403,
+          "composite_over_sum_norms": 0.7007268771333893
+        }
+      },
+      "selected_preclip_norm": 18.53725383270963,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.16183626911912893
+    },
+    {
+      "batch": 16,
+      "author": "Zhangqb",
+      "target_path": [
+        "font/train/new/ZhangqbBF/images_text_denoised/帝.png",
+        "font/train/new/ZhangqbBF/images_text_denoised/斯.png"
+      ],
+      "reference_path": [
+        "font/train/new/ZhangqbBF/images_text_denoised/亰.png",
+        "font/train/new/ZhangqbBF/images_text_denoised/提.png"
+      ],
+      "query_original_identity": [
+        "Zhangqb:f86841dce89e591935b4e06f296f5edbb863e7c369a1937539045103876b1ddb",
+        "Zhangqb:cf549f99a7cb45c25a6e3748795c86a0c7ce236fdc14e6ec5288ce320cfbc725"
+      ],
+      "reference_original_identity": [
+        "Zhangqb:da9dd4a2069fd46b2f05e9dcb122ed545a42fa7331623e763bee3b6f2a0b5016",
+        "Zhangqb:f86d7a5c7cdd4c5813e4c18805b3800eb7430f7e8157178526a27cde114372a7"
+      ],
+      "query_original_sha256": [
+        "f86841dce89e591935b4e06f296f5edbb863e7c369a1937539045103876b1ddb",
+        "cf549f99a7cb45c25a6e3748795c86a0c7ce236fdc14e6ec5288ce320cfbc725"
+      ],
+      "query_target_sha256": [
+        "8a80919bca4d8003689f0e742520419b023315120c9bf8cd564d7648f5fbff10",
+        "14c2e4ffabf69b24c0e2c3b7c679c45c6c7d3bfb4ed6531a2d1eb210ce563142"
+      ],
+      "reference_original_sha256": [
+        "da9dd4a2069fd46b2f05e9dcb122ed545a42fa7331623e763bee3b6f2a0b5016",
+        "f86d7a5c7cdd4c5813e4c18805b3800eb7430f7e8157178526a27cde114372a7"
+      ],
+      "reference_target_sha256": [
+        "986591ec80210b7b5480608918cb6fe1a30346c84ea3d31d6517e995a50f6cb9",
+        "41b04b2857bc210a3724a218baa99ce36bbb5209266cce6dd301f48e04b8f82d"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            194.79700899823501,
+            10.509812136328321,
+            0.197672398820945,
+            5.7999769315023
+          ],
+          [
+            10.509812136328321,
+            9.800524589889932,
+            0.012498472650532833,
+            4.756657196217546
+          ],
+          [
+            0.197672398820945,
+            0.012498472650532833,
+            0.003746087714820656,
+            0.006412614376355208
+          ],
+          [
+            5.7999769315023,
+            4.756657196217546,
+            0.006412614376355208,
+            2.455020571100846
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            61.86223262968171,
+            1.9228081517280995,
+            29.660827411188716
+          ],
+          [
+            0.0,
+            1.9228081517280995,
+            14.046227427072285,
+            0.9745839968262733
+          ],
+          [
+            0.0,
+            29.660827411188713,
+            0.9745839968262732,
+            15.12312997239221
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 7.865254772077107,
+          "head_centroid": 3.7478296955801347,
+          "head_shape": 3.888846869239288
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.24053548215419865,
+          "head_centroid:head": 0.2314013665661594,
+          "head_centroid:head_logsigma": 0.06522938918813108,
+          "head_shape:head": 0.26522078512521013,
+          "head_shape:head_logsigma": 0.9697273055406914,
+          "head_shape:head_centroid": 0.06686803875311145
+        },
+        "composite_norm": 12.495920500252568,
+        "sum_term_norms": 15.50193133689653,
+        "composite_over_sum_norms": 0.8060879788901347
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              194.79700899823501,
+              10.509812136328321,
+              0.197672398820945,
+              5.7999769315023
+            ],
+            [
+              10.509812136328321,
+              9.800524589889932,
+              0.012498472650532833,
+              4.756657196217546
+            ],
+            [
+              0.197672398820945,
+              0.012498472650532833,
+              0.003746087714820656,
+              0.006412614376355208
+            ],
+            [
+              5.7999769315023,
+              4.756657196217546,
+              0.006412614376355208,
+              2.455020571100846
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              194.79700899823501,
+              26.404812420413116,
+              12.10422281190672,
+              14.395260911105213
+            ],
+            [
+              26.404812420413116,
+              61.86223262968171,
+              1.9228081517280995,
+              29.660827411188716
+            ],
+            [
+              12.10422281190672,
+              1.9228081517280995,
+              14.046227427072285,
+              0.9745839968262733
+            ],
+            [
+              14.395260911105213,
+              29.660827411188713,
+              0.9745839968262732,
+              15.12312997239221
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 13.95696990747759,
+            "head_logsigma": 7.865254772077107,
+            "head_centroid": 3.7478296955801347,
+            "head_shape": 3.888846869239288
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.24053548215419865,
+            "head_centroid:head": 0.2314013665661594,
+            "head_centroid:head_logsigma": 0.06522938918813108,
+            "head_shape:head": 0.26522078512521013,
+            "head_shape:head_logsigma": 0.9697273055406914,
+            "head_shape:head_centroid": 0.06686803875311145
+          },
+          "composite_norm": 21.371795208491903,
+          "sum_term_norms": 29.458901244374122,
+          "composite_over_sum_norms": 0.7254783547832884
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              194.79565992990092,
+              10.509747882912336,
+              0.19766408216838727,
+              5.800233153813252
+            ],
+            [
+              10.509747882912336,
+              9.800356269060643,
+              0.01249492490257742,
+              4.756662996791491
+            ],
+            [
+              0.19766408216838727,
+              0.01249492490257742,
+              0.0037459773168815325,
+              0.006411774175913765
+            ],
+            [
+              5.800233153813252,
+              4.756662996791491,
+              0.006411774175913765,
+              2.455078210532662
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              194.79565992990092,
+              26.40465099037284,
+              12.103713552059576,
+              14.395896842430624
+            ],
+            [
+              26.40465099037284,
+              61.86117016591232,
+              1.9222623539430677,
+              29.660863581510764
+            ],
+            [
+              12.103713552059576,
+              1.9222623539430677,
+              14.045813481997193,
+              0.9744563038361294
+            ],
+            [
+              14.395896842430624,
+              29.66086358151076,
+              0.9744563038361295,
+              15.12348503606424
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 13.956921577837317,
+            "head_logsigma": 7.865187230187995,
+            "head_centroid": 3.747774470535439,
+            "head_shape": 3.888892520508151
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.24053691009713704,
+            "head_centroid:head": 0.23139584175989514,
+            "head_centroid:head_logsigma": 0.06521239444428123,
+            "head_shape:head": 0.26523030652896495,
+            "head_shape:head_logsigma": 0.9697254319512391,
+            "head_shape:head_centroid": 0.06685947783191926
+          },
+          "composite_norm": 21.371705965181643,
+          "sum_term_norms": 29.458775799068903,
+          "composite_over_sum_norms": 0.7254784146820227
+        }
+      },
+      "selected_preclip_norm": 21.371795208491903,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.1403719234034198
+    },
+    {
+      "batch": 17,
+      "author": "Zhaomf",
+      "target_path": [
+        "font/train/new/ZhaomfBF/images_text_denoised/情.png",
+        "font/train/new/ZhaomfBF/images_text_denoised/禽.png"
+      ],
+      "reference_path": [
+        "font/train/new/ZhaomfBF/images_text_denoised/作.png",
+        "font/train/new/ZhaomfBF/images_text_denoised/轅.png"
+      ],
+      "query_original_identity": [
+        "Zhaomf:49838cd12638d98dac75f5d56f5a9e171a3d352b6f0706fff5e4554a704b85d7",
+        "Zhaomf:72b76394a6aa69a39e1b63c86f47b6bdb80fdf989383b6d84540c0b2f9509992"
+      ],
+      "reference_original_identity": [
+        "Zhaomf:3d78598e82d22e85c1d63d419f4d7c3fd47a1977550a143dd54fbd0c8447def7",
+        "Zhaomf:9cef9c4c03c5ed9ee16c9c290e97cf1e5d1a3d3c0b48c5e3b16cec2348ee48bd"
+      ],
+      "query_original_sha256": [
+        "49838cd12638d98dac75f5d56f5a9e171a3d352b6f0706fff5e4554a704b85d7",
+        "72b76394a6aa69a39e1b63c86f47b6bdb80fdf989383b6d84540c0b2f9509992"
+      ],
+      "query_target_sha256": [
+        "def4298730530aa6a24401be4656a3f1e9e33cc1a43c72e64232f1c624d448b3",
+        "34131b9184b14e4505058cf9defc4461bfe0f886f404c514ecfea5034fda2eef"
+      ],
+      "reference_original_sha256": [
+        "3d78598e82d22e85c1d63d419f4d7c3fd47a1977550a143dd54fbd0c8447def7",
+        "9cef9c4c03c5ed9ee16c9c290e97cf1e5d1a3d3c0b48c5e3b16cec2348ee48bd"
+      ],
+      "reference_target_sha256": [
+        "34fbe059faf942bfb5719d29bc185fd1a5e625121c1306fa56817774781773b0",
+        "cb3f0440b2fb220208e66a58b0ca9b8677b92d188970e35beda7872760316404"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "geometry": {
+        "terms": [
+          "head",
+          "head_logsigma",
+          "head_centroid",
+          "head_shape"
+        ],
+        "actual_gram": [
+          [
+            162.08092095185748,
+            11.694071140404276,
+            0.05189703574444238,
+            2.7397213920657038
+          ],
+          [
+            11.694071140404276,
+            11.355353086569266,
+            -0.002425675593874743,
+            3.709152496040474
+          ],
+          [
+            0.05189703574444238,
+            -0.002425675593874743,
+            0.005817062422231956,
+            0.002641389338630673
+          ],
+          [
+            2.7397213920657038,
+            3.709152496040474,
+            0.002641389338630673,
+            1.4188072296877507
+          ]
+        ],
+        "coefficients": {
+          "head": 0.0,
+          "head_logsigma": 2.51239623295853,
+          "head_centroid": 61.23375283602912,
+          "head_shape": 2.4819514079302687
+        },
+        "weighted_gram": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            71.6765197404001,
+            -0.37317430183370576,
+            23.128959579916874
+          ],
+          [
+            0.0,
+            -0.37317430183370576,
+            21.81149720997865,
+            0.40143623610190315
+          ],
+          [
+            0.0,
+            23.128959579916874,
+            0.4014362361019032,
+            8.739969999809908
+          ]
+        ],
+        "weighted_term_norms": {
+          "head": 0.0,
+          "head_logsigma": 8.466198659398449,
+          "head_centroid": 4.670278065595094,
+          "head_shape": 2.9563440259567066
+        },
+        "pair_cosine": {
+          "head_logsigma:head": 0.27258343637461935,
+          "head_centroid:head": 0.05344717345652999,
+          "head_centroid:head_logsigma": -0.00943801221362799,
+          "head_shape:head": 0.18066696813810404,
+          "head_shape:head_logsigma": 0.9240865969086931,
+          "head_shape:head_centroid": 0.029074942336854637
+        },
+        "composite_norm": 12.187798405723603,
+        "sum_term_norms": 16.09282075095025,
+        "composite_over_sum_norms": 0.7573438239535438
+      },
+      "parameter_groups": {
+        "all_trainable": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              162.08092095185748,
+              11.694071140404276,
+              0.05189703574444238,
+              2.7397213920657038
+            ],
+            [
+              11.694071140404276,
+              11.355353086569266,
+              -0.002425675593874743,
+              3.709152496040474
+            ],
+            [
+              0.05189703574444238,
+              -0.002425675593874743,
+              0.005817062422231956,
+              0.002641389338630673
+            ],
+            [
+              2.7397213920657038,
+              3.709152496040474,
+              0.002641389338630673,
+              1.4188072296877507
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              162.08092095185748,
+              29.380140281100765,
+              3.177850259697753,
+              6.799855366374149
+            ],
+            [
+              29.380140281100765,
+              71.6765197404001,
+              -0.37317430183370576,
+              23.128959579916874
+            ],
+            [
+              3.177850259697753,
+              -0.37317430183370576,
+              21.81149720997865,
+              0.40143623610190315
+            ],
+            [
+              6.799855366374149,
+              23.128959579916874,
+              0.4014362361019032,
+              8.739969999809908
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.731100539696381,
+            "head_logsigma": 8.466198659398449,
+            "head_centroid": 4.670278065595094,
+            "head_shape": 2.9563440259567066
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.27258343637461935,
+            "head_centroid:head": 0.05344717345652999,
+            "head_centroid:head_logsigma": -0.00943801221362799,
+            "head_shape:head": 0.18066696813810404,
+            "head_shape:head_logsigma": 0.9240865969086931,
+            "head_shape:head_centroid": 0.029074942336854637
+          },
+          "composite_norm": 19.73167612608624,
+          "sum_term_norms": 28.82392129064663,
+          "composite_over_sum_norms": 0.6845590482683275
+        },
+        "head": {
+          "terms": [
+            "head",
+            "head_logsigma",
+            "head_centroid",
+            "head_shape"
+          ],
+          "actual_gram": [
+            [
+              162.08107694738464,
+              11.693633959882163,
+              0.05187600686202387,
+              2.7399755125829444
+            ],
+            [
+              11.693633959882163,
+              11.355528386363403,
+              -0.0024322646848107254,
+              3.709163166349299
+            ],
+            [
+              0.05187600686202387,
+              -0.0024322646848107254,
+              0.005816777048608779,
+              0.0026390129713371735
+            ],
+            [
+              2.7399755125829444,
+              3.709163166349299,
+              0.0026390129713371735,
+              1.418782368214174
+            ]
+          ],
+          "coefficients": {
+            "head": 1.0,
+            "head_logsigma": 2.51239623295853,
+            "head_centroid": 61.23375283602912,
+            "head_shape": 2.4819514079302687
+          },
+          "weighted_gram": [
+            [
+              162.08107694738464,
+              29.379041910403885,
+              3.1765625823093204,
+              6.800486081149699
+            ],
+            [
+              29.379041910403885,
+              71.67762625633661,
+              -0.3741879903153655,
+              23.129026116178668
+            ],
+            [
+              3.1765625823093204,
+              -0.3741879903153655,
+              21.810427180892844,
+              0.40107507770395473
+            ],
+            [
+              6.800486081149699,
+              23.129026116178668,
+              0.4010750777039547,
+              8.739816851074362
+            ]
+          ],
+          "weighted_term_norms": {
+            "head": 12.731106666248015,
+            "head_logsigma": 8.466264008187826,
+            "head_centroid": 4.670163506869202,
+            "head_shape": 2.9563181241325096
+          },
+          "pair_cosine": {
+            "head_logsigma:head": 0.27257101080976787,
+            "head_centroid:head": 0.053426801265317105,
+            "head_centroid:head_logsigma": -0.009463808667985749,
+            "head_shape:head": 0.18068522186084227,
+            "head_shape:head_logsigma": 0.9240902188412004,
+            "head_shape:head_centroid": 0.029049751691432046
+          },
+          "composite_norm": 19.731521856931078,
+          "sum_term_norms": 28.823852305437555,
+          "composite_over_sum_norms": 0.684555334514005
+        }
+      },
+      "selected_preclip_norm": 19.73167612608624,
+      "clip_threshold": 3,
+      "predicted_clip_ratio": 0.152039795343785
+    }
+  ]
+}

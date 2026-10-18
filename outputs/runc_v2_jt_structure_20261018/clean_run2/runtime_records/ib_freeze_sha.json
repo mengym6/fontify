@@ -1,0 +1,13 @@
+{
+  "before": {
+    "sha256": "3bcacc3b052ac04aabb84f2cba113b830201ba3d98816aabbd810d2c832f30f0",
+    "parameter_count": 159081625
+  },
+  "after": {
+    "sha256": "3bcacc3b052ac04aabb84f2cba113b830201ba3d98816aabbd810d2c832f30f0",
+    "parameter_count": 159081625
+  },
+  "exact_unchanged": true,
+  "optimizer_steps": 320,
+  "world_size": 2
+}

@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><title>Fontify Run C v2 实验交付</title>
+<style>body{font:17px/1.7 system-ui;max-width:1100px;margin:35px auto;padding:0 20px}
+li{margin:9px 0}a{color:#1457a4}strong{color:#9f2924}img{max-width:100%}</style>
+<h1>Run C v2：干净训练与测试已完成</h1>
+<p><strong>阶段一结构质量未通过技术审查，用户最终人工审阅pending；未启动BF正式长训。</strong>
+IA0 4步 / IA1 400步 / IB 320步；旧run1因自身参考GT泄漏全部作废。此页只汇总clean run2。</p>
+<p>尺度均值改善，但無的底部点画和复杂字内部留白仍丢失。S控制通路及阶段二接口正确性通过，
+不能据此宣称结构质量、笔锋或独立泛化通过。</p>
+<ul>
+<li><a href="clean_run2/stage1_acceptance.md">阶段一最终技术判定与局限</a></li>
+<li><a href="clean_run2/coarse_comparison/index.html">固定13字九书家：IA1 / IB80 / IB320并列图</a></li>
+<li><a href="clean_run2/ia1_report/ia_results.md">IA1实测报告</a> ·
+<a href="clean_run2/ia1_report/head_metrics.csv">全部Head分组与尾部CSV</a></li>
+<li><a href="clean_run2/ib_report/ib_results.md">IB实测报告</a> ·
+<a href="clean_run2/ib_report/coarse_metrics.csv">全部粗图分组与尾部CSV</a></li>
+<li><a href="post_ib_checks/condition/condition_response.md">固定F/Q条件响应报告</a> ·
+<a href="post_ib_checks/condition/visuals/index.html">12字真实几何干预图</a></li>
+<li><a href="clean_run2/stage2_interface_smoke.md">阶段二单步接口报告</a> ·
+<a href="post_ib_checks/stage2/stage2_interface_smoke.json">实际GPU检查JSON</a></li>
+<li><a href="clean_run2/gradient_calibration.md">干净多来源梯度标定</a> ·
+<a href="clean_run2/smoke.md">工程检查汇总</a></li>
+<li><a href="coarse_oracle_report.md">零训练oracle与表示局限</a> ·
+<a href="visuals/oracle/index.html">oracle图集</a> ·
+<a href="visuals/oracle/topology_details.html">细点/窄缝细节</a></li>
+<li><a href="clean_run2/checkpoint_manifest.json">训练谱系与checkpoint SHA</a> ·
+<a href="clean_run2/open_questions.md">待决事项</a></li>
+</ul>
+<h2>IA1固定训练/验证曲线</h2><img src="clean_run2/ia1_report/curves.png">
+<h2>IB固定训练/验证曲线</h2><img src="clean_run2/ib_report/coarse_curves.png">
+<p>单seed0，固定验证已反复用于研究；74unique排除集不构成独立测试。原240固定文件保留，
+stage I只读其中原101JT；未重配参考。模型大文件和原始优化器日志留在服务器对应clean_run2目录。</p>

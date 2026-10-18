@@ -1,0 +1,40 @@
+{
+  "indices": [
+    0,
+    54
+  ],
+  "authors": [
+    "Caoqb",
+    "Dongqc"
+  ],
+  "characters": [
+    "述",
+    "待"
+  ],
+  "target_paths": [
+    "font/train/new/CaoqbBF/images_text_denoised/述.png",
+    "font/train/new/DongqcJT/images_text_denoised/待.png"
+  ],
+  "reference_paths": [
+    "font/train/new/CaoqbBF/images_text_denoised/尉.png",
+    "font/train/new/DongqcJT/images_text_denoised/夘.png"
+  ],
+  "geometry_crop": [
+    [
+      0,
+      0,
+      448,
+      448
+    ],
+    [
+      0,
+      0,
+      448,
+      448
+    ]
+  ],
+  "image_sha256": "304bb38295bd2db9e288dc8f30ebfe72bfa44457ff8671452f1408c8cd93a820",
+  "input_target_sha256": "7cbc2f6937e12128e498b78a4fca458de30271169ada7dbf195d66cfb0471c77",
+  "target_sha256": "27b6a7203b67439a45091b1d6dbe27f2be8dc478c0ceb1770b3cb77aa97a0646",
+  "supervision_is_model_input": false
+}

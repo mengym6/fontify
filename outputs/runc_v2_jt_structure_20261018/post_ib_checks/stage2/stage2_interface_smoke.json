@@ -1,0 +1,276 @@
+{
+  "schema": "runc-v2-runtime-v1",
+  "scope": "stage-II one-update interface smoke only",
+  "stage_one_accepted": false,
+  "formal_bf_training_started": false,
+  "bf_pool_counts": {
+    "dual": 466,
+    "bf_only": 352
+  },
+  "bf_annotation_layers": 11,
+  "aggregate_bf_types": false,
+  "bf_mask_stats": {
+    "requested": [
+      11,
+      11
+    ],
+    "selected": [
+      11,
+      11
+    ],
+    "source_layers": [
+      21,
+      37
+    ],
+    "nonempty_source": [
+      11,
+      11
+    ],
+    "nonempty_after_crop": [
+      11,
+      11
+    ],
+    "target_patch_coverage": [
+      0.14795918367346939,
+      0.09183673469387756
+    ]
+  },
+  "expected_selected_layers": [
+    11,
+    11
+  ],
+  "bf_patch_mask_count": [
+    116,
+    72
+  ],
+  "bf_local_support_count": [
+    89088.0,
+    55296.0
+  ],
+  "semantic_mask_exactly_preserved": true,
+  "sampled_pools": [
+    "dual",
+    "bf_only"
+  ],
+  "sampled_indices": [
+    0,
+    3
+  ],
+  "sampled_authors": [
+    "Caoqb",
+    "Caoqb"
+  ],
+  "target_path": [
+    "font/train/new/CaoqbBF/images_text_denoised/述.png",
+    "font/train/new/CaoqbBF/images_text_denoised/載.png"
+  ],
+  "reference_path": [
+    "font/train/new/CaoqbBF/images_text_denoised/甄.png",
+    "font/train/new/CaoqbBF/images_text_denoised/和.png"
+  ],
+  "reference_policy": "distinct-original-reference-v1",
+  "query_original_identity": [
+    "Caoqb:09bf95837a38dc7e1749ec0657802fd23d0409a57f6af3ea27f7c2f1d2a96d18",
+    "Caoqb:4ec93417650e53c3b846003a9a516f589790ba71c325713ca02c2d934fb86fd2"
+  ],
+  "reference_original_identity": [
+    "Caoqb:b42faebd0a038481fde82a26cec5828682ef787bc7b5c9ebd83ae7978cf4a729",
+    "Caoqb:c16a90771598cfc87619db678efb640a009e177f5c8f2d14adc11d516eb9c392"
+  ],
+  "query_original_sha256": [
+    "09bf95837a38dc7e1749ec0657802fd23d0409a57f6af3ea27f7c2f1d2a96d18",
+    "4ec93417650e53c3b846003a9a516f589790ba71c325713ca02c2d934fb86fd2"
+  ],
+  "reference_original_sha256": [
+    "b42faebd0a038481fde82a26cec5828682ef787bc7b5c9ebd83ae7978cf4a729",
+    "c16a90771598cfc87619db678efb640a009e177f5c8f2d14adc11d516eb9c392"
+  ],
+  "query_target_sha256": [
+    "77319c029cf1bf3326ba45f1190a5079ae5281dca6ddfd9ca66b7d247aa2b071",
+    "0319fc20bc834713f62ad42f25e5a3b8cbe0eec33e62b6ace60a8043792976f5"
+  ],
+  "reference_target_sha256": [
+    "0c786956615c4a1f2f44ed872a805d60bcee7badaa13d9e384065915bbc33004",
+    "d1bcf96bea1417d4e028c814a21598548fa947835cb90bb2bd3054fdbd9a6c97"
+  ],
+  "source_stage_one_checkpoint_sha256": "f3e39d8f1747ae5449c74e2a83f5d189d00b49edbc3b4da54f25d87b991970d4",
+  "metadata": {
+    "source_sha": "3eb25f510f3c0cff4db04a2724bd25b73d525436",
+    "branch": "codex/runc-v2-jt-structure",
+    "tracked_dirty": true,
+    "tracked_dirty_sha256": {},
+    "checkpoint_sha256": "f3e39d8f1747ae5449c74e2a83f5d189d00b49edbc3b4da54f25d87b991970d4",
+    "initial_checkpoint_sha256": "339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+    "reference_policy": "distinct-original-reference-v1",
+    "stage_start_checkpoint_sha256": "f3e39d8f1747ae5449c74e2a83f5d189d00b49edbc3b4da54f25d87b991970d4",
+    "data_file_sha256": {
+      "fontdata_example/train_json_dual_v1/train_dual.json": "cf7fea0e08e831ebd5ff6bbee0a463af2018c016c090610ca1fdf7d6b68db545",
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbBF.json": "684334b4ff00590ded8e212771b34cb8f982aaa4e8ed728f10e1a1cfd570ab7b",
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbJT.json": "a6289b300fcb491ef173b67d3a0c5821322e585a58f645aa5c1de9c795715fd2",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcBF.json": "959dbd93c0cde6c0b8fbf146428db4dcbbc314f10a081ff2750d58c4a5e66965",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcJT.json": "059c1fec2efcc687efa0f790b85771a3341c68fc96392025bc505e23dd479a2c",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqBF.json": "169d920a74032ecc5707a738bddb12942bb5143312a667ffb178c93a72ab91c3",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqJT.json": "63d10187b647f2454667ea653349c45c292f45c593ab0921f977bcf41e8a6461",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenBF.json": "b28681b38ae159802a9d8e5766e5275645e3ca3ceb4a20c68e39367b13b0b5db",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenJT.json": "7d86ecb96f7d6e4f3e5db75bcfdb85deefd829cc350f4ae7731232249e81902c",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxBF.json": "28aa737e3f1a19bf3205d98388a27621f892245ac66a10a23ee610e402186f5d",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxJT.json": "2f24606289f2a03f8355ded6446af0065c7f2492263b6710741e0451c12ebb7d",
+      "fontdata_example/val_json_clean_v2/font_val_SushiBF.json": "fe3466627f7a6f3e1ca4f8344a593fcefc148e98c07a7b6dac1e5f8a4ecbf70a",
+      "fontdata_example/val_json_clean_v2/font_val_SushiJT.json": "fc46edb134bb3cf8fbc22aae0cd6f2bc083df060129b0949e48f4aed08bc5902",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqBF.json": "bce6fdb2d50e7e78740e5278bfa50904c6b0a74deb51be42669f00f0f53c139e",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqJT.json": "102be1686ef5eba0ad2abfc0f9ab308b4e55d9a0127755afa0c138430cab2a3c",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbBF.json": "e3bb72fd3de789591fab1c231468b010a0ebbf7dfeb3a597fc536b61b5fbdd49",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbJT.json": "0038f787bb113ade5f8afc91578c9b771bef0639fc83cb8fb36156a2987e09fb",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfBF.json": "b1597f365784faa7de91c67f9b61416a4b35bdb269f93a9628e5017ce498569b",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfJT.json": "41eeb014f3b684d9558a41aeae3e8482ce7879b72578ea21b94af04881798047",
+      "fontdata_example/val_pairs_fixed_clean.json": "3b9373097017165b5634122acf62db67b304c4166d34ed97ca2305643f331a30"
+    },
+    "calibration": null,
+    "stage_gate": null
+  },
+  "backend": {
+    "torch": "2.3.0+cu121",
+    "cuda": "12.1",
+    "cudnn": 8902,
+    "device": "cuda:0",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false,
+    "deterministic_algorithms": false
+  },
+  "amp": true,
+  "loss": 2.450916051864624,
+  "gradient": {
+    "refiner": {
+      "norm": 3.3832548840030583,
+      "used_tensors": 8
+    }
+  },
+  "isolated_refiner_gradients": {
+    "bf_local_dual": {
+      "norm": 0.39541153854539274,
+      "used_parameter_tensors": 8
+    },
+    "bf_local_bf_only": {
+      "norm": 0.9076932070381379,
+      "used_parameter_tensors": 8
+    },
+    "dual_j_per_sample": {
+      "norm": 7.00927181635645,
+      "used_parameter_tensors": 8
+    },
+    "bf_only_j_per_sample": {
+      "norm": 0.0,
+      "used_parameter_tensors": 8
+    }
+  },
+  "encoder_input_checks": [
+    {
+      "pass": "semantic_training",
+      "encoder_calls": 2,
+      "rounds": 1,
+      "first_lower_gt_hidden": true,
+      "second_input_matches_generated": true,
+      "first_refinement_source": "model-generated P0",
+      "last_encoder_target_sha256": "56807936bbf05d1116489b751d391f4a277061a00d4872763eccf297cf73bd4b"
+    },
+    {
+      "pass": "semantic_eval",
+      "encoder_calls": 2,
+      "rounds": 1,
+      "first_lower_gt_hidden": true,
+      "second_input_matches_generated": true,
+      "first_refinement_source": "model-generated P0",
+      "last_encoder_target_sha256": "3fffacb69e1013d53d22886fd3151334fbe826d561fb92232d59e93a486427bb"
+    },
+    {
+      "pass": "semantic_hidden_gt_replaced",
+      "encoder_calls": 2,
+      "rounds": 1,
+      "first_lower_gt_hidden": true,
+      "second_input_matches_generated": true,
+      "first_refinement_source": "model-generated P0",
+      "last_encoder_target_sha256": "3fffacb69e1013d53d22886fd3151334fbe826d561fb92232d59e93a486427bb"
+    },
+    {
+      "pass": "automatic_eval",
+      "encoder_calls": 2,
+      "rounds": 1,
+      "first_lower_gt_hidden": true,
+      "second_input_matches_generated": true,
+      "first_refinement_source": "model-generated P0",
+      "last_encoder_target_sha256": "923d238258ff8f9559801ede6df0e9dc9ef95234169d73ee063861e1b6dddae6"
+    },
+    {
+      "pass": "automatic_hidden_gt_replaced",
+      "encoder_calls": 2,
+      "rounds": 1,
+      "first_lower_gt_hidden": true,
+      "second_input_matches_generated": true,
+      "first_refinement_source": "model-generated P0",
+      "last_encoder_target_sha256": "923d238258ff8f9559801ede6df0e9dc9ef95234169d73ee063861e1b6dddae6"
+    }
+  ],
+  "hidden_gt_invariance": {
+    "semantic": {
+      "p0": true,
+      "p1": true,
+      "mask": true,
+      "masked_p0": true
+    },
+    "automatic": {
+      "p0": true,
+      "p1": true,
+      "mask": true,
+      "masked_p0": true
+    }
+  },
+  "frozen_before": {
+    "sha256": "01775fc268b3e4dc14e8b0bb17588d704c4a55dae15f770395806aacaed27de0",
+    "parameter_count": 161979611
+  },
+  "frozen_after": {
+    "sha256": "01775fc268b3e4dc14e8b0bb17588d704c4a55dae15f770395806aacaed27de0",
+    "parameter_count": 161979611
+  },
+  "stage_one_exact_unchanged": true,
+  "hidden_gt_replacement_equal": true,
+  "bf_only_j_zero": true,
+  "strict_refiner_restore": true,
+  "strict_refiner_restore_scope": "same Refiner instance strict tensor/dtype/byte reload; full-model reconstruction is not exercised here",
+  "sample_scope": "two fixed samples; no nine-source or full-pool quality claim",
+  "precision_scope": "training uses configured autocast; invariance/automatic forwards use FP32",
+  "shape": {
+    "p0": [
+      2,
+      3,
+      896,
+      448
+    ],
+    "p1": [
+      2,
+      3,
+      896,
+      448
+    ],
+    "masked_p0": [
+      2,
+      3,
+      896,
+      448
+    ]
+  },
+  "dtype": {
+    "p0": "torch.float32",
+    "p1": "torch.float32",
+    "masked_p0": "torch.float32"
+  },
+  "automatic_mask_shape": [
+    2,
+    28,
+    28
+  ],
+  "mask_distribution_limitation": "training eleven BF annotations; inference automatic block B; distribution mismatch intentionally remains",
+  "checkpoint_sha256": "55c543a6d4f2c3a5584224fd88f9db5f6cd10ac6cb3a9121b59ea028d2c44470"
+}

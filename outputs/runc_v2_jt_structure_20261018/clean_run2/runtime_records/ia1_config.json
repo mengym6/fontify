@@ -1,0 +1,87 @@
+{
+  "schema": "runc-v2-runtime-v1",
+  "experiment": "runc_v2",
+  "stage": "ia1",
+  "checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ia0/checkpoint-step-000004.pth",
+  "initial_checkpoint_sha256": "339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+  "model": {
+    "unfreeze_blocks": [
+      2,
+      5,
+      8,
+      11
+    ]
+  },
+  "data": {
+    "reference_policy": "distinct-original-reference-v1",
+    "root": "fontdata_example",
+    "train_json": [
+      "fontdata_example/train_json_dual_v1/train_dual.json"
+    ],
+    "cache": "fontdata_example/dual_targets_v1",
+    "fixed_pairs": "fontdata_example/val_pairs_fixed_clean.json",
+    "val_json": [
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_SushiBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_SushiJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbJT.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfBF.json",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfJT.json"
+    ],
+    "eval_coef": "models/dual_view_pad_20261014/eval_coef.json",
+    "s_baseline": "models/dual_view_pad_20261014/s_baseline_dual.json"
+  },
+  "weights": {
+    "head": 1.0,
+    "head_geo": 1.144868179115405,
+    "head_logsigma": 1.7566416956923732,
+    "head_centroid": 20.987238630392014,
+    "head_shape": 1.0,
+    "density": 0.0,
+    "occupancy": 0.0,
+    "occupancy_dice": 0.0,
+    "j_coarse": 0.0,
+    "j_centroid": 1.0,
+    "j_logsigma": 1.0,
+    "j_shape": 1.0
+  },
+  "backend": {
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false
+  },
+  "training": {
+    "seed": 0,
+    "steps": 400,
+    "batch_size": 2,
+    "accum_iter": 8,
+    "save_every": 50,
+    "lr_head": 0.0003,
+    "lr_vit": 3e-06,
+    "lr_coarse": 0.0003,
+    "clip_grad": 3.0,
+    "weight_decay": 0.05,
+    "amp": true,
+    "evaluate_every_save": true,
+    "save_initial": true,
+    "warmup_steps": 20
+  },
+  "purpose": "Uncalibrated correctness smoke only; not the formal training policy.",
+  "probe_batch_size": 2,
+  "probe_repeats": 2,
+  "calibration_record": "outputs/runc_v2_jt_structure_20261018/clean_run2/selection_ia1.json",
+  "stage_start_checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ia0/checkpoint-step-000004.pth",
+  "_formal_training": true
+}

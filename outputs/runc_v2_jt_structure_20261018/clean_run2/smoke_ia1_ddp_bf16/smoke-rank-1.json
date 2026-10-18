@@ -1,0 +1,44 @@
+{
+  "optimizer_steps": 2,
+  "frozen_exact_unchanged": true,
+  "world_size": 2,
+  "schema": "runc-v2-runtime-v1",
+  "stage": "ia1",
+  "checks": {
+    "occupancy_logits": {
+      "gt_replacement_equal": true,
+      "repeat_equal": true
+    },
+    "existence_logits": {
+      "gt_replacement_equal": true,
+      "repeat_equal": true
+    },
+    "class_logits": {
+      "gt_replacement_equal": true,
+      "repeat_equal": true
+    }
+  },
+  "backend": {
+    "torch": "2.3.0+cu121",
+    "cuda": "12.1",
+    "cudnn": 8902,
+    "device": "cuda:1",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false,
+    "deterministic_algorithms": false
+  },
+  "amp": true,
+  "scope": "runtime correctness only; no training benefit claim",
+  "accum_equivalence": {
+    "full_batch_size": 2,
+    "micro_batch_size": 1,
+    "full_loss": 4.130621910095215,
+    "mean_micro_loss": 4.130621910095215,
+    "gradient_relative_l2": 8.342016727336535e-07,
+    "gradient_max_absolute": 5.960464477539062e-07,
+    "relative_tolerance": 0.0001,
+    "precision": "native FP32; stochastic drop disabled only for this identity"
+  }
+}

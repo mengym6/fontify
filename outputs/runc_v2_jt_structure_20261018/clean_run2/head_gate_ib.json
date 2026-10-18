@@ -1,0 +1,119 @@
+{
+  "schema": "runc-v2-head-technical-gate-v1",
+  "status": "technical_gate_passed",
+  "source_stage": "ia1",
+  "stage": "ib",
+  "reference_policy": "distinct-original-reference-v1",
+  "checkpoint_sha256": "c2da2b87323cedfc3853acb414eb1dc3553a56bf67f8fab5e58d425fd2b7e757",
+  "supporting_evaluations": [
+    {
+      "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000000/evaluation.json",
+      "sha256": "214c0f7e8e92eaa8fdc0a916456ef489e7a1b4f818f302cb2a08a85e0b2b472b"
+    },
+    {
+      "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000100/evaluation.json",
+      "sha256": "f089f7dd12af2aa3a29d984923e6ebad3f60f07c34f34f5a68f1adf6f6cca22e"
+    },
+    {
+      "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000200/evaluation.json",
+      "sha256": "dd8209e522ee545b182d1afbbd7663d3ee9a78e60bd2848eb18821fc81337eae"
+    },
+    {
+      "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000300/evaluation.json",
+      "sha256": "3efe6a9b39b0e5521d05e3eb54833ba7c23dd0e75eef317265470b3e1d262108"
+    },
+    {
+      "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/evaluation.json",
+      "sha256": "d4766b2aa6ead2171bafab55749854f9d5f8aac9d29fc9a16d0144f14248390c"
+    }
+  ],
+  "rationale": "Allow a controlled frozen-Head IB rendering experiment: clean IA1 completed400 updates with exact frozen SHA; relative to its same fixed start, matched216 Head IoU .252255->.449461, x+y logsigma .900745->.426860, relative centroid .637929->.194315, shape .517884->.383418; all9 authors have higher mean IoU and lower mean scale. Late snapshots show a plateau without two consecutive joint scale/occupancy deteriorations. Thirteen fixed glyph strips across9 authors (including required5) were inspected: nonempty coarse structure is present, but thick/merged parts remain. This is an experimental technical gate, not a claim of reliable final structure, superiority to Run B Fix, independent generalization or human acceptance.",
+  "review_actor": "codex",
+  "user_final_structure_acceptance": "pending",
+  "chosen_checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/checkpoint-step-000400.pth",
+  "chosen_step": 400,
+  "selection_policy": "bounded endpoint; all snapshots retained, no best-of-val winner claim",
+  "final_metrics": {
+    "head_soft_iou": {
+      "count": 216,
+      "mean": 0.4494610527213404,
+      "p50": 0.46497876942157745,
+      "p90": 0.6170825362205505,
+      "p95": 0.648842841386795
+    },
+    "head_role_accuracy": {
+      "count": 216,
+      "mean": 0.7175925925925926,
+      "p50": 1,
+      "p90": 1,
+      "p95": 1
+    },
+    "head_bce": {
+      "count": 216,
+      "mean": 0.4648486395125036,
+      "p50": 0.44656631350517273,
+      "p90": 0.7164044678211212,
+      "p95": 0.8109979033470154
+    },
+    "head_dice": {
+      "count": 216,
+      "mean": 0.3933098978466458,
+      "p50": 0.3652098774909973,
+      "p90": 0.5852767825126648,
+      "p95": 0.6628118753433228
+    },
+    "head_existence_recall": {
+      "count": 216,
+      "mean": 0.9351851851851852,
+      "p50": 1,
+      "p90": 1,
+      "p95": 1
+    },
+    "head_logsigma_x": {
+      "count": 216,
+      "mean": 0.196247980274536,
+      "p50": 0.1552433967590332,
+      "p90": 0.3929963707923889,
+      "p95": 0.5839150846004486
+    },
+    "head_logsigma_y": {
+      "count": 216,
+      "mean": 0.2306115959805471,
+      "p50": 0.1561177372932434,
+      "p90": 0.5667385160923004,
+      "p95": 0.6897400766611099
+    },
+    "head_centroid_absolute": {
+      "count": 216,
+      "mean": 0.08557503206301825,
+      "p50": 0.07371778786182404,
+      "p90": 0.15269047021865845,
+      "p95": 0.20409833639860153
+    },
+    "head_centroid_relative": {
+      "count": 216,
+      "mean": 0.19431460996296396,
+      "p50": 0.13836050778627396,
+      "p90": 0.4210129678249359,
+      "p95": 0.5002159178256989
+    },
+    "head_shape": {
+      "count": 216,
+      "mean": 0.3834176367769639,
+      "p50": 0.3371109068393707,
+      "p90": 0.644359827041626,
+      "p95": 0.7569175213575363
+    },
+    "head_logsigma": {
+      "count": 216,
+      "mean": 0.4268595762550831,
+      "p50": 0.3345423638820648,
+      "p90": 0.915341317653656,
+      "p95": 1.0623571127653122
+    }
+  },
+  "evaluated_parameter_sha256": {
+    "sha256": "fdf435fd4ead51d801877ec37c014617fb76f4c674170ecf15b3c3b366927ed3",
+    "parameter_count": 161979611
+  }
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "index": 0,
+    "author": "Caoqb",
+    "character": "無",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/無.png",
+    "reference_path": "font/train/new/CaoqbJT/images_text_denoised/若.png"
+  },
+  {
+    "index": 39,
+    "author": "Sushi",
+    "character": "容",
+    "target_path": "font/train/new/SushiJT/images_text_denoised/容.png",
+    "reference_path": "font/train/new/SushiJT/images_text_denoised/春.png"
+  },
+  {
+    "index": 10,
+    "author": "Dongqc",
+    "character": "惟",
+    "target_path": "font/train/new/DongqcJT/images_text_denoised/惟.png",
+    "reference_path": "font/train/new/DongqcJT/images_text_denoised/何.png"
+  },
+  {
+    "index": 34,
+    "author": "Ouyx",
+    "character": "雲",
+    "target_path": "font/train/new/OuyxJT/images_text_denoised/雲.png",
+    "reference_path": "font/train/new/OuyxJT/images_text_denoised/李.png"
+  },
+  {
+    "index": 76,
+    "author": "Zhangqb",
+    "character": "崇",
+    "target_path": "font/train/new/ZhangqbJT/images_text_denoised/崇.png",
+    "reference_path": "font/train/new/ZhangqbJT/images_text_denoised/思.png"
+  },
+  {
+    "index": 16,
+    "author": "Liugq",
+    "character": "乎",
+    "target_path": "font/train/new/LiugqJT/images_text_denoised/乎.png",
+    "reference_path": "font/train/new/LiugqJT/images_text_denoised/守.png"
+  },
+  {
+    "index": 24,
+    "author": "Longmen",
+    "character": "扵",
+    "target_path": "font/train/new/LongmenJT/images_text_denoised/扵.png",
+    "reference_path": "font/train/new/LongmenJT/images_text_denoised/使.png"
+  },
+  {
+    "index": 40,
+    "author": "Yanzq",
+    "character": "楨",
+    "target_path": "font/train/new/YanzqJT/images_text_denoised/楨.png",
+    "reference_path": "font/train/new/YanzqJT/images_text_denoised/海1.png"
+  },
+  {
+    "index": 84,
+    "author": "Zhaomf",
+    "character": "還",
+    "target_path": "font/train/new/ZhaomfJT/images_text_denoised/還.png",
+    "reference_path": "font/train/new/ZhaomfJT/images_text_denoised/迴.png"
+  },
+  {
+    "index": 2,
+    "author": "Caoqb",
+    "character": "完",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/完.png",
+    "reference_path": "font/train/new/CaoqbJT/images_text_denoised/無.png"
+  },
+  {
+    "index": 3,
+    "author": "Caoqb",
+    "character": "貢",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/貢.png",
+    "reference_path": "font/train/new/CaoqbJT/images_text_denoised/完.png"
+  },
+  {
+    "index": 4,
+    "author": "Caoqb",
+    "character": "和",
+    "target_path": "font/train/new/CaoqbJT/images_text_denoised/和.png",
+    "reference_path": "font/train/new/CaoqbJT/images_text_denoised/討.png"
+  }
+]

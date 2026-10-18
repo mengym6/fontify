@@ -1,0 +1,277 @@
+{
+  "source_sha": "6411b2675834e5a2aa623635161c2a4eb6458123",
+  "branch": "codex/runc-v2-jt-structure",
+  "tracked_dirty": true,
+  "tracked_dirty_sha256": {},
+  "checkpoint_sha256": "c2da2b87323cedfc3853acb414eb1dc3553a56bf67f8fab5e58d425fd2b7e757",
+  "initial_checkpoint_sha256": "339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+  "reference_policy": "distinct-original-reference-v1",
+  "stage_start_checkpoint_sha256": "c2da2b87323cedfc3853acb414eb1dc3553a56bf67f8fab5e58d425fd2b7e757",
+  "data_file_sha256": {
+    "fontdata_example/train_json_dual_v1/train_dual.json": "cf7fea0e08e831ebd5ff6bbee0a463af2018c016c090610ca1fdf7d6b68db545",
+    "fontdata_example/val_json_clean_v2/font_val_CaoqbBF.json": "684334b4ff00590ded8e212771b34cb8f982aaa4e8ed728f10e1a1cfd570ab7b",
+    "fontdata_example/val_json_clean_v2/font_val_CaoqbJT.json": "a6289b300fcb491ef173b67d3a0c5821322e585a58f645aa5c1de9c795715fd2",
+    "fontdata_example/val_json_clean_v2/font_val_DongqcBF.json": "959dbd93c0cde6c0b8fbf146428db4dcbbc314f10a081ff2750d58c4a5e66965",
+    "fontdata_example/val_json_clean_v2/font_val_DongqcJT.json": "059c1fec2efcc687efa0f790b85771a3341c68fc96392025bc505e23dd479a2c",
+    "fontdata_example/val_json_clean_v2/font_val_LiugqBF.json": "169d920a74032ecc5707a738bddb12942bb5143312a667ffb178c93a72ab91c3",
+    "fontdata_example/val_json_clean_v2/font_val_LiugqJT.json": "63d10187b647f2454667ea653349c45c292f45c593ab0921f977bcf41e8a6461",
+    "fontdata_example/val_json_clean_v2/font_val_LongmenBF.json": "b28681b38ae159802a9d8e5766e5275645e3ca3ceb4a20c68e39367b13b0b5db",
+    "fontdata_example/val_json_clean_v2/font_val_LongmenJT.json": "7d86ecb96f7d6e4f3e5db75bcfdb85deefd829cc350f4ae7731232249e81902c",
+    "fontdata_example/val_json_clean_v2/font_val_OuyxBF.json": "28aa737e3f1a19bf3205d98388a27621f892245ac66a10a23ee610e402186f5d",
+    "fontdata_example/val_json_clean_v2/font_val_OuyxJT.json": "2f24606289f2a03f8355ded6446af0065c7f2492263b6710741e0451c12ebb7d",
+    "fontdata_example/val_json_clean_v2/font_val_SushiBF.json": "fe3466627f7a6f3e1ca4f8344a593fcefc148e98c07a7b6dac1e5f8a4ecbf70a",
+    "fontdata_example/val_json_clean_v2/font_val_SushiJT.json": "fc46edb134bb3cf8fbc22aae0cd6f2bc083df060129b0949e48f4aed08bc5902",
+    "fontdata_example/val_json_clean_v2/font_val_YanzqBF.json": "bce6fdb2d50e7e78740e5278bfa50904c6b0a74deb51be42669f00f0f53c139e",
+    "fontdata_example/val_json_clean_v2/font_val_YanzqJT.json": "102be1686ef5eba0ad2abfc0f9ab308b4e55d9a0127755afa0c138430cab2a3c",
+    "fontdata_example/val_json_clean_v2/font_val_ZhangqbBF.json": "e3bb72fd3de789591fab1c231468b010a0ebbf7dfeb3a597fc536b61b5fbdd49",
+    "fontdata_example/val_json_clean_v2/font_val_ZhangqbJT.json": "0038f787bb113ade5f8afc91578c9b771bef0639fc83cb8fb36156a2987e09fb",
+    "fontdata_example/val_json_clean_v2/font_val_ZhaomfBF.json": "b1597f365784faa7de91c67f9b61416a4b35bdb269f93a9628e5017ce498569b",
+    "fontdata_example/val_json_clean_v2/font_val_ZhaomfJT.json": "41eeb014f3b684d9558a41aeae3e8482ce7879b72578ea21b94af04881798047",
+    "fontdata_example/val_pairs_fixed_clean.json": "3b9373097017165b5634122acf62db67b304c4166d34ed97ca2305643f331a30"
+  },
+  "calibration": {
+    "calibration_sha256": "623e54d6b61d3e6bb1b230b8af2e0f066273c8940960f673fa76b606d9a532f0",
+    "source_probe_sha256": "c3a7aaced3d210a82967f43ca448f83bfb2330e31fadfb8aa4b7da0457027f5b",
+    "selected_weights": {
+      "head": 0.0,
+      "head_geo": 0.0,
+      "head_logsigma": 1.0,
+      "head_centroid": 1.0,
+      "head_shape": 1.0,
+      "density": 1.0,
+      "occupancy": 0.30873416622657585,
+      "occupancy_dice": 0.0,
+      "j_coarse": 1.725494366426425,
+      "j_centroid": 0.7369634791941362,
+      "j_logsigma": 0.8925855849927455,
+      "j_shape": 1.0
+    },
+    "rationale": "CPU selection from measured parameter-gradient Grams only. Geometry uses shape=1 and cross-batch median raw-norm ratios for logsigma:relative-centroid:shape approximately 2:1:1; centroid uses eligible multi-part batches only. The common multiplier uses each batch's actual Gram composite, targeting geometry/Head=1 for IA or J/density=0.5 for IB. IB targets occupancy-BCE/density=1 and leaves Dice disabled. These are conservative starting policies, not demonstrated optimal weights or evidence of training benefit.",
+    "reference_policy": "distinct-original-reference-v1",
+    "stage_start_checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/checkpoint-step-000400.pth",
+    "stage_start_checkpoint_sha256": "c2da2b87323cedfc3853acb414eb1dc3553a56bf67f8fab5e58d425fd2b7e757"
+  },
+  "stage_gate": {
+    "sha256": "d721d3d1a45805bf9e98284410ae62f67d9f474b96c51f7486a0b17077173a93",
+    "record": {
+      "schema": "runc-v2-head-technical-gate-v1",
+      "status": "technical_gate_passed",
+      "source_stage": "ia1",
+      "stage": "ib",
+      "reference_policy": "distinct-original-reference-v1",
+      "checkpoint_sha256": "c2da2b87323cedfc3853acb414eb1dc3553a56bf67f8fab5e58d425fd2b7e757",
+      "supporting_evaluations": [
+        {
+          "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000000/evaluation.json",
+          "sha256": "214c0f7e8e92eaa8fdc0a916456ef489e7a1b4f818f302cb2a08a85e0b2b472b"
+        },
+        {
+          "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000100/evaluation.json",
+          "sha256": "f089f7dd12af2aa3a29d984923e6ebad3f60f07c34f34f5a68f1adf6f6cca22e"
+        },
+        {
+          "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000200/evaluation.json",
+          "sha256": "dd8209e522ee545b182d1afbbd7663d3ee9a78e60bd2848eb18821fc81337eae"
+        },
+        {
+          "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000300/evaluation.json",
+          "sha256": "3efe6a9b39b0e5521d05e3eb54833ba7c23dd0e75eef317265470b3e1d262108"
+        },
+        {
+          "path": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/evaluation.json",
+          "sha256": "d4766b2aa6ead2171bafab55749854f9d5f8aac9d29fc9a16d0144f14248390c"
+        }
+      ],
+      "rationale": "Allow a controlled frozen-Head IB rendering experiment: clean IA1 completed400 updates with exact frozen SHA; relative to its same fixed start, matched216 Head IoU .252255->.449461, x+y logsigma .900745->.426860, relative centroid .637929->.194315, shape .517884->.383418; all9 authors have higher mean IoU and lower mean scale. Late snapshots show a plateau without two consecutive joint scale/occupancy deteriorations. Thirteen fixed glyph strips across9 authors (including required5) were inspected: nonempty coarse structure is present, but thick/merged parts remain. This is an experimental technical gate, not a claim of reliable final structure, superiority to Run B Fix, independent generalization or human acceptance.",
+      "review_actor": "codex",
+      "user_final_structure_acceptance": "pending",
+      "chosen_checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/checkpoint-step-000400.pth",
+      "chosen_step": 400,
+      "selection_policy": "bounded endpoint; all snapshots retained, no best-of-val winner claim",
+      "final_metrics": {
+        "head_soft_iou": {
+          "count": 216,
+          "mean": 0.4494610527213404,
+          "p50": 0.46497876942157745,
+          "p90": 0.6170825362205505,
+          "p95": 0.648842841386795
+        },
+        "head_role_accuracy": {
+          "count": 216,
+          "mean": 0.7175925925925926,
+          "p50": 1,
+          "p90": 1,
+          "p95": 1
+        },
+        "head_bce": {
+          "count": 216,
+          "mean": 0.4648486395125036,
+          "p50": 0.44656631350517273,
+          "p90": 0.7164044678211212,
+          "p95": 0.8109979033470154
+        },
+        "head_dice": {
+          "count": 216,
+          "mean": 0.3933098978466458,
+          "p50": 0.3652098774909973,
+          "p90": 0.5852767825126648,
+          "p95": 0.6628118753433228
+        },
+        "head_existence_recall": {
+          "count": 216,
+          "mean": 0.9351851851851852,
+          "p50": 1,
+          "p90": 1,
+          "p95": 1
+        },
+        "head_logsigma_x": {
+          "count": 216,
+          "mean": 0.196247980274536,
+          "p50": 0.1552433967590332,
+          "p90": 0.3929963707923889,
+          "p95": 0.5839150846004486
+        },
+        "head_logsigma_y": {
+          "count": 216,
+          "mean": 0.2306115959805471,
+          "p50": 0.1561177372932434,
+          "p90": 0.5667385160923004,
+          "p95": 0.6897400766611099
+        },
+        "head_centroid_absolute": {
+          "count": 216,
+          "mean": 0.08557503206301825,
+          "p50": 0.07371778786182404,
+          "p90": 0.15269047021865845,
+          "p95": 0.20409833639860153
+        },
+        "head_centroid_relative": {
+          "count": 216,
+          "mean": 0.19431460996296396,
+          "p50": 0.13836050778627396,
+          "p90": 0.4210129678249359,
+          "p95": 0.5002159178256989
+        },
+        "head_shape": {
+          "count": 216,
+          "mean": 0.3834176367769639,
+          "p50": 0.3371109068393707,
+          "p90": 0.644359827041626,
+          "p95": 0.7569175213575363
+        },
+        "head_logsigma": {
+          "count": 216,
+          "mean": 0.4268595762550831,
+          "p50": 0.3345423638820648,
+          "p90": 0.915341317653656,
+          "p95": 1.0623571127653122
+        }
+      },
+      "evaluated_parameter_sha256": {
+        "sha256": "fdf435fd4ead51d801877ec37c014617fb76f4c674170ecf15b3c3b366927ed3",
+        "parameter_count": 161979611
+      }
+    }
+  },
+  "backend": {
+    "torch": "2.3.0+cu121",
+    "cuda": "12.1",
+    "cudnn": 8902,
+    "device": "cuda:0",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false,
+    "deterministic_algorithms": false
+  },
+  "world_size": 2,
+  "effective_batch": 32,
+  "config": {
+    "schema": "runc-v2-runtime-v1",
+    "experiment": "runc_v2",
+    "stage": "ib",
+    "checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/checkpoint-step-000400.pth",
+    "initial_checkpoint_sha256": "339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+    "model": {
+      "unfreeze_blocks": [
+        2,
+        5,
+        8,
+        11
+      ]
+    },
+    "data": {
+      "reference_policy": "distinct-original-reference-v1",
+      "root": "fontdata_example",
+      "train_json": [
+        "fontdata_example/train_json_dual_v1/train_dual.json"
+      ],
+      "cache": "fontdata_example/dual_targets_v1",
+      "fixed_pairs": "fontdata_example/val_pairs_fixed_clean.json",
+      "val_json": [
+        "fontdata_example/val_json_clean_v2/font_val_CaoqbBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_CaoqbJT.json",
+        "fontdata_example/val_json_clean_v2/font_val_DongqcBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_DongqcJT.json",
+        "fontdata_example/val_json_clean_v2/font_val_LiugqBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_LiugqJT.json",
+        "fontdata_example/val_json_clean_v2/font_val_LongmenBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_LongmenJT.json",
+        "fontdata_example/val_json_clean_v2/font_val_OuyxBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_OuyxJT.json",
+        "fontdata_example/val_json_clean_v2/font_val_SushiBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_SushiJT.json",
+        "fontdata_example/val_json_clean_v2/font_val_YanzqBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_YanzqJT.json",
+        "fontdata_example/val_json_clean_v2/font_val_ZhangqbBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_ZhangqbJT.json",
+        "fontdata_example/val_json_clean_v2/font_val_ZhaomfBF.json",
+        "fontdata_example/val_json_clean_v2/font_val_ZhaomfJT.json"
+      ],
+      "eval_coef": "models/dual_view_pad_20261014/eval_coef.json",
+      "s_baseline": "models/dual_view_pad_20261014/s_baseline_dual.json"
+    },
+    "weights": {
+      "head": 0.0,
+      "head_geo": 0.0,
+      "head_logsigma": 1.0,
+      "head_centroid": 1.0,
+      "head_shape": 1.0,
+      "density": 1.0,
+      "occupancy": 0.30873416622657585,
+      "occupancy_dice": 0.0,
+      "j_coarse": 1.725494366426425,
+      "j_centroid": 0.7369634791941362,
+      "j_logsigma": 0.8925855849927455,
+      "j_shape": 1.0
+    },
+    "backend": {
+      "matmul_tf32": false,
+      "cudnn_tf32": false,
+      "cudnn_benchmark": false
+    },
+    "training": {
+      "seed": 0,
+      "steps": 320,
+      "batch_size": 2,
+      "accum_iter": 8,
+      "save_every": 40,
+      "lr_head": 0.0003,
+      "lr_vit": 3e-06,
+      "lr_coarse": 0.0003,
+      "clip_grad": 3,
+      "weight_decay": 0.05,
+      "amp": true,
+      "evaluate_every_save": true,
+      "save_initial": true,
+      "warmup_steps": 16
+    },
+    "purpose": "Uncalibrated correctness smoke only; not the formal training policy.",
+    "stage_gate_record": "outputs/runc_v2_jt_structure_20261018/clean_run2/head_gate_ib.json",
+    "probe_batch_size": 2,
+    "probe_repeats": 2,
+    "calibration_record": "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/selection_ib.json",
+    "stage_start_checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/checkpoint-step-000400.pth",
+    "_formal_training": true
+  }
+}

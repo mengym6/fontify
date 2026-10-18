@@ -1,0 +1,392 @@
+[
+  {
+    "index": 0,
+    "author": "Caoqb",
+    "character": "無",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-000.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-000.png",
+    "sha256": "2317552c641e7b13a383ff65575dd4bb80bd394189bb3bcad5dcb8b8dd741d90"
+  },
+  {
+    "index": 0,
+    "author": "Caoqb",
+    "character": "無",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-000.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-000.png",
+    "sha256": "dcd73148d955df5bc80dd29f1db6e543039d25a18ae7429cc9d029cfba5d7178"
+  },
+  {
+    "index": 0,
+    "author": "Caoqb",
+    "character": "無",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-000.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-000.png",
+    "sha256": "cdda34bce930099156c4e49048978dd3a4c78fc0a1a140d639bcfbe8f07c3dc5"
+  },
+  {
+    "index": 2,
+    "author": "Caoqb",
+    "character": "完",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-002.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-002.png",
+    "sha256": "6ba66e3ca6e582e3c005b68ce3377f0a61f7a6434f5bc9dbab8daee2e2bd645c"
+  },
+  {
+    "index": 2,
+    "author": "Caoqb",
+    "character": "完",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-002.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-002.png",
+    "sha256": "a166fc93f32bf61e485a346357cb48183631b3bf8aa8f971abdfc3bc1ea683ce"
+  },
+  {
+    "index": 2,
+    "author": "Caoqb",
+    "character": "完",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-002.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-002.png",
+    "sha256": "b0544dfeb6e0e22fe2e5e936486bf61de8f47de05708fb4a0c1ec9dd79aa3156"
+  },
+  {
+    "index": 7,
+    "author": "Dongqc",
+    "character": "元",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-007.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-007.png",
+    "sha256": "53b282eb92538e75c2add01cd8debd115b9ba187c4a4dc66b7f465a6cf625277"
+  },
+  {
+    "index": 7,
+    "author": "Dongqc",
+    "character": "元",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-007.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-007.png",
+    "sha256": "a4f40ae3bc3a5e006fe0a5447577a0f4ba7e107b9ba627e0178262cf9b22c45e"
+  },
+  {
+    "index": 7,
+    "author": "Dongqc",
+    "character": "元",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-007.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-007.png",
+    "sha256": "98ccf30555169c0bcbde0540ed8bfd1e481fe104bb61f0eb6cea1d3e157731b6"
+  },
+  {
+    "index": 10,
+    "author": "Dongqc",
+    "character": "惟",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-010.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-010.png",
+    "sha256": "726c0a0f66305920e4cffac14d8c822fe71d875440f5438afb3ff212f57d83b5"
+  },
+  {
+    "index": 10,
+    "author": "Dongqc",
+    "character": "惟",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-010.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-010.png",
+    "sha256": "327e33496bd5d168ee20266cc4281c5910849f89bc197f0cd993fa8c865d5c69"
+  },
+  {
+    "index": 10,
+    "author": "Dongqc",
+    "character": "惟",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-010.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-010.png",
+    "sha256": "39a25e17dfc2db3ccda30de0b0ea1ae7f5abaa01e162bffa8f0e6f3b5e649aee"
+  },
+  {
+    "index": 16,
+    "author": "Liugq",
+    "character": "乎",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-016.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-016.png",
+    "sha256": "2828228d99a8bdbe62ddf8b152b6a9f8bcc3251bc8dbb0f2707703805eb53944"
+  },
+  {
+    "index": 16,
+    "author": "Liugq",
+    "character": "乎",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-016.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-016.png",
+    "sha256": "216e227f9f345aa404cf54b2d334322db2ab2c2cf8abe94ffaf9d7862cb90139"
+  },
+  {
+    "index": 16,
+    "author": "Liugq",
+    "character": "乎",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-016.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-016.png",
+    "sha256": "63a78f243f48e753461def2e70d3b392696af2898a52b16ef2b9eaef6153a2c1"
+  },
+  {
+    "index": 24,
+    "author": "Longmen",
+    "character": "扵",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-024.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-024.png",
+    "sha256": "dd71843ab0378e8264849752dbd49cb1445a422f60939a573797c9960b65bb3b"
+  },
+  {
+    "index": 24,
+    "author": "Longmen",
+    "character": "扵",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-024.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-024.png",
+    "sha256": "74a41ec2fd04d673ea92583e153a8ee4b6b1d9b4914d4fd6178fbed60917a306"
+  },
+  {
+    "index": 24,
+    "author": "Longmen",
+    "character": "扵",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-024.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-024.png",
+    "sha256": "6f8e9b50725d35b865e86b9643ca716548e5c3fbb48fe16e41cda7b3c3f96707"
+  },
+  {
+    "index": 29,
+    "author": "Ouyx",
+    "character": "河",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-029.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-029.png",
+    "sha256": "7d8d05a4ee316c20a6d0d4911ceb6f091fe937edef9451933736d40ebcfde4b4"
+  },
+  {
+    "index": 29,
+    "author": "Ouyx",
+    "character": "河",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-029.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-029.png",
+    "sha256": "2ae37dc16fc4ed3ce8e01a52536f15d6dd23f33e22bce9efe3c8bd3fe3681107"
+  },
+  {
+    "index": 29,
+    "author": "Ouyx",
+    "character": "河",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-029.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-029.png",
+    "sha256": "eebe8fbae6aba4c78d3fb79c7cb2143732cef9b97b30cf7291edf494c1e032a3"
+  },
+  {
+    "index": 34,
+    "author": "Ouyx",
+    "character": "雲",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-034.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-034.png",
+    "sha256": "95eb0c9b9972c4ac77c2583d9bdd0d4a3051cb1ee0d7847038a9956a2e7fb819"
+  },
+  {
+    "index": 34,
+    "author": "Ouyx",
+    "character": "雲",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-034.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-034.png",
+    "sha256": "d01213c6937c9d47f9dd0251b8eb0dec31f8e6e83c2e75b2b9cb79677e6a3736"
+  },
+  {
+    "index": 34,
+    "author": "Ouyx",
+    "character": "雲",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-034.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-034.png",
+    "sha256": "5c9a5008104e797e4777b0414cb0c88bf63ddf527124c0ef2744b43751b98955"
+  },
+  {
+    "index": 38,
+    "author": "Sushi",
+    "character": "春",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-038.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-038.png",
+    "sha256": "fe24ee5872cd0301f37a30a8fd723b17b868d63adc06057cdbb186d1c627fac2"
+  },
+  {
+    "index": 38,
+    "author": "Sushi",
+    "character": "春",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-038.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-038.png",
+    "sha256": "3bf0a51e3f0dd3789e7cda090895af204e4d681f11a0650551b9ca0df20b54c4"
+  },
+  {
+    "index": 38,
+    "author": "Sushi",
+    "character": "春",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-038.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-038.png",
+    "sha256": "9a0229f2ffca650a6aa81ae7a4f2f84a0eab515e4b94eefb4e86d4ee4af33f86"
+  },
+  {
+    "index": 39,
+    "author": "Sushi",
+    "character": "容",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-039.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-039.png",
+    "sha256": "c78c4557dae3681aea8d14b05a023a0b42e2cd7de370739e34b1c3359e7ced29"
+  },
+  {
+    "index": 39,
+    "author": "Sushi",
+    "character": "容",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-039.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-039.png",
+    "sha256": "7c29f3ebaee6a09c8efe15de8a8538ad3d931df195519bf1a0792294dcc34a15"
+  },
+  {
+    "index": 39,
+    "author": "Sushi",
+    "character": "容",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-039.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-039.png",
+    "sha256": "25a894b50e3044670153be6969c6258610b9982302de2a92839dba807deab7fe"
+  },
+  {
+    "index": 40,
+    "author": "Yanzq",
+    "character": "楨",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-040.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-040.png",
+    "sha256": "0ad921ad8123211a3e72c5e280408a198c5be4ffc1beca74811ee86c5d9fc1aa"
+  },
+  {
+    "index": 40,
+    "author": "Yanzq",
+    "character": "楨",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-040.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-040.png",
+    "sha256": "490483f6a1e9e288144df498981e8d2970e842b82df123bc3a9a658472e84010"
+  },
+  {
+    "index": 40,
+    "author": "Yanzq",
+    "character": "楨",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-040.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-040.png",
+    "sha256": "e1bf22e5af3f787afe5351fdb2b3336e02fb643f6c5b6c83bc6789b43ff282fb"
+  },
+  {
+    "index": 76,
+    "author": "Zhangqb",
+    "character": "崇",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-076.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-076.png",
+    "sha256": "3f63b4c8864e89a97100cc422b384439fe66deddbc7cd9c0df25830847ec1691"
+  },
+  {
+    "index": 76,
+    "author": "Zhangqb",
+    "character": "崇",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-076.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-076.png",
+    "sha256": "cd405d0504bc083086fd120aec0fc3a4a63c569609372b6a37ebb84d9a6697c9"
+  },
+  {
+    "index": 76,
+    "author": "Zhangqb",
+    "character": "崇",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-076.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-076.png",
+    "sha256": "3809c3aaf2bbb77c3e9bf9f32656414efd4784338bf31ac9866fed09fd53fe79"
+  },
+  {
+    "index": 84,
+    "author": "Zhaomf",
+    "character": "還",
+    "stage": "ia1",
+    "step": 400,
+    "file": "ia1-400-084.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ia1/evaluation-step-000400/jt-084.png",
+    "sha256": "c0b2eac85d18873392a0f37a5207c8fa999d7755cc42a9d603d1399030467fd1"
+  },
+  {
+    "index": 84,
+    "author": "Zhaomf",
+    "character": "還",
+    "stage": "ib",
+    "step": 80,
+    "file": "ib-080-084.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000080/jt-084.png",
+    "sha256": "1ccb096df4a08e7656b6140a6c2c37ae9c3599ca89bbf84a4eee0b9ad2196e2c"
+  },
+  {
+    "index": 84,
+    "author": "Zhaomf",
+    "character": "還",
+    "stage": "ib",
+    "step": 320,
+    "file": "ib-320-084.png",
+    "source": "models/runc_v2_jt_structure_20261018/clean_run2/ib/evaluation-step-000320/jt-084.png",
+    "sha256": "dcb4227e06c888f19362da95b4e730e48c3fd6f3785f87fbcf2a535e6e98f017"
+  }
+]

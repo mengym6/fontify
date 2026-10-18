@@ -1,0 +1,12 @@
+{
+  "status": "invalidated_gt_visible_through_self_reference",
+  "reason": "The sampled upper visible reference could be the exact lower-query GT.",
+  "ia0_run1": {"updates": 4, "exposures": 128, "self_references": 3},
+  "ia1_run1": {"updates": 126, "exposures": 4032, "self_references": 140, "terminated": true},
+  "forbidden": ["resume_from_run1", "use_run1_calibration", "claim_run1_quality_as_no_gt"],
+  "restart_from": "checkpoint14_sha256_339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+  "required_reference_policy": "distinct-original-reference-v1",
+  "fixed_jt_pair_self_references": 0,
+  "fixed_bf_pair_self_references": 11,
+  "raw_artifacts_preserved": true
+}

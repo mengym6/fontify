@@ -1,0 +1,1260 @@
+{
+  "batch_size": 1,
+  "render": true,
+  "output_shapes": {
+    "head": {
+      "layout": {
+        "shape": [
+          1,
+          28,
+          28,
+          532
+        ],
+        "dtype": "torch.float32"
+      },
+      "occupancy_logits": {
+        "shape": [
+          1,
+          4,
+          28,
+          28
+        ],
+        "dtype": "torch.bfloat16"
+      },
+      "existence_logits": {
+        "shape": [
+          1,
+          4
+        ],
+        "dtype": "torch.bfloat16"
+      },
+      "class_logits": {
+        "shape": [
+          1,
+          4,
+          20
+        ],
+        "dtype": "torch.bfloat16"
+      },
+      "slots": {
+        "shape": [
+          1,
+          4,
+          256
+        ],
+        "dtype": "torch.float32"
+      },
+      "query": {
+        "shape": [
+          1,
+          784,
+          256
+        ],
+        "dtype": "torch.float32"
+      }
+    },
+    "full_mask": {
+      "shape": [
+        1,
+        1568
+      ],
+      "dtype": "torch.bool"
+    },
+    "density": {
+      "shape": [
+        1,
+        1,
+        112,
+        112
+      ],
+      "dtype": "torch.bfloat16"
+    },
+    "occupancy_logits": {
+      "shape": [
+        1,
+        1,
+        112,
+        112
+      ],
+      "dtype": "torch.bfloat16"
+    },
+    "p0_lower": {
+      "shape": [
+        1,
+        3,
+        448,
+        448
+      ],
+      "dtype": "torch.bfloat16"
+    },
+    "p0": {
+      "shape": [
+        1,
+        3,
+        896,
+        448
+      ],
+      "dtype": "torch.float32"
+    }
+  },
+  "profiler_counted_operator_flops": 476043190304,
+  "counted_flops_div2_mac_equivalent": 238021595152.0,
+  "operator_rows": [
+    {
+      "operator": "aten::addmm",
+      "flops": 66588770304,
+      "input_shapes": [
+        [
+          3072
+        ],
+        [
+          1568,
+          768
+        ],
+        [
+          768,
+          3072
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 66588770304,
+      "input_shapes": [
+        [
+          768
+        ],
+        [
+          1568,
+          3072
+        ],
+        [
+          3072,
+          768
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 49941577728,
+      "input_shapes": [
+        [
+          2304
+        ],
+        [
+          1568,
+          768
+        ],
+        [
+          768,
+          2304
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 44392513536,
+      "input_shapes": [
+        [
+          3072
+        ],
+        [
+          3136,
+          768
+        ],
+        [
+          768,
+          3072
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 44392513536,
+      "input_shapes": [
+        [
+          768
+        ],
+        [
+          3136,
+          3072
+        ],
+        [
+          3072,
+          768
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 33988018176,
+      "input_shapes": [
+        [
+          12,
+          1568,
+          64
+        ],
+        [
+          12,
+          64,
+          1568
+        ]
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 33988018176,
+      "input_shapes": [
+        [
+          12,
+          1568,
+          1568
+        ],
+        [
+          12,
+          1568,
+          64
+        ]
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 33294385152,
+      "input_shapes": [
+        [
+          2304
+        ],
+        [
+          3136,
+          768
+        ],
+        [
+          768,
+          2304
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 22658678784,
+      "input_shapes": [
+        [
+          24,
+          1568,
+          64
+        ],
+        [
+          24,
+          64,
+          1568
+        ]
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 22658678784,
+      "input_shapes": [
+        [
+          24,
+          1568,
+          1568
+        ],
+        [
+          24,
+          1568,
+          64
+        ]
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 16647192576,
+      "input_shapes": [
+        [
+          768
+        ],
+        [
+          1568,
+          768
+        ],
+        [
+          768,
+          768
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 11098128384,
+      "input_shapes": [
+        [
+          768
+        ],
+        [
+          3136,
+          768
+        ],
+        [
+          768,
+          768
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::conv2d",
+      "flops": 7398752256,
+      "input_shapes": [
+        [
+          1,
+          3,
+          896,
+          448
+        ],
+        [
+          768,
+          3,
+          16,
+          16
+        ],
+        [
+          768
+        ],
+        [],
+        [],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::conv2d",
+      "flops": 3699376128,
+      "input_shapes": [
+        [
+          1,
+          256,
+          56,
+          56
+        ],
+        [
+          128,
+          256,
+          3,
+          3
+        ],
+        [
+          128
+        ],
+        [],
+        [],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::conv2d",
+      "flops": 3699376128,
+      "input_shapes": [
+        [
+          1,
+          128,
+          112,
+          112
+        ],
+        [
+          64,
+          128,
+          3,
+          3
+        ],
+        [
+          64
+        ],
+        [],
+        [],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 2466250752,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          784,
+          3072
+        ],
+        [
+          3072,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 1849688064,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          784,
+          4608
+        ],
+        [
+          4608,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 1233125376,
+      "input_shapes": [
+        [
+          1024
+        ],
+        [
+          784,
+          256
+        ],
+        [
+          256,
+          1024
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 1233125376,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          784,
+          1024
+        ],
+        [
+          1024,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 1213857792,
+      "input_shapes": [
+        [
+          56,
+          336,
+          64
+        ],
+        [
+          56,
+          64,
+          56
+        ]
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 1027604480,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          784,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 822083584,
+      "input_shapes": [
+        [
+          512
+        ],
+        [
+          1568,
+          256
+        ],
+        [
+          256,
+          512
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 809238528,
+      "input_shapes": [
+        [
+          56,
+          672,
+          64
+        ],
+        [
+          56,
+          64,
+          56
+        ]
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 616562688,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          784,
+          1536
+        ],
+        [
+          1536,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 616562688,
+      "input_shapes": [
+        [
+          768
+        ],
+        [
+          784,
+          256
+        ],
+        [
+          256,
+          768
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 616562688,
+      "input_shapes": [
+        [
+          512
+        ],
+        [
+          2352,
+          256
+        ],
+        [
+          256,
+          512
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 606928896,
+      "input_shapes": [
+        [
+          28,
+          672,
+          64
+        ],
+        [
+          28,
+          64,
+          28
+        ]
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 404619264,
+      "input_shapes": [
+        [
+          28,
+          1344,
+          64
+        ],
+        [
+          28,
+          64,
+          28
+        ]
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 308281344,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          784,
+          768
+        ],
+        [
+          768,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 265531392,
+      "input_shapes": [
+        [
+          12,
+          56,
+          28,
+          56,
+          28
+        ],
+        [
+          12,
+          56,
+          28,
+          56,
+          1
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 265531392,
+      "input_shapes": [
+        [
+          12,
+          56,
+          28,
+          56,
+          28
+        ],
+        [
+          12,
+          56,
+          28,
+          1,
+          28
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 205520896,
+      "input_shapes": [
+        [
+          512
+        ],
+        [
+          784,
+          256
+        ],
+        [
+          256,
+          512
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 177020928,
+      "input_shapes": [
+        [
+          24,
+          56,
+          28,
+          56,
+          28
+        ],
+        [
+          24,
+          56,
+          28,
+          56,
+          1
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 177020928,
+      "input_shapes": [
+        [
+          24,
+          56,
+          28,
+          56,
+          28
+        ],
+        [
+          24,
+          56,
+          28,
+          1,
+          28
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 26492928,
+      "input_shapes": [
+        [
+          1,
+          56,
+          28,
+          768
+        ],
+        [
+          1,
+          56,
+          28,
+          768
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 14450688,
+      "input_shapes": [
+        [
+          2,
+          56,
+          28,
+          768
+        ],
+        [
+          2,
+          56,
+          28,
+          768
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 10838016,
+      "input_shapes": [
+        [
+          12,
+          1568,
+          64
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 8830976,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          784,
+          22
+        ],
+        [
+          22,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 7225344,
+      "input_shapes": [
+        [
+          24,
+          1568,
+          64
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::conv2d",
+      "flops": 6422528,
+      "input_shapes": [
+        [
+          1,
+          64,
+          112,
+          112
+        ],
+        [
+          1,
+          64,
+          1,
+          1
+        ],
+        [
+          1
+        ],
+        [],
+        [],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 2408448,
+      "input_shapes": [
+        [
+          1,
+          56,
+          28,
+          768
+        ],
+        [
+          1,
+          56,
+          28,
+          1
+        ]
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 2408448,
+      "input_shapes": [
+        [
+          1,
+          56,
+          28,
+          768
+        ],
+        [
+          1,
+          1,
+          1,
+          768
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 2207744,
+      "input_shapes": [
+        [
+          1,
+          784,
+          256
+        ],
+        [
+          1,
+          784,
+          256
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 2097152,
+      "input_shapes": [
+        [
+          1024
+        ],
+        [
+          4,
+          256
+        ],
+        [
+          256,
+          1024
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 2097152,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          4,
+          1024
+        ],
+        [
+          1024,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 1731072,
+      "input_shapes": [
+        [
+          1,
+          784,
+          4
+        ],
+        [
+          1,
+          4,
+          276
+        ]
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 1605632,
+      "input_shapes": [
+        [
+          1,
+          4,
+          256
+        ],
+        [
+          1,
+          256,
+          784
+        ]
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 1204224,
+      "input_shapes": [
+        [
+          1,
+          56,
+          28,
+          768
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 1048576,
+      "input_shapes": [
+        [
+          256
+        ],
+        [
+          4,
+          256
+        ],
+        [
+          256,
+          256
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 802816,
+      "input_shapes": [
+        [
+          1,
+          28,
+          28,
+          256
+        ],
+        [
+          28,
+          28,
+          256
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 602112,
+      "input_shapes": [
+        [
+          1,
+          28,
+          28,
+          256
+        ],
+        [
+          256
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 602112,
+      "input_shapes": [
+        [
+          1,
+          784,
+          256
+        ],
+        [
+          256
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::bmm",
+      "flops": 125440,
+      "input_shapes": [
+        [
+          1,
+          784,
+          4
+        ],
+        [
+          1,
+          4,
+          20
+        ]
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 40960,
+      "input_shapes": [
+        [
+          20
+        ],
+        [
+          4,
+          256
+        ],
+        [
+          256,
+          20
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 37632,
+      "input_shapes": [
+        [
+          56,
+          56
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 21504,
+      "input_shapes": [
+        [
+          28,
+          1,
+          256
+        ],
+        [
+          1,
+          28,
+          256
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 9408,
+      "input_shapes": [
+        [
+          28,
+          28
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 3136,
+      "input_shapes": [
+        [
+          1,
+          4,
+          784
+        ],
+        [
+          1,
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 3136,
+      "input_shapes": [
+        [
+          1,
+          4,
+          28,
+          28
+        ],
+        [
+          1,
+          4,
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "operator": "aten::add",
+      "flops": 2048,
+      "input_shapes": [
+        [
+          1,
+          4,
+          256
+        ],
+        [
+          1,
+          4,
+          256
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::addmm",
+      "flops": 2048,
+      "input_shapes": [
+        [
+          1
+        ],
+        [
+          4,
+          256
+        ],
+        [
+          256,
+          1
+        ],
+        [],
+        []
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 672,
+      "input_shapes": [
+        [
+          56,
+          1
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 672,
+      "input_shapes": [
+        [
+          1,
+          56
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 336,
+      "input_shapes": [
+        [
+          28,
+          1
+        ],
+        []
+      ]
+    },
+    {
+      "operator": "aten::mul",
+      "flops": 336,
+      "input_shapes": [
+        [
+          1,
+          28
+        ],
+        []
+      ]
+    }
+  ],
+  "limitations": [
+    "Counted profiler operations are a lower bound, not complete model FLOPs/MACs.",
+    "Fused SDPA, softmax, LayerNorm, activations, interpolation and other operators may have zero profiler FLOP attribution.",
+    "One full deployment forward is profiled; this is not training throughput."
+  ],
+  "peak_allocated_bytes": 1362086912,
+  "peak_reserved_bytes": 1960837120
+}

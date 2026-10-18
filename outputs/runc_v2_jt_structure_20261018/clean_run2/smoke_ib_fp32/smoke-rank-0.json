@@ -1,0 +1,63 @@
+{
+  "optimizer_steps": 2,
+  "frozen_exact_unchanged": true,
+  "world_size": 1,
+  "schema": "runc-v2-runtime-v1",
+  "stage": "ib",
+  "checks": {
+    "occupancy_logits": {
+      "gt_replacement_equal": true,
+      "repeat_equal": true
+    },
+    "existence_logits": {
+      "gt_replacement_equal": true,
+      "repeat_equal": true
+    },
+    "class_logits": {
+      "gt_replacement_equal": true,
+      "repeat_equal": true
+    },
+    "density": {
+      "gt_replacement_equal": true
+    },
+    "p0": {
+      "gt_replacement_equal": true
+    }
+  },
+  "backend": {
+    "torch": "2.3.0+cu121",
+    "cuda": "12.1",
+    "cudnn": 8902,
+    "device": "cuda:0",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false,
+    "deterministic_algorithms": false
+  },
+  "amp": false,
+  "scope": "runtime correctness only; no training benefit claim",
+  "condition": {
+    "fixed": "actual F_full, Q and reference features",
+    "s_gradient_norm": {
+      "occupancy_logits": 9.550499271426816e-07,
+      "existence_logits": 3.1118186598178e-05,
+      "class_logits": 1.741111555020325e-05
+    },
+    "responses": {
+      "no_s": {
+        "mean_abs_density_delta": 0.00015411323693115264,
+        "max_abs_density_delta": 0.00039076805114746094
+      },
+      "shift_x_three_tokens": {
+        "mean_abs_density_delta": 1.0140667654923163e-05,
+        "max_abs_density_delta": 8.291006088256836e-05
+      },
+      "stretch_x": {
+        "mean_abs_density_delta": 7.552864190074615e-06,
+        "max_abs_density_delta": 7.18533992767334e-05
+      }
+    },
+    "interpretation": "effective S path; correct geometric response needs visual/metric review"
+  }
+}

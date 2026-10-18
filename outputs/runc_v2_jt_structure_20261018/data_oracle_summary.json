@@ -1,0 +1,49 @@
+{
+  "unique_targets": 77,
+  "visual_targets": [
+    "font/train/new/CaoqbJT/images_text_denoised/無.png",
+    "font/train/new/SushiJT/images_text_denoised/容.png",
+    "font/train/new/DongqcJT/images_text_denoised/惟.png",
+    "font/train/new/OuyxJT/images_text_denoised/雲.png",
+    "font/train/new/ZhangqbJT/images_text_denoised/崇.png",
+    "font/train/new/LiugqJT/images_text_denoised/乎.png",
+    "font/train/new/LongmenJT/images_text_denoised/扵.png",
+    "font/train/new/YanzqJT/images_text_denoised/楨.png",
+    "font/train/new/ZhaomfJT/images_text_denoised/還.png",
+    "font/train/new/CaoqbJT/images_text_denoised/完.png",
+    "font/train/new/CaoqbJT/images_text_denoised/貢.png",
+    "font/train/new/CaoqbJT/images_text_denoised/和.png"
+  ],
+  "raw_geometry_means": {
+    "J_raw224_equal_coefficients": 0.0072501706467433405,
+    "logsigma_x": 0.0010586295831742903,
+    "logsigma_y": 0.0010769911644853312,
+    "shape": 0.005041940264742483,
+    "centroid_relative": 7.259051002998226e-05,
+    "centroid_absolute_normalized": 1.9439216815682173e-05
+  },
+  "topology": {
+    "0.25": {
+      "tiny_le64_count": 50,
+      "tiny_le64_lost": 37,
+      "tiny_retention": 0.26,
+      "all_components_lost": 37,
+      "merged_output_components": 21
+    },
+    "0.5": {
+      "tiny_le64_count": 33,
+      "tiny_le64_lost": 33,
+      "tiny_retention": 0.0,
+      "all_components_lost": 33,
+      "merged_output_components": 4
+    },
+    "0.75": {
+      "tiny_le64_count": 38,
+      "tiny_le64_lost": 38,
+      "tiny_retention": 0.0,
+      "all_components_lost": 38,
+      "merged_output_components": 0
+    }
+  },
+  "oracle_only_zero_training": true
+}

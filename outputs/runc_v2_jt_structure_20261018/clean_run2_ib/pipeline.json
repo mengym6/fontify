@@ -1,0 +1,89 @@
+{
+  "status": "stage_b_complete_pending_structure_review",
+  "time_utc": "2026-10-18T12:29:21.714763+00:00",
+  "controller_pid": 487231,
+  "records": [
+    {
+      "name": "probe_ib",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "tools.runc_v2",
+        "probe",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/probe_ib_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/probe_ib"
+      ],
+      "started_utc": "2026-10-18T12:14:39.849650+00:00",
+      "world_size": 1,
+      "pid": 487240,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T12:15:05.877807+00:00"
+    },
+    {
+      "name": "selection_ib",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "tools/calibrate_runc_v2.py",
+        "--probe",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/probe_ib/gradient_probe.json",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/probe_ib_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/selection_ib.json"
+      ],
+      "started_utc": "2026-10-18T12:15:05.878965+00:00",
+      "world_size": 1,
+      "pid": 487349,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T12:15:06.850221+00:00"
+    },
+    {
+      "name": "tiny_ib",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "tools.runc_v2_health",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/health_ib_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/tiny_ib",
+        "--device",
+        "cuda:0",
+        "--steps",
+        "12",
+        "--no-profile"
+      ],
+      "started_utc": "2026-10-18T12:15:06.863740+00:00",
+      "world_size": 1,
+      "pid": 487354,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T12:15:29.015034+00:00"
+    },
+    {
+      "name": "train_ib",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "-m",
+        "tools.runc_v2",
+        "train",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/train_ib_config.json",
+        "--output",
+        "models/runc_v2_jt_structure_20261018/clean_run2/ib"
+      ],
+      "started_utc": "2026-10-18T12:15:29.018650+00:00",
+      "world_size": 2,
+      "pid": 487464,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T12:29:21.713581+00:00"
+    }
+  ],
+  "final_checkpoint": "models/runc_v2_jt_structure_20261018/clean_run2/ib/checkpoint-step-000320.pth",
+  "next_action": "P0/Head/condition review; no automatic BF training"
+}

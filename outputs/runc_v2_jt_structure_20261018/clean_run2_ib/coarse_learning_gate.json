@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "loss_decreases": {
+    "total": true,
+    "raw_density": true,
+    "raw_occupancy": true
+  },
+  "scope": "fixed two targets; correctness only, not quality acceptance"
+}

@@ -1,0 +1,4676 @@
+{
+  "schema": "runc-v2-runtime-v1",
+  "stage": "ib",
+  "status": "measured",
+  "metadata": {
+    "source_sha": "6411b2675834e5a2aa623635161c2a4eb6458123",
+    "branch": "codex/runc-v2-jt-structure",
+    "tracked_dirty": true,
+    "tracked_dirty_sha256": {},
+    "checkpoint_sha256": "c2da2b87323cedfc3853acb414eb1dc3553a56bf67f8fab5e58d425fd2b7e757",
+    "initial_checkpoint_sha256": "339ae9781f4f3831b9c97a19f3c5160c72fa790dbc82157d1d7d6ddf7be17dac",
+    "reference_policy": "distinct-original-reference-v1",
+    "stage_start_checkpoint_sha256": "c2da2b87323cedfc3853acb414eb1dc3553a56bf67f8fab5e58d425fd2b7e757",
+    "data_file_sha256": {
+      "fontdata_example/train_json_dual_v1/train_dual.json": "cf7fea0e08e831ebd5ff6bbee0a463af2018c016c090610ca1fdf7d6b68db545",
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbBF.json": "684334b4ff00590ded8e212771b34cb8f982aaa4e8ed728f10e1a1cfd570ab7b",
+      "fontdata_example/val_json_clean_v2/font_val_CaoqbJT.json": "a6289b300fcb491ef173b67d3a0c5821322e585a58f645aa5c1de9c795715fd2",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcBF.json": "959dbd93c0cde6c0b8fbf146428db4dcbbc314f10a081ff2750d58c4a5e66965",
+      "fontdata_example/val_json_clean_v2/font_val_DongqcJT.json": "059c1fec2efcc687efa0f790b85771a3341c68fc96392025bc505e23dd479a2c",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqBF.json": "169d920a74032ecc5707a738bddb12942bb5143312a667ffb178c93a72ab91c3",
+      "fontdata_example/val_json_clean_v2/font_val_LiugqJT.json": "63d10187b647f2454667ea653349c45c292f45c593ab0921f977bcf41e8a6461",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenBF.json": "b28681b38ae159802a9d8e5766e5275645e3ca3ceb4a20c68e39367b13b0b5db",
+      "fontdata_example/val_json_clean_v2/font_val_LongmenJT.json": "7d86ecb96f7d6e4f3e5db75bcfdb85deefd829cc350f4ae7731232249e81902c",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxBF.json": "28aa737e3f1a19bf3205d98388a27621f892245ac66a10a23ee610e402186f5d",
+      "fontdata_example/val_json_clean_v2/font_val_OuyxJT.json": "2f24606289f2a03f8355ded6446af0065c7f2492263b6710741e0451c12ebb7d",
+      "fontdata_example/val_json_clean_v2/font_val_SushiBF.json": "fe3466627f7a6f3e1ca4f8344a593fcefc148e98c07a7b6dac1e5f8a4ecbf70a",
+      "fontdata_example/val_json_clean_v2/font_val_SushiJT.json": "fc46edb134bb3cf8fbc22aae0cd6f2bc083df060129b0949e48f4aed08bc5902",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqBF.json": "bce6fdb2d50e7e78740e5278bfa50904c6b0a74deb51be42669f00f0f53c139e",
+      "fontdata_example/val_json_clean_v2/font_val_YanzqJT.json": "102be1686ef5eba0ad2abfc0f9ab308b4e55d9a0127755afa0c138430cab2a3c",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbBF.json": "e3bb72fd3de789591fab1c231468b010a0ebbf7dfeb3a597fc536b61b5fbdd49",
+      "fontdata_example/val_json_clean_v2/font_val_ZhangqbJT.json": "0038f787bb113ade5f8afc91578c9b771bef0639fc83cb8fb36156a2987e09fb",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfBF.json": "b1597f365784faa7de91c67f9b61416a4b35bdb269f93a9628e5017ce498569b",
+      "fontdata_example/val_json_clean_v2/font_val_ZhaomfJT.json": "41eeb014f3b684d9558a41aeae3e8482ce7879b72578ea21b94af04881798047",
+      "fontdata_example/val_pairs_fixed_clean.json": "3b9373097017165b5634122acf62db67b304c4166d34ed97ca2305643f331a30"
+    },
+    "calibration": null,
+    "stage_gate": null
+  },
+  "backend": {
+    "torch": "2.3.0+cu121",
+    "cuda": "12.1",
+    "cudnn": 8902,
+    "device": "cuda:0",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false,
+    "deterministic_algorithms": false
+  },
+  "amp": true,
+  "rows": [
+    {
+      "batch": 0,
+      "author": "Caoqb",
+      "indices": [
+        0,
+        1
+      ],
+      "target_path": [
+        "font/train/new/CaoqbBF/images_text_denoised/述.png",
+        "font/train/new/CaoqbBF/images_text_denoised/計.png"
+      ],
+      "reference_path": [
+        "font/train/new/CaoqbBF/images_text_denoised/泉.png",
+        "font/train/new/CaoqbBF/images_text_denoised/季.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Caoqb:09bf95837a38dc7e1749ec0657802fd23d0409a57f6af3ea27f7c2f1d2a96d18",
+        "Caoqb:2ff9d42c737037c68771e1620875d98fdb76d19588a455fa8a87fd31569e3d72"
+      ],
+      "reference_original_identity": [
+        "Caoqb:351bf92626dd88af63d63cffbe21fbc1d53c96fdcd9c8b0a9ad8f2132bcfc190",
+        "Caoqb:e5c1fc13cf061cb5fed973c95a857bf2b54c4c546840fc51c44533c2b8c595ff"
+      ],
+      "query_original_sha256": [
+        "09bf95837a38dc7e1749ec0657802fd23d0409a57f6af3ea27f7c2f1d2a96d18",
+        "2ff9d42c737037c68771e1620875d98fdb76d19588a455fa8a87fd31569e3d72"
+      ],
+      "reference_original_sha256": [
+        "351bf92626dd88af63d63cffbe21fbc1d53c96fdcd9c8b0a9ad8f2132bcfc190",
+        "e5c1fc13cf061cb5fed973c95a857bf2b54c4c546840fc51c44533c2b8c595ff"
+      ],
+      "query_target_sha256": [
+        "77319c029cf1bf3326ba45f1190a5079ae5281dca6ddfd9ca66b7d247aa2b071",
+        "50fc1f40ea04b1d3644f57aca0366ededcbaa6a3ed43e05eb99c5e72aef6e1f5"
+      ],
+      "reference_target_sha256": [
+        "2413d7fa95a080803e344ae0484141e23cb51f4f9f052d554013a1f7bfc3b1e4",
+        "c1b5e47b80b15b9b380d0f603d96409a84dcf18ff51a8c403679fae52517d4dd"
+      ],
+      "losses": {
+        "raw_head": 0.6470836997032166,
+        "raw_head_logsigma_x": 0.1059451550245285,
+        "raw_head_logsigma_y": 0.22835199534893036,
+        "raw_head_centroid": 0.1383000612258911,
+        "raw_head_centroid_absolute": 0.09798774123191833,
+        "raw_head_shape": 0.48051542043685913,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.33429715037345886,
+        "raw_head_geo": 0.9531126022338867,
+        "raw_density": 0.13603785634040833,
+        "raw_occupancy": 0.7138094902038574,
+        "raw_occupancy_bce": 0.7138094902038574,
+        "raw_occupancy_dice": 0.8234802484512329,
+        "raw_j_coarse": 2.467398166656494,
+        "raw_j_centroid": 0.47947192192077637,
+        "raw_j_logsigma": 1.4400129318237305,
+        "raw_j_shape": 0.5479133129119873,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 3.3172454833984375
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.04784048841287358,
+              -0.005147333159245759,
+              0.00022344240357097256,
+              -0.0025750071646108985,
+              -0.004141976308109641,
+              0.00029830103633837757
+            ],
+            [
+              -0.005147333159245759,
+              0.5622660486171469,
+              -0.023099428397717503,
+              0.0003892896352124531,
+              0.0005475726790006297,
+              7.953961608238302e-05
+            ],
+            [
+              0.00022344240357097256,
+              -0.023099428397717503,
+              0.0010418486324779153,
+              -2.0770161599820147e-05,
+              -3.0301634777372966e-05,
+              -3.740477737641454e-06
+            ],
+            [
+              -0.0025750071646108985,
+              0.0003892896352124531,
+              -2.0770161599820147e-05,
+              0.00042084293528799055,
+              0.00043095751542987504,
+              -6.820837180826489e-05
+            ],
+            [
+              -0.004141976308109641,
+              0.0005475726790006297,
+              -3.0301634777372966e-05,
+              0.00043095751542987504,
+              0.0007384690458023258,
+              -3.5286307686815954e-05
+            ],
+            [
+              0.00029830103633837757,
+              7.953961608238302e-05,
+              -3.740477737641454e-06,
+              -6.820837180826489e-05,
+              -3.5286307686815954e-05,
+              0.00011222919464204395
+            ]
+          ],
+          "norms": {
+            "density": 0.2187246863362103,
+            "occupancy_bce": 0.7498440161907988,
+            "occupancy_dice": 0.03227768009752119,
+            "j_centroid": 0.020514456738797412,
+            "j_logsigma": 0.027174786950449597,
+            "j_shape": 0.010593828139159326
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.03138437946721835,
+            "occupancy_dice:density": 0.031649399840761046,
+            "occupancy_dice:occupancy_bce": -0.9543946367780574,
+            "j_centroid:density": -0.5738793778626331,
+            "j_centroid:occupancy_bce": 0.025307071388899722,
+            "j_centroid:occupancy_dice": -0.0313673292090069,
+            "j_logsigma:density": -0.6968569890487247,
+            "j_logsigma:occupancy_bce": 0.02687229094556674,
+            "j_logsigma:occupancy_dice": -0.03454598645936298,
+            "j_logsigma:j_centroid": 0.7730512563232895,
+            "j_shape:density": 0.12873719331363062,
+            "j_shape:occupancy_bce": 0.010012894426403865,
+            "j_shape:occupancy_dice": -0.010938854306798043,
+            "j_shape:j_centroid": -0.3138518832394694,
+            "j_shape:j_logsigma": -0.12257083525703591
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.04784069795264756,
+              -0.0051469244831966465,
+              0.00022323413290559202,
+              -0.002574475276031496,
+              -0.004141940143036926,
+              0.0002971087746411749
+            ],
+            [
+              -0.0051469244831966465,
+              0.5622781700538866,
+              -0.023099739851808465,
+              0.000387893237334791,
+              0.0005511428064588486,
+              7.846339005490588e-05
+            ],
+            [
+              0.00022323413290559202,
+              -0.023099739851808465,
+              0.001041857001255364,
+              -2.070055566833623e-05,
+              -3.0376642878297833e-05,
+              -3.697280449140028e-06
+            ],
+            [
+              -0.002574475276031496,
+              0.000387893237334791,
+              -2.070055566833623e-05,
+              0.00042077150228991833,
+              0.0004308907268548712,
+              -6.80927543628973e-05
+            ],
+            [
+              -0.004141940143036926,
+              0.0005511428064588486,
+              -3.0376642878297833e-05,
+              0.0004308907268548712,
+              0.0007384832483714465,
+              -3.5081933611569305e-05
+            ],
+            [
+              0.0002971087746411749,
+              7.846339005490588e-05,
+              -3.697280449140028e-06,
+              -6.80927543628973e-05,
+              -3.5081933611569305e-05,
+              0.00011219110233515184
+            ]
+          ],
+          "norms": {
+            "density": 0.2187251653391707,
+            "occupancy_bce": 0.7498520987860783,
+            "occupancy_dice": 0.03227780973448112,
+            "j_centroid": 0.020512715624458853,
+            "j_logsigma": 0.027175048268061025,
+            "j_shape": 0.010592030132847614
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.03138148069517977,
+            "occupancy_dice:density": 0.03161970319386613,
+            "occupancy_dice:occupancy_bce": -0.9543933844517797,
+            "j_centroid:density": -0.5738082824822494,
+            "j_centroid:occupancy_bce": 0.02521816241199973,
+            "j_centroid:occupancy_dice": -0.031264737516709815,
+            "j_logsigma:density": -0.6968426774908811,
+            "j_logsigma:occupancy_bce": 0.027046944373971305,
+            "j_logsigma:occupancy_dice": -0.034631028840962155,
+            "j_logsigma:j_centroid": 0.7729896240574012,
+            "j_shape:density": 0.1282441363250076,
+            "j_shape:occupancy_bce": 0.0098789832518786,
+            "j_shape:occupancy_dice": -0.010814317834666076,
+            "j_shape:j_centroid": -0.3133996700707665,
+            "j_shape:j_logsigma": -0.12188043360681827
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.768704515204446,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.768704515204446,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 1,
+      "author": "Dongqc",
+      "indices": [
+        54,
+        55
+      ],
+      "target_path": [
+        "font/train/new/DongqcJT/images_text_denoised/待.png",
+        "font/train/new/DongqcBF/images_text_denoised/莫.png"
+      ],
+      "reference_path": [
+        "font/train/new/DongqcJT/images_text_denoised/蒼.png",
+        "font/train/new/DongqcBF/images_text_denoised/伊.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Dongqc:c5206e47bcfe829e973b5a06fc5649ff8a65ce0c7298127977971e2fad55f30e",
+        "Dongqc:aa0208be7c69f050ed62dba4ff2715c452282f3cf4d4a88d7bb38091a913f515"
+      ],
+      "reference_original_identity": [
+        "Dongqc:36e8242701025bac47042a1f8ac962c12a19ae0e123635c62533051ddb3067b3",
+        "Dongqc:99807f43bad52e3c58a7eaffbb4d8ec6bce6a6370793f9660ab9ad4c7b4e516a"
+      ],
+      "query_original_sha256": [
+        "c5206e47bcfe829e973b5a06fc5649ff8a65ce0c7298127977971e2fad55f30e",
+        "aa0208be7c69f050ed62dba4ff2715c452282f3cf4d4a88d7bb38091a913f515"
+      ],
+      "reference_original_sha256": [
+        "36e8242701025bac47042a1f8ac962c12a19ae0e123635c62533051ddb3067b3",
+        "99807f43bad52e3c58a7eaffbb4d8ec6bce6a6370793f9660ab9ad4c7b4e516a"
+      ],
+      "query_target_sha256": [
+        "33b5573d47e82c444e02f65fd7eb5f31b6578195aa3801cccd87abe011c1b593",
+        "256b021cceef67682a3aaf06c6b6d8b12854b5e38f04c1f238a465a0912bb8e3"
+      ],
+      "reference_target_sha256": [
+        "4f3b4e3e36aaf40fa08fe4630e3c1a3adb0611761bc9c3446c87a7545373794f",
+        "4ba0d48bc98fe6d73eca5486d8134657f00d8f886362ca5479d56f4787e05a39"
+      ],
+      "losses": {
+        "raw_head": 1.0019986629486084,
+        "raw_head_logsigma_x": 0.19905346632003784,
+        "raw_head_logsigma_y": 0.21172234416007996,
+        "raw_head_centroid": 0.18509303033351898,
+        "raw_head_centroid_absolute": 0.06139179319143295,
+        "raw_head_shape": 0.5068869590759277,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 6.0,
+        "raw_head_logsigma": 0.4107758104801178,
+        "raw_head_geo": 1.1027557849884033,
+        "raw_density": 0.13164862990379333,
+        "raw_occupancy": 0.7094945907592773,
+        "raw_occupancy_bce": 0.7094945907592773,
+        "raw_occupancy_dice": 0.7177481055259705,
+        "raw_j_coarse": 1.7699804306030273,
+        "raw_j_centroid": 0.29411229491233826,
+        "raw_j_logsigma": 0.9264599680900574,
+        "raw_j_shape": 0.5494081974029541,
+        "count_j_coarse_parts": 6.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.611123561859131
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.0307668964083323,
+              -0.002872479537183892,
+              0.00034941571878699396,
+              -0.0016361822301296236,
+              -0.0028841267307821994,
+              -0.0005242609040497226
+            ],
+            [
+              -0.002872479537183892,
+              0.3276701784324896,
+              -0.04259227377810504,
+              0.00019172173368886547,
+              0.0005534536350482178,
+              4.32993017987493e-05
+            ],
+            [
+              0.00034941571878699396,
+              -0.04259227377810504,
+              0.005802412858503914,
+              -3.639551713713329e-05,
+              -8.792621100511822e-05,
+              -1.1861611775215719e-05
+            ],
+            [
+              -0.0016361822301296236,
+              0.00019172173368886547,
+              -3.639551713713329e-05,
+              0.00031738004043058154,
+              0.0003215769620976694,
+              0.00011193685827695643
+            ],
+            [
+              -0.0028841267307821994,
+              0.0005534536350482178,
+              -8.792621100511822e-05,
+              0.0003215769620976694,
+              0.0006081414996264023,
+              0.00015736175942762665
+            ],
+            [
+              -0.0005242609040497226,
+              4.32993017987493e-05,
+              -1.1861611775215719e-05,
+              0.00011193685827695643,
+              0.00015736175942762665,
+              7.975293672764228e-05
+            ]
+          ],
+          "norms": {
+            "density": 0.1754049497828733,
+            "occupancy_bce": 0.5724248233894906,
+            "occupancy_dice": 0.07617357060361496,
+            "j_centroid": 0.017815163216501315,
+            "j_logsigma": 0.024660525128764033,
+            "j_shape": 0.008930449973413562
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02860860227719798,
+            "occupancy_dice:density": 0.026151480485824913,
+            "occupancy_dice:occupancy_bce": -0.9768054029664219,
+            "j_centroid:density": -0.5236004624664679,
+            "j_centroid:occupancy_bce": 0.018800226569617527,
+            "j_centroid:occupancy_dice": -0.02681969135173264,
+            "j_logsigma:density": -0.6667609776572211,
+            "j_logsigma:occupancy_bce": 0.03920671583930117,
+            "j_logsigma:occupancy_dice": -0.04680709893577827,
+            "j_logsigma:j_centroid": 0.7319691918377093,
+            "j_shape:density": -0.3346819459565408,
+            "j_shape:occupancy_bce": 0.008470110821595815,
+            "j_shape:occupancy_dice": -0.017436770451246985,
+            "j_shape:j_centroid": 0.7035742977598185,
+            "j_shape:j_logsigma": 0.7145350554377145
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.030766468627245747,
+              -0.0028722479084262176,
+              0.00034911547876548266,
+              -0.0016361611056652237,
+              -0.0028838302551174033,
+              -0.0005257869216283018
+            ],
+            [
+              -0.0028722479084262176,
+              0.32766402655066695,
+              -0.04259038257282555,
+              0.00019074105488370297,
+              0.0005532717630472028,
+              4.336502316992785e-05
+            ],
+            [
+              0.00034911547876548266,
+              -0.04259038257282555,
+              0.005801982385607474,
+              -3.6237313982556696e-05,
+              -8.77810443438154e-05,
+              -1.1850756711048738e-05
+            ],
+            [
+              -0.0016361611056652237,
+              0.00019074105488370297,
+              -3.6237313982556696e-05,
+              0.0003173826059940654,
+              0.00032147813652783075,
+              0.00011210106177379775
+            ],
+            [
+              -0.0028838302551174033,
+              0.0005532717630472028,
+              -8.77810443438154e-05,
+              0.00032147813652783075,
+              0.000607850470805138,
+              0.0001575920146413834
+            ],
+            [
+              -0.0005257869216283018,
+              4.336502316992785e-05,
+              -1.1850756711048738e-05,
+              0.00011210106177379775,
+              0.0001575920146413834,
+              7.98735721691951e-05
+            ]
+          ],
+          "norms": {
+            "density": 0.17540373036867188,
+            "occupancy_bce": 0.572419449836103,
+            "occupancy_dice": 0.07617074494586143,
+            "j_centroid": 0.017815235221407138,
+            "j_logsigma": 0.02465462372061553,
+            "j_shape": 0.008937201584903135
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02860676277304794,
+            "occupancy_dice:density": 0.02613016043254308,
+            "occupancy_dice:occupancy_bce": -0.9768074342783539,
+            "j_centroid:density": -0.5235952261427956,
+            "j_centroid:occupancy_bce": 0.01870416122514724,
+            "j_centroid:occupancy_dice": -0.02670399482214718,
+            "j_logsigma:density": -0.6668566551119688,
+            "j_logsigma:occupancy_bce": 0.03920358158344506,
+            "j_logsigma:occupancy_dice": -0.04674273947410181,
+            "j_logsigma:j_centroid": 0.7319164407516985,
+            "j_shape:density": -0.33540489769554466,
+            "j_shape:occupancy_bce": 0.008476638199852091,
+            "j_shape:occupancy_dice": -0.017408298525088496,
+            "j_shape:j_centroid": 0.7040712509629424,
+            "j_shape:j_logsigma": 0.7152111476312456
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.5885445080690074,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.5885445080690074,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 6,
+      "coarse_relative_eligible_parts": 6
+    },
+    {
+      "batch": 2,
+      "author": "Liugq",
+      "indices": [
+        122,
+        123
+      ],
+      "target_path": [
+        "font/train/new/LiugqBF/images_text_denoised/柱.png",
+        "font/train/new/LiugqBF/images_text_denoised/捨.png"
+      ],
+      "reference_path": [
+        "font/train/new/LiugqBF/images_text_denoised/紫.png",
+        "font/train/new/LiugqBF/images_text_denoised/紫.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Liugq:f57c2bace4011d819920de3e2e8243238a2fa325607b5dd0ccebc265707442d6",
+        "Liugq:f61c6f6d232a3fb73929db6508434179fc4e96f773c536f6700d5f590f44cd0f"
+      ],
+      "reference_original_identity": [
+        "Liugq:5cabf320d3e4a3c280fe6a0d486b269d7da306b9da5dcdd119cc7d5f70cd8349",
+        "Liugq:5cabf320d3e4a3c280fe6a0d486b269d7da306b9da5dcdd119cc7d5f70cd8349"
+      ],
+      "query_original_sha256": [
+        "f57c2bace4011d819920de3e2e8243238a2fa325607b5dd0ccebc265707442d6",
+        "f61c6f6d232a3fb73929db6508434179fc4e96f773c536f6700d5f590f44cd0f"
+      ],
+      "reference_original_sha256": [
+        "5cabf320d3e4a3c280fe6a0d486b269d7da306b9da5dcdd119cc7d5f70cd8349",
+        "5cabf320d3e4a3c280fe6a0d486b269d7da306b9da5dcdd119cc7d5f70cd8349"
+      ],
+      "query_target_sha256": [
+        "7589e75ccbd7f00627bc13125bcb98e23d634597212f2b49b4a4c0c784497f9e",
+        "be68f90058c3f4bcf6555191559c75bcce74fd8ac6dbbc7e82cb647a20eec847"
+      ],
+      "reference_target_sha256": [
+        "9ac7dd8f226116dff5159b32e8ff8a9b6fac2584755be7b854868edd28ac6f20",
+        "9ac7dd8f226116dff5159b32e8ff8a9b6fac2584755be7b854868edd28ac6f20"
+      ],
+      "losses": {
+        "raw_head": 0.40430575609207153,
+        "raw_head_logsigma_x": 0.10256022214889526,
+        "raw_head_logsigma_y": 0.1896829903125763,
+        "raw_head_centroid": 0.0870288610458374,
+        "raw_head_centroid_absolute": 0.0409359335899353,
+        "raw_head_shape": 0.2865096926689148,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.29224321246147156,
+        "raw_head_geo": 0.6657817363739014,
+        "raw_density": 0.1297253668308258,
+        "raw_occupancy": 0.7066521644592285,
+        "raw_occupancy_bce": 0.7066521644592285,
+        "raw_occupancy_dice": 0.6705120801925659,
+        "raw_j_coarse": 1.520280122756958,
+        "raw_j_centroid": 0.22617509961128235,
+        "raw_j_logsigma": 0.7970576882362366,
+        "raw_j_shape": 0.4970473349094391,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.3566575050354004
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.022852681381944073,
+              -0.0022246960286484985,
+              0.0004473343031836663,
+              -0.0014433803144995316,
+              -0.0028029638412743196,
+              -0.00031566194683929627
+            ],
+            [
+              -0.0022246960286484985,
+              0.22446919565452017,
+              -0.04684068586789891,
+              0.00023475189976285282,
+              0.0004252544174323525,
+              5.001460193909679e-05
+            ],
+            [
+              0.0004473343031836663,
+              -0.04684068586789891,
+              0.010100919869522329,
+              -6.296146816768544e-05,
+              -0.00011428177562172737,
+              -2.789741521161404e-05
+            ],
+            [
+              -0.0014433803144995316,
+              0.00023475189976285282,
+              -6.296146816768544e-05,
+              0.0003715130146413337,
+              0.000352282820941463,
+              0.00012931319044517942
+            ],
+            [
+              -0.0028029638412743196,
+              0.0004252544174323525,
+              -0.00011428177562172737,
+              0.000352282820941463,
+              0.0010054315061651664,
+              0.0002785396631905801
+            ],
+            [
+              -0.00031566194683929627,
+              5.001460193909679e-05,
+              -2.789741521161404e-05,
+              0.00012931319044517942,
+              0.0002785396631905801,
+              0.00023110056846026295
+            ]
+          ],
+          "norms": {
+            "density": 0.15117103354129743,
+            "occupancy_bce": 0.47378180173421625,
+            "occupancy_dice": 0.10050333262893489,
+            "j_centroid": 0.01927467288026787,
+            "j_logsigma": 0.03170853995637715,
+            "j_shape": 0.015201992252999702
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.031061592800499888,
+            "occupancy_dice:density": 0.029443074471762642,
+            "occupancy_dice:occupancy_bce": -0.983703932445573,
+            "j_centroid:density": -0.4953648416146626,
+            "j_centroid:occupancy_bce": 0.025706545798887783,
+            "j_centroid:occupancy_dice": -0.03250179655180032,
+            "j_logsigma:density": -0.5847532818889524,
+            "j_logsigma:occupancy_bce": 0.02830702401833347,
+            "j_logsigma:occupancy_dice": -0.035860824582251996,
+            "j_logsigma:j_centroid": 0.5764056167346026,
+            "j_shape:density": -0.13735774155099384,
+            "j_shape:occupancy_bce": 0.006944131470917471,
+            "j_shape:occupancy_dice": -0.018259252590218357,
+            "j_shape:j_centroid": 0.4413217217173596,
+            "j_shape:j_logsigma": 0.5778435821982113
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.022852770311992288,
+              -0.0022249062107112527,
+              0.0004467551903151179,
+              -0.0014434792459563361,
+              -0.0028033586062665705,
+              -0.00031566408677141666
+            ],
+            [
+              -0.0022249062107112527,
+              0.2244695861737096,
+              -0.04683945326517858,
+              0.00023473871724546957,
+              0.00042438799034449914,
+              5.091958191122403e-05
+            ],
+            [
+              0.0004467551903151179,
+              -0.04683945326517858,
+              0.010100345864914928,
+              -6.285947431916572e-05,
+              -0.00011392964486522938,
+              -2.8103928008019197e-05
+            ],
+            [
+              -0.0014434792459563361,
+              0.00023473871724546957,
+              -6.285947431916572e-05,
+              0.0003715009689092552,
+              0.00035234754366220145,
+              0.0001293024694241085
+            ],
+            [
+              -0.0028033586062665705,
+              0.00042438799034449914,
+              -0.00011392964486522938,
+              0.00035234754366220145,
+              0.0010055974360083653,
+              0.00027860311394889425
+            ],
+            [
+              -0.00031566408677141666,
+              5.091958191122403e-05,
+              -2.8103928008019197e-05,
+              0.0001293024694241085,
+              0.00027860311394889425,
+              0.00023115633065728947
+            ]
+          ],
+          "norms": {
+            "density": 0.1511713276782085,
+            "occupancy_bce": 0.4737822138638275,
+            "occupancy_dice": 0.10050047693874357,
+            "j_centroid": 0.01927436040207963,
+            "j_logsigma": 0.03171115633351085,
+            "j_shape": 0.015203826184789455
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.031064439934077582,
+            "occupancy_dice:density": 0.029405736187826846,
+            "occupancy_dice:occupancy_bce": -0.9837051416969844,
+            "j_centroid:density": -0.4954058622065123,
+            "j_centroid:occupancy_bce": 0.02570549661876246,
+            "j_centroid:occupancy_dice": -0.03245059368363482,
+            "j_logsigma:density": -0.5847862470311871,
+            "j_logsigma:occupancy_bce": 0.028246995046296037,
+            "j_logsigma:occupancy_dice": -0.03574839452103942,
+            "j_logsigma:j_centroid": 0.5764732958782394,
+            "j_shape:density": -0.13734183687483076,
+            "j_shape:occupancy_bce": 0.007068921847014303,
+            "j_shape:occupancy_dice": -0.01839272195255019,
+            "j_shape:j_centroid": 0.4412390570260259,
+            "j_shape:j_logsigma": 0.5778578156688148
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.48801754900395633,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.48801754900395633,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 3,
+      "author": "Longmen",
+      "indices": [
+        218,
+        219
+      ],
+      "target_path": [
+        "font/train/new/LongmenBF/images_text_denoised/林.png",
+        "font/train/new/LongmenBF/images_text_denoised/改.png"
+      ],
+      "reference_path": [
+        "font/train/new/LongmenBF/images_text_denoised/益.png",
+        "font/train/new/LongmenBF/images_text_denoised/作.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Longmen:5844fcb677e121882722db287917f9ce4248405b0c2d3955b210206353ca3f16",
+        "Longmen:021ee4f4af9ba367f6c269aa3f9141a43acfca2a14d68b6237a863484368490d"
+      ],
+      "reference_original_identity": [
+        "Longmen:4809e74922ebbd96ca4302c2b9ec50f099665c18e18771eeaa8cec8936d83986",
+        "Longmen:88c2884d684c0cc243435f9ea34eed9ceefbbec82107299913a2d7ccd72f735c"
+      ],
+      "query_original_sha256": [
+        "5844fcb677e121882722db287917f9ce4248405b0c2d3955b210206353ca3f16",
+        "021ee4f4af9ba367f6c269aa3f9141a43acfca2a14d68b6237a863484368490d"
+      ],
+      "reference_original_sha256": [
+        "4809e74922ebbd96ca4302c2b9ec50f099665c18e18771eeaa8cec8936d83986",
+        "88c2884d684c0cc243435f9ea34eed9ceefbbec82107299913a2d7ccd72f735c"
+      ],
+      "query_target_sha256": [
+        "09735b729cd6af1149dc45c9e53d783bcc87042a23944fe4c70d4f7a00687787",
+        "b5d4811256bd3def4888c20dd5f875f17953e2fca348552e60d377d33492a9d9"
+      ],
+      "reference_target_sha256": [
+        "10241ae62588c84f79bc689998839f6e4d9c8b4218f20ce4c375a5687aba7777",
+        "6538a9f674cc4c7258daaff40466261817d0d392fa73db55a87899f315a8d8d4"
+      ],
+      "losses": {
+        "raw_head": 0.3857761025428772,
+        "raw_head_logsigma_x": 0.14606884121894836,
+        "raw_head_logsigma_y": 0.13442304730415344,
+        "raw_head_centroid": 0.11661946028470993,
+        "raw_head_centroid_absolute": 0.04524391144514084,
+        "raw_head_shape": 0.2643347978591919,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.2804918885231018,
+        "raw_head_geo": 0.6614461541175842,
+        "raw_density": 0.13186901807785034,
+        "raw_occupancy": 0.7092104554176331,
+        "raw_occupancy_bce": 0.7092104554176331,
+        "raw_occupancy_dice": 0.7131147384643555,
+        "raw_j_coarse": 1.6961089372634888,
+        "raw_j_centroid": 0.29400408267974854,
+        "raw_j_logsigma": 0.9195497632026672,
+        "raw_j_shape": 0.4825550615787506,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.5371885299682617
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.029146178292827063,
+              -0.002746866868279463,
+              0.0004000904172902775,
+              -0.0013881475299380996,
+              -0.003206715591118181,
+              -0.0011989998013628989
+            ],
+            [
+              -0.002746866868279463,
+              0.313535552335483,
+              -0.04299552088025127,
+              0.00025359493156096313,
+              0.0004754615739659407,
+              0.00018147010513938633
+            ],
+            [
+              0.0004000904172902775,
+              -0.04299552088025127,
+              0.006191608591977982,
+              -4.746563535892867e-05,
+              -9.502817666695584e-05,
+              -3.912658862890994e-05
+            ],
+            [
+              -0.0013881475299380996,
+              0.00025359493156096313,
+              -4.746563535892867e-05,
+              0.00030409282417892536,
+              0.0002977261819127608,
+              0.0001667385789256015
+            ],
+            [
+              -0.003206715591118181,
+              0.0004754615739659407,
+              -9.502817666695584e-05,
+              0.0002977261819127608,
+              0.0009309219782658307,
+              0.00035386158895311937
+            ],
+            [
+              -0.0011989998013628989,
+              0.00018147010513938633,
+              -3.912658862890994e-05,
+              0.0001667385789256015,
+              0.00035386158895311937,
+              0.0001690971005970654
+            ]
+          ],
+          "norms": {
+            "density": 0.1707225184116819,
+            "occupancy_bce": 0.5599424544857114,
+            "occupancy_dice": 0.0786867752038294,
+            "j_centroid": 0.017438257486885704,
+            "j_logsigma": 0.030511014048468312,
+            "j_shape": 0.013003734102059508
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02873448420514367,
+            "occupancy_dice:density": 0.02978280471335873,
+            "occupancy_dice:occupancy_bce": -0.9758387751415836,
+            "j_centroid:density": -0.466274569748856,
+            "j_centroid:occupancy_bce": 0.025971323786035054,
+            "j_centroid:occupancy_dice": -0.034591903874953575,
+            "j_logsigma:density": -0.6156203859778179,
+            "j_logsigma:occupancy_bce": 0.027830139621894866,
+            "j_logsigma:occupancy_dice": -0.039581660315520587,
+            "j_logsigma:j_centroid": 0.559573707327423,
+            "j_shape:density": -0.5400826451117289,
+            "j_shape:occupancy_bce": 0.02492261528656351,
+            "j_shape:occupancy_dice": -0.03823861524918714,
+            "j_shape:j_centroid": 0.7353006150398022,
+            "j_shape:j_logsigma": 0.8918846734746452
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02914664734098249,
+              -0.002747304442463405,
+              0.0003995654897104295,
+              -0.0013897533987737853,
+              -0.003207038995454492,
+              -0.0011978765557437987
+            ],
+            [
+              -0.002747304442463405,
+              0.31354658699482973,
+              -0.042992780737462155,
+              0.00025506229304794736,
+              0.0004757731129760856,
+              0.0001818487782933309
+            ],
+            [
+              0.0003995654897104295,
+              -0.042992780737462155,
+              0.006190584022972345,
+              -4.767385240944666e-05,
+              -9.497865527441363e-05,
+              -3.914854571232529e-05
+            ],
+            [
+              -0.0013897533987737853,
+              0.00025506229304794736,
+              -4.767385240944666e-05,
+              0.0003042713098175831,
+              0.00029799995530421786,
+              0.0001667447913689113
+            ],
+            [
+              -0.003207038995454492,
+              0.0004757731129760856,
+              -9.497865527441363e-05,
+              0.00029799995530421786,
+              0.0009309717159106112,
+              0.0003536346566943571
+            ],
+            [
+              -0.0011978765557437987,
+              0.0001818487782933309,
+              -3.914854571232529e-05,
+              0.0001667447913689113,
+              0.0003536346566943571,
+              0.00016894297124964153
+            ]
+          ],
+          "norms": {
+            "density": 0.1707238921211161,
+            "occupancy_bce": 0.5599523077859665,
+            "occupancy_dice": 0.07868026450751386,
+            "j_centroid": 0.017443374381626485,
+            "j_logsigma": 0.030511829114469872,
+            "j_shape": 0.012997806401452575
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.028738324637244118,
+            "occupancy_dice:density": 0.029745950915433167,
+            "occupancy_dice:occupancy_bce": -0.9758401565486892,
+            "j_centroid:density": -0.46667328449589085,
+            "j_centroid:occupancy_bce": 0.02611347802290648,
+            "j_centroid:occupancy_dice": -0.034736330189683924,
+            "j_logsigma:density": -0.6156610719708613,
+            "j_logsigma:occupancy_bce": 0.02784714095762507,
+            "j_logsigma:occupancy_dice": -0.03956325013351491,
+            "j_logsigma:j_centroid": 0.559909006598764,
+            "j_shape:density": -0.5398184179524324,
+            "j_shape:occupancy_bce": 0.024985571340451936,
+            "j_shape:occupancy_dice": -0.038280690094525026,
+            "j_shape:j_centroid": 0.7354475587016047,
+            "j_shape:j_logsigma": 0.8916953718215306
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.5748584669125898,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.5748584669125898,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 4,
+      "author": "Ouyx",
+      "indices": [
+        269,
+        270
+      ],
+      "target_path": [
+        "font/train/new/OuyxBF/images_text_denoised/昃.png",
+        "font/train/new/OuyxBF/images_text_denoised/吊.png"
+      ],
+      "reference_path": [
+        "font/train/new/OuyxBF/images_text_denoised/制.png",
+        "font/train/new/OuyxBF/images_text_denoised/黄.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Ouyx:26434c9fee8b876b37db642963e3df772864d2bf743c4b737078376d4a56decd",
+        "Ouyx:e0f6441e6cbea4765e4c7be4baf1b831a061dfdca259480b972fe14d8b3e0894"
+      ],
+      "reference_original_identity": [
+        "Ouyx:1d4fb04522714eb7bbb4fccb2eb86e7bb327b9317557e7709031d87b23dc7520",
+        "Ouyx:5ed667a4ac36a4b511adb96cad44dd7248e8ba154d6ce1aafda65c49ba96e1e7"
+      ],
+      "query_original_sha256": [
+        "26434c9fee8b876b37db642963e3df772864d2bf743c4b737078376d4a56decd",
+        "e0f6441e6cbea4765e4c7be4baf1b831a061dfdca259480b972fe14d8b3e0894"
+      ],
+      "reference_original_sha256": [
+        "1d4fb04522714eb7bbb4fccb2eb86e7bb327b9317557e7709031d87b23dc7520",
+        "5ed667a4ac36a4b511adb96cad44dd7248e8ba154d6ce1aafda65c49ba96e1e7"
+      ],
+      "query_target_sha256": [
+        "395d2a2fd4544122244ee5d2aa25e3e22354dc93664bf777632c9d295d6d8d4a",
+        "077512573bbffd0e268e70da8610ac440b1a815de6a7d804224ed0354b30cdda"
+      ],
+      "reference_target_sha256": [
+        "784ef1bd176ec12132ed6be60e3d62520ece08fae3e05d6fa7a9453e98375a53",
+        "4fc61d5da8a8110aee5ecb8cb53c98db002e60e7b01cd650ad6860b4d3e6abfe"
+      ],
+      "losses": {
+        "raw_head": 0.5461387038230896,
+        "raw_head_logsigma_x": 0.24711814522743225,
+        "raw_head_logsigma_y": 0.21261118352413177,
+        "raw_head_centroid": 0.09050838649272919,
+        "raw_head_centroid_absolute": 0.09196065366268158,
+        "raw_head_shape": 0.4654982089996338,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.45972931385040283,
+        "raw_head_geo": 1.0157358646392822,
+        "raw_density": 0.1337352842092514,
+        "raw_occupancy": 0.7112389802932739,
+        "raw_occupancy_bce": 0.7112389802932739,
+        "raw_occupancy_dice": 0.7547904253005981,
+        "raw_j_coarse": 2.1705849170684814,
+        "raw_j_centroid": 0.2982591390609741,
+        "raw_j_logsigma": 1.4261386394500732,
+        "raw_j_shape": 0.44618719816207886,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 3.015559196472168
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.03439415126220169,
+              -0.0035860862341708932,
+              0.000332736171126502,
+              -0.0015072188677613951,
+              -0.003700145070531846,
+              -0.0003663058587403123
+            ],
+            [
+              -0.0035860862341708932,
+              0.3961173397148636,
+              -0.036079380211038625,
+              0.0002630392119931102,
+              0.0004812052697900082,
+              0.00012175231320926683
+            ],
+            [
+              0.000332736171126502,
+              -0.036079380211038625,
+              0.003611268244989141,
+              -4.521643662824815e-05,
+              -6.295912403229964e-05,
+              -2.2073128797595043e-05
+            ],
+            [
+              -0.0015072188677613951,
+              0.0002630392119931102,
+              -4.521643662824815e-05,
+              0.00034111274022041727,
+              0.0003647820455832118,
+              9.887865496277515e-05
+            ],
+            [
+              -0.003700145070531846,
+              0.0004812052697900082,
+              -6.295912403229964e-05,
+              0.0003647820455832118,
+              0.0009326233141426776,
+              0.00013444573046314523
+            ],
+            [
+              -0.0003663058587403123,
+              0.00012175231320926683,
+              -2.2073128797595043e-05,
+              9.887865496277515e-05,
+              0.00013444573046314523,
+              0.00010643799926662867
+            ]
+          ],
+          "norms": {
+            "density": 0.1854566020992558,
+            "occupancy_bce": 0.6293785345202548,
+            "occupancy_dice": 0.060093828676405205,
+            "j_centroid": 0.018469237672963584,
+            "j_logsigma": 0.03053888200544803,
+            "j_shape": 0.010316879337601495
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.030723203922856428,
+            "occupancy_dice:density": 0.029855740123586248,
+            "occupancy_dice:occupancy_bce": -0.9539316693186314,
+            "j_centroid:density": -0.44003280363698166,
+            "j_centroid:occupancy_bce": 0.02262869963816849,
+            "j_centroid:occupancy_dice": -0.0407396683598137,
+            "j_logsigma:density": -0.6533160373728718,
+            "j_logsigma:occupancy_bce": 0.02503602138981104,
+            "j_logsigma:occupancy_dice": -0.03430644118955005,
+            "j_logsigma:j_centroid": 0.6467424244161167,
+            "j_shape:density": -0.19144904979893096,
+            "j_shape:occupancy_bce": 0.018750676588673732,
+            "j_shape:occupancy_dice": -0.03560292436702559,
+            "j_shape:j_centroid": 0.5189257585153599,
+            "j_shape:j_logsigma": 0.4267224873825621
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.034395039108479075,
+              -0.0035866838921893573,
+              0.00033274240995251336,
+              -0.0015078449337251332,
+              -0.0036994569295316637,
+              -0.00036710833099939943
+            ],
+            [
+              -0.0035866838921893573,
+              0.396116568189008,
+              -0.036077878565265564,
+              0.0002629132442580895,
+              0.0004829444164151653,
+              0.0001217968478825493
+            ],
+            [
+              0.00033274240995251336,
+              -0.036077878565265564,
+              0.003611005487047514,
+              -4.525470409655341e-05,
+              -6.310265535053317e-05,
+              -2.2029374895704557e-05
+            ],
+            [
+              -0.0015078449337251332,
+              0.0002629132442580895,
+              -4.525470409655341e-05,
+              0.0003411576103284908,
+              0.0003647835522120335,
+              9.893271340388754e-05
+            ],
+            [
+              -0.0036994569295316637,
+              0.0004829444164151653,
+              -6.310265535053317e-05,
+              0.0003647835522120335,
+              0.0009323672843459807,
+              0.00013453574552299563
+            ],
+            [
+              -0.00036710833099939943,
+              0.0001217968478825493,
+              -2.2029374895704557e-05,
+              9.893271340388754e-05,
+              0.00013453574552299563,
+              0.00010643031814919213
+            ]
+          ],
+          "norms": {
+            "density": 0.18545899576046204,
+            "occupancy_bce": 0.6293779215932253,
+            "occupancy_dice": 0.06009164240597451,
+            "j_centroid": 0.018470452358523622,
+            "j_logsigma": 0.030534689851805942,
+            "j_shape": 0.01031650707115505
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.030727957583506715,
+            "occupancy_dice:density": 0.02985700080082299,
+            "occupancy_dice:occupancy_bce": -0.9539275998505247,
+            "j_centroid:density": -0.44018095213793407,
+            "j_centroid:occupancy_bce": 0.022616397494447157,
+            "j_centroid:occupancy_dice": -0.0407729489592692,
+            "j_logsigma:density": -0.6532757821000278,
+            "j_logsigma:occupancy_bce": 0.025129979382562288,
+            "j_logsigma:occupancy_dice": -0.03439062332206329,
+            "j_logsigma:j_centroid": 0.646791350013055,
+            "j_shape:density": -0.1918729073859646,
+            "j_shape:occupancy_bce": 0.018758230353425612,
+            "j_shape:occupancy_dice": -0.03553492633265704,
+            "j_shape:j_centroid": 0.5191940520583088,
+            "j_shape:j_logsigma": 0.4270822247611059
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.6451631291895046,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.6451631291895046,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 5,
+      "author": "Sushi",
+      "indices": [
+        333,
+        334
+      ],
+      "target_path": [
+        "font/train/new/SushiBF/images_text_denoised/窮.png",
+        "font/train/new/SushiBF/images_text_denoised/苦.png"
+      ],
+      "reference_path": [
+        "font/train/new/SushiBF/images_text_denoised/途.png",
+        "font/train/new/SushiBF/images_text_denoised/寒.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Sushi:c0dd3013f4f2e2fe07397ab98f5d2643d9ffae7688ca63655e2777acadb60663",
+        "Sushi:225b79fe790aff7360bec096a623b950e51d4d3c8e6ca5200b82c96689f18b94"
+      ],
+      "reference_original_identity": [
+        "Sushi:5f09d886fa09fcd02b0ad994312bf937e0852e1dbc30e6f3348c8d6e42bcb639",
+        "Sushi:b1635e2a6d040bf50f5438c2cc3f6fea069a3c53c33791b14e1b268edb1e8c27"
+      ],
+      "query_original_sha256": [
+        "c0dd3013f4f2e2fe07397ab98f5d2643d9ffae7688ca63655e2777acadb60663",
+        "225b79fe790aff7360bec096a623b950e51d4d3c8e6ca5200b82c96689f18b94"
+      ],
+      "reference_original_sha256": [
+        "5f09d886fa09fcd02b0ad994312bf937e0852e1dbc30e6f3348c8d6e42bcb639",
+        "b1635e2a6d040bf50f5438c2cc3f6fea069a3c53c33791b14e1b268edb1e8c27"
+      ],
+      "query_target_sha256": [
+        "c32c7980b44b907014bb013b183dcd09df6cfb699d5fa425c484eee1269a1f5d",
+        "900b8da82f37f23aae100b3ec177a6c28007a390487bb0d3b1ede2d8108178dd"
+      ],
+      "reference_target_sha256": [
+        "02c6e3868668b19707136da1c0123611e67b5dc3916961762e7beb26eeb2a503",
+        "05d01e8f98f8ca1ec14c13d16dc1fd297daa5c2c69fffe200218589d301cbf2c"
+      ],
+      "losses": {
+        "raw_head": 0.8404455184936523,
+        "raw_head_logsigma_x": 0.33721640706062317,
+        "raw_head_logsigma_y": 0.2148146629333496,
+        "raw_head_centroid": 0.2365247905254364,
+        "raw_head_centroid_absolute": 0.09025957435369492,
+        "raw_head_shape": 0.437801331281662,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 5.0,
+        "raw_head_logsigma": 0.5520310401916504,
+        "raw_head_geo": 1.2263572216033936,
+        "raw_density": 0.1299179345369339,
+        "raw_occupancy": 0.70586758852005,
+        "raw_occupancy_bce": 0.70586758852005,
+        "raw_occupancy_dice": 0.6622650623321533,
+        "raw_j_coarse": 1.909984827041626,
+        "raw_j_centroid": 0.39690205454826355,
+        "raw_j_logsigma": 1.0627574920654297,
+        "raw_j_shape": 0.4503253102302551,
+        "count_j_coarse_parts": 5.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.7457704544067383
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.019284703007613757,
+              -0.0019422115253230343,
+              0.0004204733614521228,
+              -0.0012443048241270738,
+              -0.0024702494576649414,
+              -0.0009203210048903676
+            ],
+            [
+              -0.0019422115253230343,
+              0.19651493543564502,
+              -0.04506967500071113,
+              0.00010302226119329738,
+              0.00039145796934669796,
+              5.934456503342567e-05
+            ],
+            [
+              0.0004204733614521228,
+              -0.04506967500071113,
+              0.010831999035247009,
+              -5.07366232234685e-05,
+              -0.00011847454953262115,
+              -3.293477796964539e-05
+            ],
+            [
+              -0.0012443048241270738,
+              0.00010302226119329738,
+              -5.07366232234685e-05,
+              0.0004125230742688668,
+              0.000435421436533856,
+              0.00026525660786624883
+            ],
+            [
+              -0.0024702494576649414,
+              0.00039145796934669796,
+              -0.00011847454953262115,
+              0.000435421436533856,
+              0.0009083461197463283,
+              0.0003784457883633241
+            ],
+            [
+              -0.0009203210048903676,
+              5.934456503342567e-05,
+              -3.293477796964539e-05,
+              0.00026525660786624883,
+              0.0003784457883633241,
+              0.0002187660906983191
+            ]
+          ],
+          "norms": {
+            "density": 0.13886937390084883,
+            "occupancy_bce": 0.44330005124705885,
+            "occupancy_dice": 0.10407689001525271,
+            "j_centroid": 0.020310664052877906,
+            "j_logsigma": 0.030138780993038326,
+            "j_shape": 0.014790743412632075
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.031549484532979497,
+            "occupancy_dice:density": 0.02909227626420707,
+            "occupancy_dice:occupancy_bce": -0.9768600266506772,
+            "j_centroid:density": -0.44116005744299924,
+            "j_centroid:occupancy_bce": 0.011442190486090057,
+            "j_centroid:occupancy_dice": -0.024001762289882565,
+            "j_logsigma:density": -0.5902128389196494,
+            "j_logsigma:occupancy_bce": 0.029299598877659573,
+            "j_logsigma:occupancy_dice": -0.03776983408765192,
+            "j_logsigma:j_centroid": 0.7113117795620796,
+            "j_shape:density": -0.44806689091484253,
+            "j_shape:occupancy_bce": 0.009050929174416765,
+            "j_shape:occupancy_dice": -0.021394908358207957,
+            "j_shape:j_centroid": 0.8829824783487005,
+            "j_shape:j_logsigma": 0.8489614903638455
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.019284635447685883,
+              -0.0019408274255696967,
+              0.00042039748356459405,
+              -0.0012450856015768785,
+              -0.0024699610296963215,
+              -0.0009198667422514739
+            ],
+            [
+              -0.0019408274255696967,
+              0.19651677841386972,
+              -0.04506808904054793,
+              0.0001044315952800634,
+              0.0003922007956482787,
+              6.018758709713801e-05
+            ],
+            [
+              0.00042039748356459405,
+              -0.04506808904054793,
+              0.010831172554311763,
+              -5.1142791861275017e-05,
+              -0.00011878137168219727,
+              -3.323110694541942e-05
+            ],
+            [
+              -0.0012450856015768785,
+              0.0001044315952800634,
+              -5.1142791861275017e-05,
+              0.0004127662505244434,
+              0.000435544600599469,
+              0.0002652772222002664
+            ],
+            [
+              -0.0024699610296963215,
+              0.0003922007956482787,
+              -0.00011878137168219727,
+              0.000435544600599469,
+              0.0009080814689990113,
+              0.00037832171026397354
+            ],
+            [
+              -0.0009198667422514739,
+              6.018758709713801e-05,
+              -3.323110694541942e-05,
+              0.0002652772222002664,
+              0.00037832171026397354,
+              0.00021870341422380868
+            ]
+          ],
+          "norms": {
+            "density": 0.1388691306507169,
+            "occupancy_bce": 0.4433021299451083,
+            "occupancy_dice": 0.10407291940899786,
+            "j_centroid": 0.02031664958905487,
+            "j_logsigma": 0.03013439013816293,
+            "j_shape": 0.01478862448721343
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.031526908463733246,
+            "occupancy_dice:density": 0.029088187007908786,
+            "occupancy_dice:occupancy_bce": -0.9768583392247784,
+            "j_centroid:density": -0.4413075971842288,
+            "j_centroid:occupancy_bce": 0.011595246994040994,
+            "j_centroid:occupancy_dice": -0.02418770174342467,
+            "j_logsigma:density": -0.5902309484929866,
+            "j_logsigma:occupancy_bce": 0.029359337120808866,
+            "j_logsigma:occupancy_dice": -0.037874611975534454,
+            "j_logsigma:j_centroid": 0.7114070053011332,
+            "j_shape:density": -0.4479106811591626,
+            "j_shape:occupancy_bce": 0.009180774778893392,
+            "j_shape:occupancy_dice": -0.021591324733428213,
+            "j_shape:j_centroid": 0.8829174282431869,
+            "j_shape:j_logsigma": 0.8489284264594479
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.4555043714912678,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.4555043714912678,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 5,
+      "coarse_relative_eligible_parts": 5
+    },
+    {
+      "batch": 6,
+      "author": "Yanzq",
+      "indices": [
+        363,
+        364
+      ],
+      "target_path": [
+        "font/train/new/YanzqBF/images_text_denoised/妙.png",
+        "font/train/new/YanzqJT/images_text_denoised/禪.png"
+      ],
+      "reference_path": [
+        "font/train/new/YanzqBF/images_text_denoised/尚.png",
+        "font/train/new/YanzqJT/images_text_denoised/衜.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Yanzq:708f1c4e0d8e3f5e1985760fcb67cc8b885c079ced64dca37d4d4da10345d889",
+        "Yanzq:508e91d701975491a9d72ed83ddd44b0fe5e6d175866f7bc59f78856405e05bf"
+      ],
+      "reference_original_identity": [
+        "Yanzq:e20cee1deaf841826439ef9520f3b31d8e3c733164c0bcf459a9306a31368b8a",
+        "Yanzq:5ca5f6ee67e67dab518e4e52a4449c608d243b4160377dbfc42c9f5999ba9270"
+      ],
+      "query_original_sha256": [
+        "708f1c4e0d8e3f5e1985760fcb67cc8b885c079ced64dca37d4d4da10345d889",
+        "508e91d701975491a9d72ed83ddd44b0fe5e6d175866f7bc59f78856405e05bf"
+      ],
+      "reference_original_sha256": [
+        "e20cee1deaf841826439ef9520f3b31d8e3c733164c0bcf459a9306a31368b8a",
+        "5ca5f6ee67e67dab518e4e52a4449c608d243b4160377dbfc42c9f5999ba9270"
+      ],
+      "query_target_sha256": [
+        "aace7b13c808f487c4313cb04d448473bc1d042b625ed5eb4a0e8710076a66b0",
+        "b2bf10045a2544ea1709859b2d3c5a612e0574939bfd00a8348588eb93434d99"
+      ],
+      "reference_target_sha256": [
+        "c3b1077edc6707fdc7d16c82dff4166ac27a14e33d91de1180c3c47a915bfa41",
+        "9fb08f8f5e6bded3001b8c17cab77bcf514943830edc31b1cb4fc8e0d252d554"
+      ],
+      "losses": {
+        "raw_head": 0.42589449882507324,
+        "raw_head_logsigma_x": 0.2278403341770172,
+        "raw_head_logsigma_y": 0.11491525173187256,
+        "raw_head_centroid": 0.10405759513378143,
+        "raw_head_centroid_absolute": 0.05595226585865021,
+        "raw_head_shape": 0.3143082857131958,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.34275558590888977,
+        "raw_head_geo": 0.7611214518547058,
+        "raw_density": 0.12899084389209747,
+        "raw_occupancy": 0.706508219242096,
+        "raw_occupancy_bce": 0.706508219242096,
+        "raw_occupancy_dice": 0.6662410497665405,
+        "raw_j_coarse": 1.559234857559204,
+        "raw_j_centroid": 0.22879081964492798,
+        "raw_j_logsigma": 0.8538621664047241,
+        "raw_j_shape": 0.47658178210258484,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.3947339057922363
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02125570765138729,
+              -0.001593081764863724,
+              0.0003296260122566119,
+              -0.0012707912001830302,
+              -0.0026359177097909914,
+              -0.0008392316770030189
+            ],
+            [
+              -0.001593081764863724,
+              0.20844287442438336,
+              -0.045509235530504455,
+              0.0001981559585026993,
+              0.00030989814130788496,
+              4.250833011454347e-05
+            ],
+            [
+              0.0003296260122566119,
+              -0.045509235530504455,
+              0.010307054041089003,
+              -5.789642318898558e-05,
+              -9.323468236765997e-05,
+              -2.8171902806947702e-05
+            ],
+            [
+              -0.0012707912001830302,
+              0.0001981559585026993,
+              -5.789642318898558e-05,
+              0.00030411265337837445,
+              0.0003951450208162788,
+              0.0002451754199013778
+            ],
+            [
+              -0.0026359177097909914,
+              0.00030989814130788496,
+              -9.323468236765997e-05,
+              0.0003951450208162788,
+              0.0009946736171895232,
+              0.00047748274377190647
+            ],
+            [
+              -0.0008392316770030189,
+              4.250833011454347e-05,
+              -2.8171902806947702e-05,
+              0.0002451754199013778,
+              0.00047748274377190647,
+              0.0003529800137258565
+            ]
+          ],
+          "norms": {
+            "density": 0.14579337313947877,
+            "occupancy_bce": 0.45655544507144297,
+            "occupancy_dice": 0.1015236624688501,
+            "j_centroid": 0.017438826032115076,
+            "j_logsigma": 0.031538446651500185,
+            "j_shape": 0.01878776233950857
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02393352986058535,
+            "occupancy_dice:density": 0.022269805080640772,
+            "occupancy_dice:occupancy_bce": -0.9818355140726036,
+            "j_centroid:density": -0.4998263751212881,
+            "j_centroid:occupancy_bce": 0.024888364814542513,
+            "j_centroid:occupancy_dice": -0.03270146523670276,
+            "j_logsigma:density": -0.5732628051213841,
+            "j_logsigma:occupancy_bce": 0.021522124795689993,
+            "j_logsigma:occupancy_dice": -0.029118561718237432,
+            "j_logsigma:j_centroid": 0.7184540034884994,
+            "j_shape:density": -0.30638607714310867,
+            "j_shape:occupancy_bce": 0.004955705159417932,
+            "j_shape:occupancy_dice": -0.014769773898873111,
+            "j_shape:j_centroid": 0.7483152997446224,
+            "j_shape:j_logsigma": 0.8058279440885913
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02125567953052654,
+              -0.0015925466003622185,
+              0.0003295795248655642,
+              -0.0012705250241944466,
+              -0.002636552570686179,
+              -0.000839550123407376
+            ],
+            [
+              -0.0015925466003622185,
+              0.20843603675327405,
+              -0.045509651902722936,
+              0.00019772674886564534,
+              0.00030870600521715197,
+              4.370656704666409e-05
+            ],
+            [
+              0.0003295795248655642,
+              -0.045509651902722936,
+              0.010307647745522175,
+              -5.783744326742779e-05,
+              -9.300363849396032e-05,
+              -2.8462529863215735e-05
+            ],
+            [
+              -0.0012705250241944466,
+              0.00019772674886564534,
+              -5.783744326742779e-05,
+              0.0003040022023637068,
+              0.0003951718089616474,
+              0.0002452003534905711
+            ],
+            [
+              -0.002636552570686179,
+              0.00030870600521715197,
+              -9.300363849396032e-05,
+              0.0003951718089616474,
+              0.0009949158187176899,
+              0.00047756596746661995
+            ],
+            [
+              -0.000839550123407376,
+              4.370656704666409e-05,
+              -2.8462529863215735e-05,
+              0.0002452003534905711,
+              0.00047756596746661995,
+              0.0003530126920664456
+            ]
+          ],
+          "norms": {
+            "density": 0.14579327669864114,
+            "occupancy_bce": 0.45654795668502784,
+            "occupancy_dice": 0.10152658639746623,
+            "j_centroid": 0.017435658931159063,
+            "j_logsigma": 0.031542286199920416,
+            "j_shape": 0.018788631990287255
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.023925898118896987,
+            "occupancy_dice:density": 0.02226603781113997,
+            "occupancy_dice:occupancy_bce": -0.9818323242364961,
+            "j_centroid:density": -0.49981278562290443,
+            "j_centroid:occupancy_bce": 0.0248393746044196,
+            "j_centroid:occupancy_dice": -0.03267314478827381,
+            "j_logsigma:density": -0.5733314563675718,
+            "j_logsigma:occupancy_bce": 0.02143707396579499,
+            "j_logsigma:occupancy_dice": -0.029042031164447424,
+            "j_logsigma:j_centroid": 0.7185457451587486,
+            "j_shape:density": -0.30648835128908486,
+            "j_shape:occupancy_bce": 0.005095245715941857,
+            "j_shape:occupancy_dice": -0.014921021459664145,
+            "j_shape:j_centroid": 0.7484926963611555,
+            "j_shape:j_logsigma": 0.8058329886394544
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.4711859643018396,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.4711859643018396,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 7,
+      "author": "Zhangqb",
+      "indices": [
+        594,
+        595
+      ],
+      "target_path": [
+        "font/train/new/ZhangqbBF/images_text_denoised/利.png",
+        "font/train/new/ZhangqbBF/images_text_denoised/忠.png"
+      ],
+      "reference_path": [
+        "font/train/new/ZhangqbBF/images_text_denoised/景.png",
+        "font/train/new/ZhangqbBF/images_text_denoised/拾.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Zhangqb:7eed9d82a67d45c29a83c77f4b008a327bebfb3a59ace3e1d85e109cc76bafe9",
+        "Zhangqb:ac21a313643bd4a00ee39f37c9dc971bdf4fe3ed09e36db04a199bb94e82af5b"
+      ],
+      "reference_original_identity": [
+        "Zhangqb:2869f811d8f36990186c11c8adb349603283bde803b79c2584e52d03d7cccb5e",
+        "Zhangqb:c944c9f4acf9afbc115430fc8f52b24f71845d0223c4ac86a99d3d9ee2c772f1"
+      ],
+      "query_original_sha256": [
+        "7eed9d82a67d45c29a83c77f4b008a327bebfb3a59ace3e1d85e109cc76bafe9",
+        "ac21a313643bd4a00ee39f37c9dc971bdf4fe3ed09e36db04a199bb94e82af5b"
+      ],
+      "reference_original_sha256": [
+        "2869f811d8f36990186c11c8adb349603283bde803b79c2584e52d03d7cccb5e",
+        "c944c9f4acf9afbc115430fc8f52b24f71845d0223c4ac86a99d3d9ee2c772f1"
+      ],
+      "query_target_sha256": [
+        "ee0d111e34fef640d338dbc0004e7426d587c995d4247061651e80eec502eb00",
+        "35df7006190e26b2d210f4af0afaf3a2caa4367be6d38bb0e977de9462ac6e13"
+      ],
+      "reference_target_sha256": [
+        "c9250636744201b687d3b9e4899625150c6b09e35920ad4309b4d4c9b4da51fa",
+        "5616102e79ff85d02827481e39a2f2e2ba5d009231f78a92a762435a5dc11d31"
+      ],
+      "losses": {
+        "raw_head": 0.5368027091026306,
+        "raw_head_logsigma_x": 0.18241150677204132,
+        "raw_head_logsigma_y": 0.11590798199176788,
+        "raw_head_centroid": 0.17781762778759003,
+        "raw_head_centroid_absolute": 0.09261143207550049,
+        "raw_head_shape": 0.38326600193977356,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.2983194887638092,
+        "raw_head_geo": 0.859403133392334,
+        "raw_density": 0.13388404250144958,
+        "raw_occupancy": 0.7106403112411499,
+        "raw_occupancy_bce": 0.7106403112411499,
+        "raw_occupancy_dice": 0.7552505731582642,
+        "raw_j_coarse": 2.0957767963409424,
+        "raw_j_centroid": 0.32102519273757935,
+        "raw_j_logsigma": 1.2533408403396606,
+        "raw_j_shape": 0.5214106440544128,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.9403011798858643
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.035560126442694795,
+              -0.0036358838027599205,
+              0.0003017288722994005,
+              -0.0010875282346020088,
+              -0.003766288219289482,
+              -0.0006967891122326986
+            ],
+            [
+              -0.0036358838027599205,
+              0.4001594416926366,
+              -0.03604131955449219,
+              6.133805185837282e-05,
+              0.0005912619634589333,
+              0.00013895460737983756
+            ],
+            [
+              0.0003017288722994005,
+              -0.03604131955449219,
+              0.003451375726570838,
+              -1.7415616460930705e-05,
+              -6.559048927454181e-05,
+              -1.6450810809247318e-05
+            ],
+            [
+              -0.0010875282346020088,
+              6.133805185837282e-05,
+              -1.7415616460930705e-05,
+              0.0002755540437152648,
+              0.00031031676045645273,
+              8.967914146695843e-05
+            ],
+            [
+              -0.003766288219289482,
+              0.0005912619634589333,
+              -6.559048927454181e-05,
+              0.00031031676045645273,
+              0.0009098604920363407,
+              0.0001980450549089463
+            ],
+            [
+              -0.0006967891122326986,
+              0.00013895460737983756,
+              -1.6450810809247318e-05,
+              8.967914146695843e-05,
+              0.0001980450549089463,
+              8.580159825288813e-05
+            ]
+          ],
+          "norms": {
+            "density": 0.18857392832174547,
+            "occupancy_bce": 0.6325815692008712,
+            "occupancy_dice": 0.0587484104173963,
+            "j_centroid": 0.01659982059286379,
+            "j_logsigma": 0.0301638938473855,
+            "j_shape": 0.009262915213521504
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.030479778940780997,
+            "occupancy_dice:density": 0.027235735077559723,
+            "occupancy_dice:occupancy_bce": -0.9698130609561745,
+            "j_centroid:density": -0.34742054595441646,
+            "j_centroid:occupancy_bce": 0.005841307240496914,
+            "j_centroid:occupancy_dice": -0.017858268046548515,
+            "j_logsigma:density": -0.6621318818360536,
+            "j_logsigma:occupancy_bce": 0.03098674821519335,
+            "j_logsigma:occupancy_dice": -0.037013260738232495,
+            "j_logsigma:j_centroid": 0.6197470022656504,
+            "j_shape:density": -0.39890733201940454,
+            "j_shape:occupancy_bce": 0.023714213656793923,
+            "j_shape:occupancy_dice": -0.03023037251395291,
+            "j_shape:j_centroid": 0.5832306765889771,
+            "j_shape:j_logsigma": 0.7088084889268723
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.03556073224675682,
+              -0.003636849163472622,
+              0.0003011478917042121,
+              -0.0010861859706220445,
+              -0.0037651634867277295,
+              -0.000698584764136978
+            ],
+            [
+              -0.003636849163472622,
+              0.40016839621910805,
+              -0.03604496322326156,
+              6.263324886224275e-05,
+              0.0005896750175700127,
+              0.00013918685544953013
+            ],
+            [
+              0.0003011478917042121,
+              -0.03604496322326156,
+              0.0034519531572305695,
+              -1.7488389473213628e-05,
+              -6.525468565166115e-05,
+              -1.6410327384502876e-05
+            ],
+            [
+              -0.0010861859706220445,
+              6.263324886224275e-05,
+              -1.7488389473213628e-05,
+              0.0002754057080323058,
+              0.0003100333168390701,
+              8.974848223586296e-05
+            ],
+            [
+              -0.0037651634867277295,
+              0.0005896750175700127,
+              -6.525468565166115e-05,
+              0.0003100333168390701,
+              0.0009094942920717664,
+              0.00019833089596366094
+            ],
+            [
+              -0.000698584764136978,
+              0.00013918685544953013,
+              -1.6410327384502876e-05,
+              8.974848223586296e-05,
+              0.00019833089596366094,
+              8.59412416320815e-05
+            ]
+          ],
+          "norms": {
+            "density": 0.18857553459226045,
+            "occupancy_bce": 0.6325886469255578,
+            "occupancy_dice": 0.058753324648317305,
+            "j_centroid": 0.016595352000855716,
+            "j_logsigma": 0.03015782306586081,
+            "j_shape": 0.00927044991529977
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.030487270799364526,
+            "occupancy_dice:density": 0.027180787336788255,
+            "occupancy_dice:occupancy_bce": -0.9698191301177571,
+            "j_centroid:density": -0.3470822250360914,
+            "j_centroid:occupancy_bce": 0.005966189970903885,
+            "j_centroid:occupancy_dice": -0.01793621913143639,
+            "j_logsigma:density": -0.6620617565205117,
+            "j_logsigma:occupancy_bce": 0.030909454915000266,
+            "j_logsigma:occupancy_dice": -0.0368280959640227,
+            "j_logsigma:j_centroid": 0.6194723251149109,
+            "j_shape:density": -0.39960687382348886,
+            "j_shape:occupancy_bce": 0.023734277617355234,
+            "j_shape:occupancy_dice": -0.030128949292232823,
+            "j_shape:j_centroid": 0.5833642786912954,
+            "j_shape:j_logsigma": 0.70939736828176
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.6490874939090621,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.6490874939090621,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 8,
+      "author": "Zhaomf",
+      "indices": [
+        645,
+        646
+      ],
+      "target_path": [
+        "font/train/new/ZhaomfBF/images_text_denoised/其1.png",
+        "font/train/new/ZhaomfJT/images_text_denoised/清.png"
+      ],
+      "reference_path": [
+        "font/train/new/ZhaomfBF/images_text_denoised/袂.png",
+        "font/train/new/ZhaomfJT/images_text_denoised/黄.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Zhaomf:35e83496e4b5bb159fce3e501d84f2a0b93fd4ac0f343bcaefc6c6fe83a40218",
+        "Zhaomf:9b3dc2fd3f96be0e46f7097237c4d7d415ed660debd90752de9950522f55f8f7"
+      ],
+      "reference_original_identity": [
+        "Zhaomf:8b480f68119b778d809318dfd8da17f4e3fbb5875bfe584de125ef07039a2e15",
+        "Zhaomf:5156f29ec1250fd3b38f2f6d1992e322c4e8a604c10e52c6d37d8d08909854d5"
+      ],
+      "query_original_sha256": [
+        "35e83496e4b5bb159fce3e501d84f2a0b93fd4ac0f343bcaefc6c6fe83a40218",
+        "9b3dc2fd3f96be0e46f7097237c4d7d415ed660debd90752de9950522f55f8f7"
+      ],
+      "reference_original_sha256": [
+        "8b480f68119b778d809318dfd8da17f4e3fbb5875bfe584de125ef07039a2e15",
+        "5156f29ec1250fd3b38f2f6d1992e322c4e8a604c10e52c6d37d8d08909854d5"
+      ],
+      "query_target_sha256": [
+        "ae75e4eef80c7c45eec2affe17a9f4311600eda3ee7e0391f19c3b5b011d0735",
+        "1f2b71fdd321f9941f398ae859e128982bb715afc69f0200d5cb70493ac95eb6"
+      ],
+      "reference_target_sha256": [
+        "baa971101ebe94b3cd26716cc36b48de4c60428c9c98d421f31921114542b432",
+        "61a48ea37977e0819df86c63b1d2e4ba1a2df1fd84aa4e51f5db6278b65a9637"
+      ],
+      "losses": {
+        "raw_head": 0.8158794641494751,
+        "raw_head_logsigma_x": 0.14497259259223938,
+        "raw_head_logsigma_y": 0.11496054381132126,
+        "raw_head_centroid": 0.13136990368366241,
+        "raw_head_centroid_absolute": 0.11239896714687347,
+        "raw_head_shape": 0.4504752457141876,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 5.0,
+        "raw_head_logsigma": 0.25993314385414124,
+        "raw_head_geo": 0.8417782783508301,
+        "raw_density": 0.12926843762397766,
+        "raw_occupancy": 0.7059221863746643,
+        "raw_occupancy_bce": 0.7059221863746643,
+        "raw_occupancy_dice": 0.660517156124115,
+        "raw_j_coarse": 1.5683954954147339,
+        "raw_j_centroid": 0.27256232500076294,
+        "raw_j_logsigma": 0.7916486263275146,
+        "raw_j_shape": 0.5041846036911011,
+        "count_j_coarse_parts": 5.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.4035861492156982
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.020822730955150526,
+              -0.0015254830808315578,
+              0.00038926616281753645,
+              -0.001062071688806121,
+              -0.0026004233706560242,
+              -0.0012095499672595267
+            ],
+            [
+              -0.0015254830808315578,
+              0.19976313145396762,
+              -0.04587583403441542,
+              6.689042573171378e-07,
+              0.0005559242270651299,
+              0.00020095221548632747
+            ],
+            [
+              0.00038926616281753645,
+              -0.04587583403441542,
+              0.01079590907987793,
+              -7.754926695968667e-06,
+              -0.0001612116904473604,
+              -6.319619650263508e-05
+            ],
+            [
+              -0.001062071688806121,
+              6.689042573171378e-07,
+              -7.754926695968667e-06,
+              0.0002402854652817643,
+              0.000290758951151715,
+              0.0001853773932414815
+            ],
+            [
+              -0.0026004233706560242,
+              0.0005559242270651299,
+              -0.0001612116904473604,
+              0.000290758951151715,
+              0.0007618996695080149,
+              0.00035890039139119256
+            ],
+            [
+              -0.0012095499672595267,
+              0.00020095221548632747,
+              -6.319619650263508e-05,
+              0.0001853773932414815,
+              0.00035890039139119256,
+              0.00026714521959614324
+            ]
+          ],
+          "norms": {
+            "density": 0.14430083490801612,
+            "occupancy_bce": 0.4469486899566522,
+            "occupancy_dice": 0.10390336414129203,
+            "j_centroid": 0.01550114399913001,
+            "j_logsigma": 0.02760253012874028,
+            "j_shape": 0.01634457768179231
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.023652708673757974,
+            "occupancy_dice:density": 0.025962601116282166,
+            "occupancy_dice:occupancy_bce": -0.9878629445929725,
+            "j_centroid:density": -0.4748115093273925,
+            "j_centroid:occupancy_bce": 9.654783525863901e-05,
+            "j_centroid:occupancy_dice": -0.004814867464161528,
+            "j_logsigma:density": -0.6528694155352569,
+            "j_logsigma:occupancy_bce": 0.04506185229135994,
+            "j_logsigma:occupancy_dice": -0.05621057529640274,
+            "j_logsigma:j_centroid": 0.6795484876469607,
+            "j_shape:density": -0.5128392620539572,
+            "j_shape:occupancy_bce": 0.027508152694154384,
+            "j_shape:occupancy_dice": -0.037212395498287164,
+            "j_shape:j_centroid": 0.7316768538119411,
+            "j_shape:j_logsigma": 0.79552042707416
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02082258501914147,
+              -0.001525950155487038,
+              0.00038942770912819835,
+              -0.0010625606458902759,
+              -0.0025989553008041177,
+              -0.0012106004846121898
+            ],
+            [
+              -0.001525950155487038,
+              0.1997670289129161,
+              -0.04587553589468385,
+              2.352033699082323e-06,
+              0.0005567166789439137,
+              0.000203264225241917
+            ],
+            [
+              0.00038942770912819835,
+              -0.04587553589468385,
+              0.010795564003089453,
+              -8.146475185322188e-06,
+              -0.00016135700782626827,
+              -6.37508274984322e-05
+            ],
+            [
+              -0.0010625606458902759,
+              2.352033699082323e-06,
+              -8.146475185322188e-06,
+              0.000240353654309855,
+              0.0002907372368199379,
+              0.00018558523922623804
+            ],
+            [
+              -0.0025989553008041177,
+              0.0005567166789439137,
+              -0.00016135700782626827,
+              0.0002907372368199379,
+              0.0007612497613807001,
+              0.00035896668973645074
+            ],
+            [
+              -0.0012106004846121898,
+              0.000203264225241917,
+              -6.37508274984322e-05,
+              0.00018558523922623804,
+              0.00035896668973645074,
+              0.00026737022282863343
+            ]
+          ],
+          "norms": {
+            "density": 0.14430032924127884,
+            "occupancy_bce": 0.4469530500096359,
+            "occupancy_dice": 0.10390170356201794,
+            "j_centroid": 0.015503343326839376,
+            "j_logsigma": 0.027590754998381255,
+            "j_shape": 0.016351459348591287
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02365980280067842,
+            "occupancy_dice:density": 0.02597388178376652,
+            "occupancy_dice:occupancy_bce": -0.9878626760118517,
+            "j_centroid:density": -0.4749643791900426,
+            "j_centroid:occupancy_bce": 0.00033943472518140473,
+            "j_centroid:occupancy_dice": -0.005057334808123971,
+            "j_logsigma:density": -0.6527815984851054,
+            "j_logsigma:occupancy_bce": 0.045144904924681296,
+            "j_logsigma:occupancy_dice": -0.05628615454435456,
+            "j_logsigma:j_centroid": 0.679691296954051,
+            "j_shape:density": -0.5130704499970192,
+            "j_shape:occupancy_bce": 0.027812659872501557,
+            "j_shape:occupancy_dice": -0.03752378501606134,
+            "j_shape:j_centroid": 0.7320850654308149,
+            "j_shape:j_logsigma": 0.7956719469726433
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.4606148038919265,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.4606148038919265,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 5,
+      "coarse_relative_eligible_parts": 5
+    },
+    {
+      "batch": 9,
+      "author": "Caoqb",
+      "indices": [
+        2,
+        3
+      ],
+      "target_path": [
+        "font/train/new/CaoqbJT/images_text_denoised/部.png",
+        "font/train/new/CaoqbBF/images_text_denoised/在.png"
+      ],
+      "reference_path": [
+        "font/train/new/CaoqbJT/images_text_denoised/毖.png",
+        "font/train/new/CaoqbBF/images_text_denoised/泉.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Caoqb:b2ae69905d799f5b591e322fc888ac0e13cfbdb664b5f81262ac2eca1ef79a31",
+        "Caoqb:e7a37f2bb9f52e878f4bda8c0273dde95d3ba039f10504088310930c9e4b6d93"
+      ],
+      "reference_original_identity": [
+        "Caoqb:6ea998da2a6d1945fec505c260eb386ded334051b4ada05526d69c5a2a9821af",
+        "Caoqb:351bf92626dd88af63d63cffbe21fbc1d53c96fdcd9c8b0a9ad8f2132bcfc190"
+      ],
+      "query_original_sha256": [
+        "b2ae69905d799f5b591e322fc888ac0e13cfbdb664b5f81262ac2eca1ef79a31",
+        "e7a37f2bb9f52e878f4bda8c0273dde95d3ba039f10504088310930c9e4b6d93"
+      ],
+      "reference_original_sha256": [
+        "6ea998da2a6d1945fec505c260eb386ded334051b4ada05526d69c5a2a9821af",
+        "351bf92626dd88af63d63cffbe21fbc1d53c96fdcd9c8b0a9ad8f2132bcfc190"
+      ],
+      "query_target_sha256": [
+        "fde22ced5ae1d48c077772e482cf5ffc667f681fd306a7607c27a66716e8cfee",
+        "1b18b420807fae4832e63ad31729c64192293c0d1cad0369b908d4fb71af3b5e"
+      ],
+      "reference_target_sha256": [
+        "ab2fcabf50f43a2f2cfe708f0ca7a0c2755ae8577c2662cdfe084026ec54c231",
+        "2413d7fa95a080803e344ae0484141e23cb51f4f9f052d554013a1f7bfc3b1e4"
+      ],
+      "losses": {
+        "raw_head": 0.3993168771266937,
+        "raw_head_logsigma_x": 0.09447324275970459,
+        "raw_head_logsigma_y": 0.2968272566795349,
+        "raw_head_centroid": 0.07645894587039948,
+        "raw_head_centroid_absolute": 0.08468068391084671,
+        "raw_head_shape": 0.3347172737121582,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.3913004994392395,
+        "raw_head_geo": 0.802476704120636,
+        "raw_density": 0.13524362444877625,
+        "raw_occupancy": 0.713530957698822,
+        "raw_occupancy_bce": 0.713530957698822,
+        "raw_occupancy_dice": 0.8076609969139099,
+        "raw_j_coarse": 2.3793818950653076,
+        "raw_j_centroid": 0.4784240126609802,
+        "raw_j_logsigma": 1.4146206378936768,
+        "raw_j_shape": 0.4863371253013611,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 3.228156566619873
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.04448327515075157,
+              -0.004705354390552863,
+              0.0002497705097511682,
+              -0.0021778251606496823,
+              -0.004004711018424922,
+              -0.00141889300742426
+            ],
+            [
+              -0.004705354390552863,
+              0.5191028100387456,
+              -0.026342357211795786,
+              0.00019538555204978714,
+              0.0009138075746930596,
+              0.00037454731683350673
+            ],
+            [
+              0.0002497705097511682,
+              -0.026342357211795786,
+              0.0014450793155256214,
+              -1.6687429485198746e-05,
+              -6.140490414391353e-05,
+              -2.4129550887659612e-05
+            ],
+            [
+              -0.0021778251606496823,
+              0.00019538555204978714,
+              -1.6687429485198746e-05,
+              0.00029738078566599047,
+              0.0003972980440884455,
+              0.00013724959395995662
+            ],
+            [
+              -0.004004711018424922,
+              0.0009138075746930596,
+              -6.140490414391353e-05,
+              0.0003972980440884455,
+              0.0008138332555658323,
+              0.0002723456431431015
+            ],
+            [
+              -0.00141889300742426,
+              0.00037454731683350673,
+              -2.4129550887659612e-05,
+              0.00013724959395995662,
+              0.0002723456431431015,
+              0.000188830075555535
+            ]
+          ],
+          "norms": {
+            "density": 0.21091058567732338,
+            "occupancy_bce": 0.7204878972187844,
+            "occupancy_dice": 0.03801419886733931,
+            "j_centroid": 0.01724473211348876,
+            "j_logsigma": 0.028527762891012543,
+            "j_shape": 0.013741545602861964
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.03096472810511882,
+            "occupancy_dice:density": 0.03115278947010342,
+            "occupancy_dice:occupancy_bce": -0.9617940861635976,
+            "j_centroid:density": -0.5987812340881876,
+            "j_centroid:occupancy_bce": 0.015725675296836616,
+            "j_centroid:occupancy_dice": -0.025455823373670052,
+            "j_logsigma:density": -0.6655873952768813,
+            "j_logsigma:occupancy_bce": 0.04445906730929937,
+            "j_logsigma:occupancy_dice": -0.05662255981044913,
+            "j_logsigma:j_centroid": 0.8075924656050354,
+            "j_shape:density": -0.48957100344648435,
+            "j_shape:occupancy_bce": 0.03783070344381677,
+            "j_shape:occupancy_dice": -0.04619211128726443,
+            "j_shape:j_centroid": 0.5791873029322971,
+            "j_shape:j_logsigma": 0.6947317265037093
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.044484529957035335,
+              -0.004706260217584468,
+              0.0002498096198426669,
+              -0.002179407456128324,
+              -0.0040043175410842125,
+              -0.0014178258453644288
+            ],
+            [
+              -0.004706260217584468,
+              0.5190975926486487,
+              -0.0263430385550798,
+              0.00019403771203374554,
+              0.0009137337781339738,
+              0.0003739606498531778
+            ],
+            [
+              0.0002498096198426669,
+              -0.0263430385550798,
+              0.001445118883669494,
+              -1.660489414273547e-05,
+              -6.13781388331125e-05,
+              -2.4076067039968674e-05
+            ],
+            [
+              -0.002179407456128324,
+              0.00019403771203374554,
+              -1.660489414273547e-05,
+              0.00029755195303593496,
+              0.0003974369395677302,
+              0.00013720882862930384
+            ],
+            [
+              -0.0040043175410842125,
+              0.0009137337781339738,
+              -6.13781388331125e-05,
+              0.0003974369395677302,
+              0.000813596702738395,
+              0.0002721204335095484
+            ],
+            [
+              -0.0014178258453644288,
+              0.0003739606498531778,
+              -2.4076067039968674e-05,
+              0.00013720882862930384,
+              0.0002721204335095484,
+              0.00018871368985706738
+            ]
+          ],
+          "norms": {
+            "density": 0.2109135603915389,
+            "occupancy_bce": 0.7204842764756555,
+            "occupancy_dice": 0.03801471930278447,
+            "j_centroid": 0.01724969428818769,
+            "j_logsigma": 0.02852361657887013,
+            "j_shape": 0.013737310139072619
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.030970407949833526,
+            "occupancy_dice:density": 0.031156801501686343,
+            "occupancy_dice:occupancy_bce": -0.9618106287356781,
+            "j_centroid:density": -0.5990354537879036,
+            "j_centroid:occupancy_bce": 0.015612779819164075,
+            "j_centroid:occupancy_dice": -0.025322286645993786,
+            "j_logsigma:density": -0.6656093541148476,
+            "j_logsigma:occupancy_bce": 0.04446216259294579,
+            "j_logsigma:occupancy_dice": -0.05660533138483328,
+            "j_logsigma:j_centroid": 0.807759803132518,
+            "j_shape:density": -0.48934672108056526,
+            "j_shape:occupancy_bce": 0.03778328335163965,
+            "j_shape:occupancy_dice": -0.04610330426095444,
+            "j_shape:j_centroid": 0.5790271808328361,
+            "j_shape:j_logsigma": 0.6944721929993996
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.7382507489984234,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.7382507489984234,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 10,
+      "author": "Dongqc",
+      "indices": [
+        56,
+        57
+      ],
+      "target_path": [
+        "font/train/new/DongqcBF/images_text_denoised/畔.png",
+        "font/train/new/DongqcBF/images_text_denoised/江.png"
+      ],
+      "reference_path": [
+        "font/train/new/DongqcBF/images_text_denoised/適.png",
+        "font/train/new/DongqcBF/images_text_denoised/室.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Dongqc:53f0ba34f34b8a7cd5e1f9cef6328dad45599584793d722fa14e5607a102ed4c",
+        "Dongqc:f982c3813ef9a146396a57a61df1951e0572e604d8b1ed7339281ffffb4f2fb7"
+      ],
+      "reference_original_identity": [
+        "Dongqc:5dbf9ab8da433c9d0ba2aa4fe40d917e51b810965aabeb1f4326f404ef8d5202",
+        "Dongqc:40bf3248f6628d9782e0beb2e0ca37bf629dd981c462c647b4f2b9756d101928"
+      ],
+      "query_original_sha256": [
+        "53f0ba34f34b8a7cd5e1f9cef6328dad45599584793d722fa14e5607a102ed4c",
+        "f982c3813ef9a146396a57a61df1951e0572e604d8b1ed7339281ffffb4f2fb7"
+      ],
+      "reference_original_sha256": [
+        "5dbf9ab8da433c9d0ba2aa4fe40d917e51b810965aabeb1f4326f404ef8d5202",
+        "40bf3248f6628d9782e0beb2e0ca37bf629dd981c462c647b4f2b9756d101928"
+      ],
+      "query_target_sha256": [
+        "e229a4cf4fd48339c7ede26ab95caa82aeab9de17a10d469e87b7f22c1506813",
+        "f701f7d909fcddde8134385b009f84b13ce355cef1397064dc1cf544cd22806c"
+      ],
+      "reference_target_sha256": [
+        "b2546b93e15bbe3cca2fd75d4a5b24f9fc95c2795f6be39641447ca7524ca43e",
+        "e9a94a479fcee74868b2662d1452ac7675b01818e36e28bb4dd48a9219740816"
+      ],
+      "losses": {
+        "raw_head": 0.36189520359039307,
+        "raw_head_logsigma_x": 0.09727999567985535,
+        "raw_head_logsigma_y": 0.18490493297576904,
+        "raw_head_centroid": 0.09837057441473007,
+        "raw_head_centroid_absolute": 0.04157394915819168,
+        "raw_head_shape": 0.2771463096141815,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.2821849286556244,
+        "raw_head_geo": 0.657701849937439,
+        "raw_density": 0.13380685448646545,
+        "raw_occupancy": 0.7112765312194824,
+        "raw_occupancy_bce": 0.7112765312194824,
+        "raw_occupancy_dice": 0.7578703165054321,
+        "raw_j_coarse": 1.9880023002624512,
+        "raw_j_centroid": 0.17316043376922607,
+        "raw_j_logsigma": 1.3460097312927246,
+        "raw_j_shape": 0.4688321650028229,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.833085536956787
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.03464755631560479,
+              -0.0030800242388968613,
+              0.0002845796462098704,
+              -0.0015426950860564226,
+              -0.0035247196933720915,
+              -0.0007613809000718286
+            ],
+            [
+              -0.0030800242388968613,
+              0.3944903996574638,
+              -0.035500269082383795,
+              0.00015866928598362584,
+              0.00040483728180440437,
+              0.00025030892088029333
+            ],
+            [
+              0.0002845796462098704,
+              -0.035500269082383795,
+              0.0033955350217418356,
+              -2.0812039711631813e-05,
+              -5.8953910178904945e-05,
+              -3.0550388826600106e-05
+            ],
+            [
+              -0.0015426950860564226,
+              0.00015866928598362584,
+              -2.0812039711631813e-05,
+              0.00023787941229735932,
+              0.00029149944946310624,
+              8.18473582722204e-05
+            ],
+            [
+              -0.0035247196933720915,
+              0.00040483728180440437,
+              -5.8953910178904945e-05,
+              0.00029149944946310624,
+              0.000981525098537439,
+              0.0002508066561479616
+            ],
+            [
+              -0.0007613809000718286,
+              0.00025030892088029333,
+              -3.0550388826600106e-05,
+              8.18473582722204e-05,
+              0.0002508066561479616,
+              0.0001410008573099475
+            ]
+          ],
+          "norms": {
+            "density": 0.18613854065078728,
+            "occupancy_bce": 0.6280847073902244,
+            "occupancy_dice": 0.05827121949763739,
+            "j_centroid": 0.015423339855470971,
+            "j_logsigma": 0.03132930095832716,
+            "j_shape": 0.011874378186244006
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02634508537409701,
+            "occupancy_dice:density": 0.026236954574083805,
+            "occupancy_dice:occupancy_bce": -0.9699722696692027,
+            "j_centroid:density": -0.5373600343688087,
+            "j_centroid:occupancy_bce": 0.016379333272345174,
+            "j_centroid:occupancy_dice": -0.02315699012185881,
+            "j_logsigma:density": -0.6044182591344993,
+            "j_logsigma:occupancy_bce": 0.020573660841896706,
+            "j_logsigma:occupancy_dice": -0.032292956207111416,
+            "j_logsigma:j_centroid": 0.6032656617829043,
+            "j_shape:density": -0.3444726901343262,
+            "j_shape:occupancy_bce": 0.03356195354755778,
+            "j_shape:occupancy_dice": -0.04415214001997901,
+            "j_shape:j_centroid": 0.4469051522035238,
+            "j_shape:j_logsigma": 0.6741825023549365
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.03464921304477908,
+              -0.003082596133682891,
+              0.00028428019454840303,
+              -0.0015419691810807379,
+              -0.0035262159058699893,
+              -0.0007615152825181104
+            ],
+            [
+              -0.003082596133682891,
+              0.39449610078905195,
+              -0.035499699994751666,
+              0.00015900293109583075,
+              0.00040366644082245884,
+              0.00024925262065977893
+            ],
+            [
+              0.00028428019454840303,
+              -0.035499699994751666,
+              0.003395454921575336,
+              -2.0811591897706982e-05,
+              -5.8697770204008126e-05,
+              -3.0392062583928237e-05
+            ],
+            [
+              -0.0015419691810807379,
+              0.00015900293109583075,
+              -2.0811591897706982e-05,
+              0.00023766757338367084,
+              0.00029144008922221687,
+              8.184577261349801e-05
+            ],
+            [
+              -0.0035262159058699893,
+              0.00040366644082245884,
+              -5.8697770204008126e-05,
+              0.00029144008922221687,
+              0.0009820150939823247,
+              0.0002508534151013375
+            ],
+            [
+              -0.0007615152825181104,
+              0.00024925262065977893,
+              -3.0392062583928237e-05,
+              8.184577261349801e-05,
+              0.0002508534151013375,
+              0.00014097781453642488
+            ]
+          ],
+          "norms": {
+            "density": 0.18614299085589842,
+            "occupancy_bce": 0.62808924587916,
+            "occupancy_dice": 0.05827053218888031,
+            "j_centroid": 0.015416470847235785,
+            "j_logsigma": 0.03133712006522496,
+            "j_shape": 0.011873407873749848
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.026366263267681347,
+            "occupancy_dice:density": 0.026209029023665883,
+            "occupancy_dice:occupancy_bce": -0.9699611524227707,
+            "j_centroid:density": -0.5373336516306971,
+            "j_centroid:occupancy_bce": 0.01642096996659479,
+            "j_centroid:occupancy_dice": -0.023167082781954514,
+            "j_logsigma:density": -0.6045095008087145,
+            "j_logsigma:occupancy_bce": 0.02050889239169875,
+            "j_logsigma:occupancy_dice": -0.03214500795542249,
+            "j_logsigma:j_centroid": 0.6032609915962291,
+            "j_shape:density": -0.3445534071794625,
+            "j_shape:occupancy_bce": 0.03342281221068684,
+            "j_shape:occupancy_dice": -0.04392743081553512,
+            "j_shape:j_centroid": 0.44713215198393164,
+            "j_shape:j_logsigma": 0.6741950342314765
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.6446706332748015,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.6446706332748015,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 11,
+      "author": "Liugq",
+      "indices": [
+        124,
+        125
+      ],
+      "target_path": [
+        "font/train/new/LiugqJT/images_text_denoised/無.png",
+        "font/train/new/LiugqBF/images_text_denoised/家.png"
+      ],
+      "reference_path": [
+        "font/train/new/LiugqJT/images_text_denoised/都.png",
+        "font/train/new/LiugqBF/images_text_denoised/丞.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Liugq:24a37e99a59746f365337e0b8c4ad2b7d11799d114d9c7bc37879511c0272927",
+        "Liugq:3a5822322e8c63e04ae35728ab094be3ad1cfbe1506b4d043b9940f0da2f0634"
+      ],
+      "reference_original_identity": [
+        "Liugq:3f9d854eb848de8f296a7491c94dccb3a371d60518594108e0eac203321e5325",
+        "Liugq:8776de55fab0a95a32673564f2bdfbef4ee32924f300ef6c9e4ebf1b64ba3194"
+      ],
+      "query_original_sha256": [
+        "24a37e99a59746f365337e0b8c4ad2b7d11799d114d9c7bc37879511c0272927",
+        "3a5822322e8c63e04ae35728ab094be3ad1cfbe1506b4d043b9940f0da2f0634"
+      ],
+      "reference_original_sha256": [
+        "3f9d854eb848de8f296a7491c94dccb3a371d60518594108e0eac203321e5325",
+        "8776de55fab0a95a32673564f2bdfbef4ee32924f300ef6c9e4ebf1b64ba3194"
+      ],
+      "query_target_sha256": [
+        "ca9852031c37f998432a66efc9950d0b29889d3555bd0d24129149ed5d3a253a",
+        "fba20da32be92e24c5f6fb58446ac0c9b4c6801379ea7d8e5f1136dd419c6502"
+      ],
+      "reference_target_sha256": [
+        "3802d731a518a1b2f9b1d8f2c1c3f2d7774f560eecd5840f21ab68d6f7afcc50",
+        "7076468e49f9849ca6f0673f8bbb81ad1b90b741209be9dc33abd8cb2ab11f0a"
+      ],
+      "losses": {
+        "raw_head": 0.8143166303634644,
+        "raw_head_logsigma_x": 0.20172366499900818,
+        "raw_head_logsigma_y": 0.21097464859485626,
+        "raw_head_centroid": 0.0962669849395752,
+        "raw_head_centroid_absolute": 0.07708949595689774,
+        "raw_head_shape": 0.3380160331726074,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 5.0,
+        "raw_head_logsigma": 0.41269832849502563,
+        "raw_head_geo": 0.8469813466072083,
+        "raw_density": 0.12933313846588135,
+        "raw_occupancy": 0.7059853672981262,
+        "raw_occupancy_bce": 0.7059853672981262,
+        "raw_occupancy_dice": 0.6660619378089905,
+        "raw_j_coarse": 1.3838430643081665,
+        "raw_j_centroid": 0.13831621408462524,
+        "raw_j_logsigma": 0.8421455025672913,
+        "raw_j_shape": 0.40338134765625,
+        "count_j_coarse_parts": 5.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.2191615104675293
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02154450149710474,
+              -0.0018589653717896448,
+              0.00037905625961909273,
+              -0.0011580525235102002,
+              -0.002693604057513177,
+              -0.0010209502071170107
+            ],
+            [
+              -0.0018589653717896448,
+              0.2088986821651222,
+              -0.04570959387940121,
+              -3.473485770566498e-06,
+              0.00043040037234698403,
+              8.239118049868654e-05
+            ],
+            [
+              0.00037905625961909273,
+              -0.04570959387940121,
+              0.01032159810283062,
+              -3.3750941266647017e-06,
+              -0.00012425828242268455,
+              -3.1160343847536076e-05
+            ],
+            [
+              -0.0011580525235102002,
+              -3.473485770566498e-06,
+              -3.3750941266647017e-06,
+              0.00023321885396820896,
+              0.0003292450769671884,
+              0.00017300200635039786
+            ],
+            [
+              -0.002693604057513177,
+              0.00043040037234698403,
+              -0.00012425828242268455,
+              0.0003292450769671884,
+              0.0010045901297597304,
+              0.0004380863606406882
+            ],
+            [
+              -0.0010209502071170107,
+              8.239118049868654e-05,
+              -3.1160343847536076e-05,
+              0.00017300200635039786,
+              0.0004380863606406882,
+              0.00023407596851199308
+            ]
+          ],
+          "norms": {
+            "density": 0.1467804533890829,
+            "occupancy_bce": 0.457054353622326,
+            "occupancy_dice": 0.10159526614380525,
+            "j_centroid": 0.01527150463995637,
+            "j_logsigma": 0.03169526983257487,
+            "j_shape": 0.015299541447768723
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.027709917002314354,
+            "occupancy_dice:density": 0.025419205702305978,
+            "occupancy_dice:occupancy_bce": -0.9843873864775601,
+            "j_centroid:density": -0.5166283137807146,
+            "j_centroid:occupancy_bce": -0.0004976406463793719,
+            "j_centroid:occupancy_dice": -0.0021753572441772463,
+            "j_logsigma:density": -0.5789900218792707,
+            "j_logsigma:occupancy_bce": 0.02971052559902446,
+            "j_logsigma:occupancy_dice": -0.03858845764362185,
+            "j_logsigma:j_centroid": 0.6802099932190655,
+            "j_shape:density": -0.4546298239065778,
+            "j_shape:occupancy_bce": 0.011782418946306465,
+            "j_shape:occupancy_dice": -0.020047044504426226,
+            "j_shape:j_centroid": 0.7404417470279463,
+            "j_shape:j_logsigma": 0.9034140992828273
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02154462780075761,
+              -0.0018586156953928068,
+              0.00037918077189358357,
+              -0.0011577938887823436,
+              -0.0026930000337150872,
+              -0.0010219768174131172
+            ],
+            [
+              -0.0018586156953928068,
+              0.20890275388507185,
+              -0.04571129107298333,
+              -4.150779980283126e-06,
+              0.00043047391410278024,
+              8.233376586219698e-05
+            ],
+            [
+              0.00037918077189358357,
+              -0.04571129107298333,
+              0.010322117084159643,
+              -3.2893751986673436e-06,
+              -0.0001243701540457609,
+              -3.1240811554644754e-05
+            ],
+            [
+              -0.0011577938887823436,
+              -4.150779980283126e-06,
+              -3.2893751986673436e-06,
+              0.00023320383340508233,
+              0.000329148681836422,
+              0.00017308552714934144
+            ],
+            [
+              -0.0026930000337150872,
+              0.00043047391410278024,
+              -0.0001243701540457609,
+              0.000329148681836422,
+              0.001004319956534161,
+              0.00043823900474571076
+            ],
+            [
+              -0.0010219768174131172,
+              8.233376586219698e-05,
+              -3.1240811554644754e-05,
+              0.00017308552714934144,
+              0.00043823900474571076,
+              0.00023429006732833546
+            ]
+          ],
+          "norms": {
+            "density": 0.14678088363529362,
+            "occupancy_bce": 0.4570588079066761,
+            "occupancy_dice": 0.10159782027267929,
+            "j_centroid": 0.015271012848042605,
+            "j_logsigma": 0.031691007502668025,
+            "j_shape": 0.015306536751608297
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02770435348733346,
+            "occupancy_dice:density": 0.025426841624180508,
+            "occupancy_dice:occupancy_bce": -0.9843895951753461,
+            "j_centroid:density": -0.5165280519862815,
+            "j_centroid:occupancy_bce": -0.0005946888396430781,
+            "j_centroid:occupancy_dice": -0.002120123600893836,
+            "j_logsigma:density": -0.5789363446855642,
+            "j_logsigma:occupancy_bce": 0.029719309195640847,
+            "j_logsigma:occupancy_dice": -0.038627423002448154,
+            "j_logsigma:j_centroid": 0.6801242051925581,
+            "j_shape:density": -0.45487765963882243,
+            "j_shape:occupancy_bce": 0.011768712645367527,
+            "j_shape:occupancy_dice": -0.020089123012705788,
+            "j_shape:j_centroid": 0.7404845030241721,
+            "j_shape:j_logsigma": 0.9034373552581871
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.47048325705087646,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.47048325705087646,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 5,
+      "coarse_relative_eligible_parts": 5
+    },
+    {
+      "batch": 12,
+      "author": "Longmen",
+      "indices": [
+        220,
+        221
+      ],
+      "target_path": [
+        "font/train/new/LongmenBF/images_text_denoised/悼.png",
+        "font/train/new/LongmenJT/images_text_denoised/神.png"
+      ],
+      "reference_path": [
+        "font/train/new/LongmenBF/images_text_denoised/財.png",
+        "font/train/new/LongmenJT/images_text_denoised/容.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Longmen:da3d25e3bf8a612d7101fa4336576aa558fd74b0c72085dcb76222698d3c9377",
+        "Longmen:cfd49d4a2df8525b52a2b8167c02b0116f69461e686f5e77595356b48d36f3f2"
+      ],
+      "reference_original_identity": [
+        "Longmen:77ff2d107578a786fdc853ec81a8ff503215171fa85019825b87fa249874a532",
+        "Longmen:4a0a1d11e3250a18bacbafb1938565cf07cf4b2292fc72eb6e3a7e52b58590cf"
+      ],
+      "query_original_sha256": [
+        "da3d25e3bf8a612d7101fa4336576aa558fd74b0c72085dcb76222698d3c9377",
+        "cfd49d4a2df8525b52a2b8167c02b0116f69461e686f5e77595356b48d36f3f2"
+      ],
+      "reference_original_sha256": [
+        "77ff2d107578a786fdc853ec81a8ff503215171fa85019825b87fa249874a532",
+        "4a0a1d11e3250a18bacbafb1938565cf07cf4b2292fc72eb6e3a7e52b58590cf"
+      ],
+      "query_target_sha256": [
+        "efb288fba2764fec0c89b3c5305126bec3cda8f52c45eddd4ee3ec9ca6b2f27c",
+        "5393c9f1ee9d128049de4007882c1950854aef339c90a73c4f1696c2fb8410d8"
+      ],
+      "reference_target_sha256": [
+        "51c7623ea0554dabf88c68b5f8eb5af51e889b0acac87b07ec8c7b6ebed2be8c",
+        "96aff6197f493863a69f8ff5bb53a54f51def89597d5887c948e7f95aa867069"
+      ],
+      "losses": {
+        "raw_head": 0.39034363627433777,
+        "raw_head_logsigma_x": 0.09131990373134613,
+        "raw_head_logsigma_y": 0.1160307228565216,
+        "raw_head_centroid": 0.07942450791597366,
+        "raw_head_centroid_absolute": 0.044884633272886276,
+        "raw_head_shape": 0.30952131748199463,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 4.0,
+        "raw_head_logsigma": 0.20735062658786774,
+        "raw_head_geo": 0.5962964296340942,
+        "raw_density": 0.13152262568473816,
+        "raw_occupancy": 0.7090712189674377,
+        "raw_occupancy_bce": 0.7090712189674377,
+        "raw_occupancy_dice": 0.7056505680084229,
+        "raw_j_coarse": 1.9842946529388428,
+        "raw_j_centroid": 0.34075239300727844,
+        "raw_j_logsigma": 1.1326817274093628,
+        "raw_j_shape": 0.5108605623245239,
+        "count_j_coarse_parts": 4.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.8248884677886963
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02738636996353261,
+              -0.002314481183410766,
+              0.00034031786735422287,
+              -0.0018596351307653691,
+              -0.003107081105998777,
+              -0.0003253633218676111
+            ],
+            [
+              -0.002314481183410766,
+              0.2931971924542247,
+              -0.043029273280802194,
+              0.00026274860040120807,
+              0.00039540619787903353,
+              -6.574943351989049e-06
+            ],
+            [
+              0.00034031786735422287,
+              -0.043029273280802194,
+              0.006669034770997229,
+              -5.348773069124846e-05,
+              -8.811780202544472e-05,
+              -1.4459545075173885e-05
+            ],
+            [
+              -0.0018596351307653691,
+              0.00026274860040120807,
+              -5.348773069124846e-05,
+              0.0005200758901620084,
+              0.00038732220197457146,
+              8.84347541815142e-05
+            ],
+            [
+              -0.003107081105998777,
+              0.00039540619787903353,
+              -8.811780202544472e-05,
+              0.00038732220197457146,
+              0.0010082109845663823,
+              0.00027035255739010777
+            ],
+            [
+              -0.0003253633218676111,
+              -6.574943351989049e-06,
+              -1.4459545075173885e-05,
+              8.84347541815142e-05,
+              0.00027035255739010777,
+              0.0001938354893628036
+            ]
+          ],
+          "norms": {
+            "density": 0.1654882774202832,
+            "occupancy_bce": 0.5414768623442969,
+            "occupancy_dice": 0.08166415842336973,
+            "j_centroid": 0.02280517244315439,
+            "j_logsigma": 0.031752338253526816,
+            "j_shape": 0.013922481436971054
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.0258289359478509,
+            "occupancy_dice:density": 0.025181756768551382,
+            "occupancy_dice:occupancy_bce": -0.9730891200730709,
+            "j_centroid:density": -0.4927505821224385,
+            "j_centroid:occupancy_bce": 0.02127782080631529,
+            "j_centroid:occupancy_dice": -0.028720323088451388,
+            "j_logsigma:density": -0.5913024007239788,
+            "j_logsigma:occupancy_bce": 0.02299788279818649,
+            "j_logsigma:occupancy_dice": -0.03398258817717158,
+            "j_logsigma:j_centroid": 0.5348885720625035,
+            "j_shape:density": -0.14121626168524132,
+            "j_shape:occupancy_bce": -0.0008721585933203281,
+            "j_shape:occupancy_dice": -0.01271763894195617,
+            "j_shape:j_centroid": 0.2785306322016846,
+            "j_shape:j_logsigma": 0.6115586625497973
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02738613421906866,
+              -0.002314647615027865,
+              0.00034068659617148,
+              -0.0018595824911449288,
+              -0.0031064275317689294,
+              -0.00032462329499149956
+            ],
+            [
+              -0.002314647615027865,
+              0.29319392390403687,
+              -0.04302934231093758,
+              0.00026179585875008016,
+              0.00039556035449317406,
+              -8.364645679104221e-06
+            ],
+            [
+              0.00034068659617148,
+              -0.04302934231093758,
+              0.006669085436943334,
+              -5.345453145083612e-05,
+              -8.818689200174035e-05,
+              -1.4129448597979821e-05
+            ],
+            [
+              -0.0018595824911449288,
+              0.00026179585875008016,
+              -5.345453145083612e-05,
+              0.0005200647396418345,
+              0.00038726698884872235,
+              8.831471031363336e-05
+            ],
+            [
+              -0.0031064275317689294,
+              0.00039556035449317406,
+              -8.818689200174035e-05,
+              0.00038726698884872235,
+              0.001008059422949792,
+              0.00027030285089213457
+            ],
+            [
+              -0.00032462329499149956,
+              -8.364645679104221e-06,
+              -1.4129448597979821e-05,
+              8.831471031363336e-05,
+              0.00027030285089213457,
+              0.00019377457974484313
+            ]
+          ],
+          "norms": {
+            "density": 0.16548756514937507,
+            "occupancy_bce": 0.5414738441550403,
+            "occupancy_dice": 0.0816644686319781,
+            "j_centroid": 0.022804927968354437,
+            "j_logsigma": 0.03174995154247943,
+            "j_shape": 0.013920293809573242
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.025831048436032667,
+            "occupancy_dice:density": 0.02520905353099015,
+            "occupancy_dice:occupancy_bce": -0.973092408815048,
+            "j_centroid:density": -0.49274403717951654,
+            "j_centroid:occupancy_bce": 0.021201011646062664,
+            "j_centroid:occupancy_dice": -0.02870269537140073,
+            "j_logsigma:density": -0.591225005086145,
+            "j_logsigma:occupancy_bce": 0.023008706683411824,
+            "j_logsigma:occupancy_dice": -0.0340116600431235,
+            "j_logsigma:j_centroid": 0.5348582599520568,
+            "j_shape:density": -0.1409178192234499,
+            "j_shape:occupancy_bce": -0.001109741084139597,
+            "j_shape:occupancy_dice": -0.012429214167922786,
+            "j_shape:j_centroid": 0.27819924181811917,
+            "j_shape:j_logsigma": 0.6115882845993633
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.5567482345873638,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.5567482345873638,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 4,
+      "coarse_relative_eligible_parts": 4
+    },
+    {
+      "batch": 13,
+      "author": "Ouyx",
+      "indices": [
+        271,
+        272
+      ],
+      "target_path": [
+        "font/train/new/OuyxBF/images_text_denoised/致.png",
+        "font/train/new/OuyxBF/images_text_denoised/龍.png"
+      ],
+      "reference_path": [
+        "font/train/new/OuyxBF/images_text_denoised/官.png",
+        "font/train/new/OuyxBF/images_text_denoised/宿.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Ouyx:9f33c10beb4945ab9ddd61e1f12602e0af4221e030f9aa54d805001cc3a34b79",
+        "Ouyx:263c6c17d0e2f202b15e096a91e7e2ca8d3a375456b64ca0063dcb5372195cd2"
+      ],
+      "reference_original_identity": [
+        "Ouyx:4b5f019f595da42a12fcb7eee2b93aa2741fd8cfa78cfea8aae93371e6a39329",
+        "Ouyx:f3235aef926be04a18e2b807a6ab7384fa7ba55c46b57e708c97ee2bfc0be155"
+      ],
+      "query_original_sha256": [
+        "9f33c10beb4945ab9ddd61e1f12602e0af4221e030f9aa54d805001cc3a34b79",
+        "263c6c17d0e2f202b15e096a91e7e2ca8d3a375456b64ca0063dcb5372195cd2"
+      ],
+      "reference_original_sha256": [
+        "4b5f019f595da42a12fcb7eee2b93aa2741fd8cfa78cfea8aae93371e6a39329",
+        "f3235aef926be04a18e2b807a6ab7384fa7ba55c46b57e708c97ee2bfc0be155"
+      ],
+      "query_target_sha256": [
+        "834763bde09227b2a6ad45ba92b5b045cd47633d9fa209ff0031a4c680367779",
+        "04c400173294b37c8fe0dd5335142858fb7aefe67ba4bfe7d5690fbf44401998"
+      ],
+      "reference_target_sha256": [
+        "e38468c4563b3f0bb9542010e1c01d77559fde7a5ba31a262e7ece750d3a6d37",
+        "4a92297287bad96ab1cfc00de30d7b6138f6f11a7d676024c02160772c40533e"
+      ],
+      "losses": {
+        "raw_head": 0.830365002155304,
+        "raw_head_logsigma_x": 0.23812119662761688,
+        "raw_head_logsigma_y": 0.1772998571395874,
+        "raw_head_centroid": 0.2123195230960846,
+        "raw_head_centroid_absolute": 0.07679367065429688,
+        "raw_head_shape": 0.4207695722579956,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 5.0,
+        "raw_head_logsigma": 0.4154210686683655,
+        "raw_head_geo": 1.048510193824768,
+        "raw_density": 0.1303553730249405,
+        "raw_occupancy": 0.7074007391929626,
+        "raw_occupancy_bce": 0.7074007391929626,
+        "raw_occupancy_dice": 0.6872674226760864,
+        "raw_j_coarse": 1.8976948261260986,
+        "raw_j_centroid": 0.40305766463279724,
+        "raw_j_logsigma": 0.9517645835876465,
+        "raw_j_shape": 0.5428725481033325,
+        "count_j_coarse_parts": 5.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.7354509830474854
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.024078131641866563,
+              -0.0023077628934962124,
+              0.0004171683133384896,
+              -0.001651258328974281,
+              -0.0027426797297920302,
+              -0.0005343614034487021
+            ],
+            [
+              -0.0023077628934962124,
+              0.2488739256337471,
+              -0.044260901725806434,
+              0.00024103198226366196,
+              0.00042981645616202435,
+              7.147269183271909e-05
+            ],
+            [
+              0.0004171683133384896,
+              -0.044260901725806434,
+              0.008256306747719933,
+              -6.86390830665351e-05,
+              -0.00010529953485544086,
+              -2.4952364411405525e-05
+            ],
+            [
+              -0.001651258328974281,
+              0.00024103198226366196,
+              -6.86390830665351e-05,
+              0.0005100181164641171,
+              0.0004589914870289924,
+              0.00013304479589489743
+            ],
+            [
+              -0.0027426797297920302,
+              0.00042981645616202435,
+              -0.00010529953485544086,
+              0.0004589914870289924,
+              0.000857978384978697,
+              0.0002885759994258885
+            ],
+            [
+              -0.0005343614034487021,
+              7.147269183271909e-05,
+              -2.4952364411405525e-05,
+              0.00013304479589489743,
+              0.0002885759994258885,
+              0.00019715232827666185
+            ]
+          ],
+          "norms": {
+            "density": 0.15517129773855268,
+            "occupancy_bce": 0.49887265472638115,
+            "occupancy_dice": 0.09086422149405085,
+            "j_centroid": 0.022583580682967817,
+            "j_logsigma": 0.02929126806709974,
+            "j_shape": 0.014041094269203589
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.029811930127663033,
+            "occupancy_dice:density": 0.029587414179904546,
+            "occupancy_dice:occupancy_bce": -0.9764222077208632,
+            "j_centroid:density": -0.47120601694810027,
+            "j_centroid:occupancy_bce": 0.02139400888399317,
+            "j_centroid:occupancy_dice": -0.0334492020380859,
+            "j_logsigma:density": -0.6034281012732479,
+            "j_logsigma:occupancy_bce": 0.029414073043286235,
+            "j_logsigma:occupancy_dice": -0.039563560553724925,
+            "j_logsigma:j_centroid": 0.6938628821898625,
+            "j_shape:density": -0.24525774700780714,
+            "j_shape:occupancy_bce": 0.010203507422387981,
+            "j_shape:occupancy_dice": -0.019557702662954663,
+            "j_shape:j_centroid": 0.4195697170787279,
+            "j_shape:j_logsigma": 0.7016508891402703
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.024078148629417484,
+              -0.0023074177555841846,
+              0.00041726396847741043,
+              -0.0016512276127298442,
+              -0.0027432713732054026,
+              -0.0005348329432530163
+            ],
+            [
+              -0.0023074177555841846,
+              0.24887559741452137,
+              -0.04426129378401811,
+              0.0002398558835894904,
+              0.00043117270875070446,
+              6.915503194004913e-05
+            ],
+            [
+              0.00041726396847741043,
+              -0.04426129378401811,
+              0.008256431259335173,
+              -6.845313490269622e-05,
+              -0.00010557397746935315,
+              -2.4498212997700608e-05
+            ],
+            [
+              -0.0016512276127298442,
+              0.0002398558835894904,
+              -6.845313490269622e-05,
+              0.0005099614338603953,
+              0.0004589726571639918,
+              0.00013306445483036305
+            ],
+            [
+              -0.0027432713732054026,
+              0.00043117270875070446,
+              -0.00010557397746935315,
+              0.0004589726571639918,
+              0.0008582798558574023,
+              0.00028861586611317325
+            ],
+            [
+              -0.0005348329432530163,
+              6.915503194004913e-05,
+              -2.4498212997700608e-05,
+              0.00013306445483036305,
+              0.00028861586611317325,
+              0.0001970814560370293
+            ]
+          ],
+          "norms": {
+            "density": 0.1551713524766008,
+            "occupancy_bce": 0.4988743302822078,
+            "occupancy_dice": 0.09086490664351762,
+            "j_centroid": 0.022582325696446665,
+            "j_logsigma": 0.0292964137030013,
+            "j_shape": 0.014038570298895443
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.0298073609705005,
+            "occupancy_dice:density": 0.02959396487473349,
+            "occupancy_dice:occupancy_bce": -0.9764202146839615,
+            "j_centroid:density": -0.4712232717176838,
+            "j_centroid:occupancy_bce": 0.02129072995317113,
+            "j_centroid:occupancy_dice": -0.03336018808447324,
+            "j_logsigma:density": -0.6034520490103314,
+            "j_logsigma:occupancy_bce": 0.029501605186022063,
+            "j_logsigma:occupancy_dice": -0.039659409105522604,
+            "j_logsigma:j_centroid": 0.6937511037248283,
+            "j_shape:density": -0.24551821807141203,
+            "j_shape:occupancy_bce": 0.009874377977262828,
+            "j_shape:occupancy_dice": -0.019205045501360873,
+            "j_shape:j_centroid": 0.41973048304456034,
+            "j_shape:j_logsigma": 0.7017507105500748
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.5131211845827583,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.5131211845827583,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 5,
+      "coarse_relative_eligible_parts": 5
+    },
+    {
+      "batch": 14,
+      "author": "Sushi",
+      "indices": [
+        335,
+        336
+      ],
+      "target_path": [
+        "font/train/new/SushiBF/images_text_denoised/瑟.png",
+        "font/train/new/SushiBF/images_text_denoised/首.png"
+      ],
+      "reference_path": [
+        "font/train/new/SushiBF/images_text_denoised/菜.png",
+        "font/train/new/SushiBF/images_text_denoised/窮.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Sushi:5c68e21af2349a01e496e7a37d1d2c9a8ddc56ab0389db9e671e11b002baedcb",
+        "Sushi:231b28c5e1ae74e9d73c353504645b656ac3b942d5d5139e30f7e98b86542e3e"
+      ],
+      "reference_original_identity": [
+        "Sushi:69002cd21c844ff71d38089604b632d81648ae9dcbf39a7373b548611389d9e8",
+        "Sushi:c0dd3013f4f2e2fe07397ab98f5d2643d9ffae7688ca63655e2777acadb60663"
+      ],
+      "query_original_sha256": [
+        "5c68e21af2349a01e496e7a37d1d2c9a8ddc56ab0389db9e671e11b002baedcb",
+        "231b28c5e1ae74e9d73c353504645b656ac3b942d5d5139e30f7e98b86542e3e"
+      ],
+      "reference_original_sha256": [
+        "69002cd21c844ff71d38089604b632d81648ae9dcbf39a7373b548611389d9e8",
+        "c0dd3013f4f2e2fe07397ab98f5d2643d9ffae7688ca63655e2777acadb60663"
+      ],
+      "query_target_sha256": [
+        "5b8ebd9484f5fdface039f7442d3fd16ea648701e366467ac313a65fe5a59e2a",
+        "e50cb0e8a2c501115c6ddf37d7b57b38ecc5a09693cfc29186471c0f7aba8de2"
+      ],
+      "reference_target_sha256": [
+        "d794456f06a8da7bae72a471350b9ad3bb434cdaa4c99d8e1dc780a8b4ee7d5f",
+        "c32c7980b44b907014bb013b183dcd09df6cfb699d5fa425c484eee1269a1f5d"
+      ],
+      "losses": {
+        "raw_head": 0.7316970825195312,
+        "raw_head_logsigma_x": 0.2864551246166229,
+        "raw_head_logsigma_y": 0.14774778485298157,
+        "raw_head_centroid": 0.1378771960735321,
+        "raw_head_centroid_absolute": 0.07092326134443283,
+        "raw_head_shape": 0.516258955001831,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 5.0,
+        "raw_head_logsigma": 0.4342029094696045,
+        "raw_head_geo": 1.08833909034729,
+        "raw_density": 0.12964782118797302,
+        "raw_occupancy": 0.7052937746047974,
+        "raw_occupancy_bce": 0.7052937746047974,
+        "raw_occupancy_dice": 0.6584726572036743,
+        "raw_j_coarse": 1.7221860885620117,
+        "raw_j_centroid": 0.30020958185195923,
+        "raw_j_logsigma": 0.9522346258163452,
+        "raw_j_shape": 0.4697418212890625,
+        "count_j_coarse_parts": 5.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.5571277141571045
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.01891896116807934,
+              -0.0017498800840413248,
+              0.00039414871823895137,
+              -0.0012266448531685903,
+              -0.0025300177769418397,
+              -0.0007731437756560711
+            ],
+            [
+              -0.0017498800840413248,
+              0.19238655299638552,
+              -0.04549069744858514,
+              0.00012536678935604062,
+              0.00031558450772051216,
+              0.00011888860754460939
+            ],
+            [
+              0.00039414871823895137,
+              -0.04549069744858514,
+              0.011337900502553566,
+              -5.243103870022914e-05,
+              -9.877445063188883e-05,
+              -4.544074822579458e-05
+            ],
+            [
+              -0.0012266448531685903,
+              0.00012536678935604062,
+              -5.243103870022914e-05,
+              0.0003531369849183452,
+              0.0004365012488001252,
+              0.00020813531092100934
+            ],
+            [
+              -0.0025300177769418397,
+              0.00031558450772051216,
+              -9.877445063188883e-05,
+              0.0004365012488001252,
+              0.0008442913334145707,
+              0.0003315264724019773
+            ],
+            [
+              -0.0007731437756560711,
+              0.00011888860754460939,
+              -4.544074822579458e-05,
+              0.00020813531092100934,
+              0.0003315264724019773,
+              0.00017554958893800654
+            ]
+          ],
+          "norms": {
+            "density": 0.1375462146628519,
+            "occupancy_bce": 0.4386189154566701,
+            "occupancy_dice": 0.10647957786615031,
+            "j_centroid": 0.018791939360224247,
+            "j_logsigma": 0.029056691714897116,
+            "j_shape": 0.013249512781155635
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.029004961191465548,
+            "occupancy_dice:density": 0.02691194923914229,
+            "occupancy_dice:occupancy_bce": -0.9740223400270215,
+            "j_centroid:density": -0.47456815865519913,
+            "j_centroid:occupancy_bce": 0.015209801446223825,
+            "j_centroid:occupancy_dice": -0.026202971135526852,
+            "j_logsigma:density": -0.633036518391058,
+            "j_logsigma:occupancy_bce": 0.02476179665677088,
+            "j_logsigma:occupancy_dice": -0.03192509045939816,
+            "j_logsigma:j_centroid": 0.7994065871304281,
+            "j_shape:density": -0.42424009613965136,
+            "j_shape:occupancy_bce": 0.020457519572922984,
+            "j_shape:occupancy_dice": -0.03220914857192131,
+            "j_shape:j_centroid": 0.835938360971911,
+            "j_shape:j_logsigma": 0.8611367794071312
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.01891876584396357,
+              -0.0017499805809142177,
+              0.00039399424560809804,
+              -0.0012269453170716815,
+              -0.002531071472816837,
+              -0.0007732540347465955
+            ],
+            [
+              -0.0017499805809142177,
+              0.19238562254696223,
+              -0.045492776863454765,
+              0.0001291866228496641,
+              0.00031591598579161495,
+              0.00011826408116477616
+            ],
+            [
+              0.00039399424560809804,
+              -0.045492776863454765,
+              0.011338864324823561,
+              -5.335259904445944e-05,
+              -9.89164067420889e-05,
+              -4.518983674908772e-05
+            ],
+            [
+              -0.0012269453170716815,
+              0.0001291866228496641,
+              -5.335259904445944e-05,
+              0.000353202478822201,
+              0.000436705334308396,
+              0.00020816703978787654
+            ],
+            [
+              -0.002531071472816837,
+              0.00031591598579161495,
+              -9.89164067420889e-05,
+              0.000436705334308396,
+              0.0008448483401259921,
+              0.00033161044309815146
+            ],
+            [
+              -0.0007732540347465955,
+              0.00011826408116477616,
+              -4.518983674908772e-05,
+              0.00020816703978787654,
+              0.00033161044309815146,
+              0.00017551948251642857
+            ]
+          ],
+          "norms": {
+            "density": 0.13754550463015347,
+            "occupancy_bce": 0.43861785479727367,
+            "occupancy_dice": 0.10648410362501795,
+            "j_centroid": 0.018793681885734922,
+            "j_logsigma": 0.029066274961301663,
+            "j_shape": 0.01324837659928297
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.029006846848054425,
+            "occupancy_dice:density": 0.026900397561163993,
+            "occupancy_dice:occupancy_bce": -0.9740278191848041,
+            "j_centroid:density": -0.4746428411180428,
+            "j_centroid:occupancy_bce": 0.015671817560195485,
+            "j_centroid:occupancy_dice": -0.026659925403727393,
+            "j_logsigma:density": -0.6330946309334698,
+            "j_logsigma:occupancy_bce": 0.024779692815384113,
+            "j_logsigma:occupancy_dice": -0.031959073073205245,
+            "j_logsigma:j_centroid": 0.7994425281438136,
+            "j_shape:density": -0.4243391761517891,
+            "j_shape:occupancy_bce": 0.020351849880948774,
+            "j_shape:occupancy_dice": -0.03203268390113147,
+            "j_shape:j_centroid": 0.8360599698085193,
+            "j_shape:j_logsigma": 0.8611447464437391
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.45077909046223735,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.45077909046223735,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 5,
+      "coarse_relative_eligible_parts": 5
+    },
+    {
+      "batch": 15,
+      "author": "Yanzq",
+      "indices": [
+        365,
+        366
+      ],
+      "target_path": [
+        "font/train/new/YanzqJT/images_text_denoised/卿.png",
+        "font/train/new/YanzqJT/images_text_denoised/垤.png"
+      ],
+      "reference_path": [
+        "font/train/new/YanzqJT/images_text_denoised/相.png",
+        "font/train/new/YanzqJT/images_text_denoised/龍.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Yanzq:9d2b50169aa66422da481b447f49b9818d5c321fbd5b2affa2e9462b4e1ef723",
+        "Yanzq:c15b604a36a1895d5e11597175b4f4703bd5bd94da61a045af9fbc27f430ee0d"
+      ],
+      "reference_original_identity": [
+        "Yanzq:f974b9c2c01b07f63200ddc204a43ac19c096a01bbd0f8ec274d48abac6ba65e",
+        "Yanzq:b27db6f69040575e31c9d03a2a7204158bc53d64c316dded1ea0969200e8fe31"
+      ],
+      "query_original_sha256": [
+        "9d2b50169aa66422da481b447f49b9818d5c321fbd5b2affa2e9462b4e1ef723",
+        "c15b604a36a1895d5e11597175b4f4703bd5bd94da61a045af9fbc27f430ee0d"
+      ],
+      "reference_original_sha256": [
+        "f974b9c2c01b07f63200ddc204a43ac19c096a01bbd0f8ec274d48abac6ba65e",
+        "b27db6f69040575e31c9d03a2a7204158bc53d64c316dded1ea0969200e8fe31"
+      ],
+      "query_target_sha256": [
+        "9c40c7e75892962d5343a1086bc6753e6786f40a7202975bcc04c4159d635f79",
+        "3e84344d16726e9a3fd0b73f8dd8afbfabbe969245a14eeb4d72a300cab1acac"
+      ],
+      "reference_target_sha256": [
+        "b46a08075ac1e2895e954c4a5aa1f3c82943a94cd77fd0006947f2d1f5b39b1f",
+        "0d0b1534de69f9b23ddb7e18033e18837b8b39a9c969ee0bb48b62046889f40c"
+      ],
+      "losses": {
+        "raw_head": 0.6975767612457275,
+        "raw_head_logsigma_x": 0.11436355113983154,
+        "raw_head_logsigma_y": 0.08498569577932358,
+        "raw_head_centroid": 0.152345210313797,
+        "raw_head_centroid_absolute": 0.0797659307718277,
+        "raw_head_shape": 0.31539052724838257,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 5.0,
+        "raw_head_logsigma": 0.19934925436973572,
+        "raw_head_geo": 0.6670849919319153,
+        "raw_density": 0.12859922647476196,
+        "raw_occupancy": 0.7052301168441772,
+        "raw_occupancy_bce": 0.7052301168441772,
+        "raw_occupancy_dice": 0.6472700834274292,
+        "raw_j_coarse": 1.5277856588363647,
+        "raw_j_centroid": 0.1492500901222229,
+        "raw_j_logsigma": 0.8751745820045471,
+        "raw_j_shape": 0.5033609867095947,
+        "count_j_coarse_parts": 5.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.361614942550659
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.017673634547500372,
+              -0.001403167526657076,
+              0.00034060641853042584,
+              -0.0008430032629339612,
+              -0.0027412738828553884,
+              -0.0008379307573066486
+            ],
+            [
+              -0.001403167526657076,
+              0.17222671680295676,
+              -0.045808382085652966,
+              9.044556219378608e-05,
+              0.00029890655432129876,
+              9.95970037309668e-05
+            ],
+            [
+              0.00034060641853042584,
+              -0.045808382085652966,
+              0.012550273937552703,
+              -2.9732845133287333e-05,
+              -9.68143697955004e-05,
+              -4.0817969010981114e-05
+            ],
+            [
+              -0.0008430032629339612,
+              9.044556219378608e-05,
+              -2.9732845133287333e-05,
+              0.00018679752750494494,
+              0.000260357362896535,
+              0.00012053238676562605
+            ],
+            [
+              -0.0027412738828553884,
+              0.00029890655432129876,
+              -9.68143697955004e-05,
+              0.000260357362896535,
+              0.001119385702391451,
+              0.00038303769416903055
+            ],
+            [
+              -0.0008379307573066486,
+              9.95970037309668e-05,
+              -4.0817969010981114e-05,
+              0.00012053238676562605,
+              0.00038303769416903055,
+              0.00023083972075710335
+            ]
+          ],
+          "norms": {
+            "density": 0.1329422225912459,
+            "occupancy_bce": 0.4150020684321426,
+            "occupancy_dice": 0.11202800514850161,
+            "j_centroid": 0.01366738919856111,
+            "j_logsigma": 0.03345722197659948,
+            "j_shape": 0.015193410438644226
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.025432926066049213,
+            "occupancy_dice:density": 0.022869848613398882,
+            "occupancy_dice:occupancy_bce": -0.9852991069064396,
+            "j_centroid:density": -0.463960233803374,
+            "j_centroid:occupancy_bce": 0.015945988242723627,
+            "j_centroid:occupancy_dice": -0.01941888564992307,
+            "j_logsigma:density": -0.6163105690008462,
+            "j_logsigma:occupancy_bce": 0.021527584329550212,
+            "j_logsigma:occupancy_dice": -0.0258299367301885,
+            "j_logsigma:j_centroid": 0.5693697954851783,
+            "j_shape:density": -0.41484888451924784,
+            "j_shape:occupancy_bce": 0.015795767835273495,
+            "j_shape:occupancy_dice": -0.023981123122066354,
+            "j_shape:j_centroid": 0.5804474726969073,
+            "j_shape:j_logsigma": 0.7535227458435494
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.01767282793983982,
+              -0.0014034586489058698,
+              0.0003406774253780498,
+              -0.000843452518664467,
+              -0.002741516444588754,
+              -0.000837914436358389
+            ],
+            [
+              -0.0014034586489058698,
+              0.1722202659733565,
+              -0.045808949412858624,
+              9.019701409113123e-05,
+              0.00029926615133213375,
+              0.00010069491916309126
+            ],
+            [
+              0.0003406774253780498,
+              -0.045808949412858624,
+              0.012550983413394334,
+              -2.9624370857267435e-05,
+              -9.687008994629931e-05,
+              -4.109105497931975e-05
+            ],
+            [
+              -0.000843452518664467,
+              9.019701409113123e-05,
+              -2.9624370857267435e-05,
+              0.00018684916151323616,
+              0.00026048790821509016,
+              0.00012056401859045218
+            ],
+            [
+              -0.002741516444588754,
+              0.00029926615133213375,
+              -9.687008994629931e-05,
+              0.00026048790821509016,
+              0.0011195761339650723,
+              0.0003829895204747191
+            ],
+            [
+              -0.000837914436358389,
+              0.00010069491916309126,
+              -4.109105497931975e-05,
+              0.00012056401859045218,
+              0.0003829895204747191,
+              0.00023084274467599641
+            ]
+          ],
+          "norms": {
+            "density": 0.13293918887912556,
+            "occupancy_bce": 0.41499429631424634,
+            "occupancy_dice": 0.11203117161484269,
+            "j_centroid": 0.013669278017263245,
+            "j_logsigma": 0.03346006775194982,
+            "j_shape": 0.015193509952476302
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.025439259694945354,
+            "occupancy_dice:density": 0.022874491792030518,
+            "occupancy_dice:occupancy_bce": -0.9853019132754516,
+            "j_centroid:density": -0.46415393660131776,
+            "j_centroid:occupancy_bce": 0.0159002684346712,
+            "j_centroid:occupancy_dice": -0.019344819480939072,
+            "j_logsigma:density": -0.6163267459180032,
+            "j_logsigma:occupancy_bce": 0.02155205341164388,
+            "j_logsigma:occupancy_dice": -0.025841874270284927,
+            "j_logsigma:j_centroid": 0.569528124866639,
+            "j_shape:density": -0.41484755384693,
+            "j_shape:occupancy_bce": 0.015970088216095475,
+            "j_shape:occupancy_dice": -0.024140724459502515,
+            "j_shape:j_centroid": 0.5805157725324751,
+            "j_shape:j_logsigma": 0.7533589638446503
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.4270292888497914,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.4270292888497914,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 5,
+      "coarse_relative_eligible_parts": 5
+    },
+    {
+      "batch": 16,
+      "author": "Zhangqb",
+      "indices": [
+        596,
+        597
+      ],
+      "target_path": [
+        "font/train/new/ZhangqbBF/images_text_denoised/帝.png",
+        "font/train/new/ZhangqbBF/images_text_denoised/斯.png"
+      ],
+      "reference_path": [
+        "font/train/new/ZhangqbBF/images_text_denoised/亰.png",
+        "font/train/new/ZhangqbBF/images_text_denoised/提.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Zhangqb:f86841dce89e591935b4e06f296f5edbb863e7c369a1937539045103876b1ddb",
+        "Zhangqb:cf549f99a7cb45c25a6e3748795c86a0c7ce236fdc14e6ec5288ce320cfbc725"
+      ],
+      "reference_original_identity": [
+        "Zhangqb:da9dd4a2069fd46b2f05e9dcb122ed545a42fa7331623e763bee3b6f2a0b5016",
+        "Zhangqb:f86d7a5c7cdd4c5813e4c18805b3800eb7430f7e8157178526a27cde114372a7"
+      ],
+      "query_original_sha256": [
+        "f86841dce89e591935b4e06f296f5edbb863e7c369a1937539045103876b1ddb",
+        "cf549f99a7cb45c25a6e3748795c86a0c7ce236fdc14e6ec5288ce320cfbc725"
+      ],
+      "reference_original_sha256": [
+        "da9dd4a2069fd46b2f05e9dcb122ed545a42fa7331623e763bee3b6f2a0b5016",
+        "f86d7a5c7cdd4c5813e4c18805b3800eb7430f7e8157178526a27cde114372a7"
+      ],
+      "query_target_sha256": [
+        "8a80919bca4d8003689f0e742520419b023315120c9bf8cd564d7648f5fbff10",
+        "14c2e4ffabf69b24c0e2c3b7c679c45c6c7d3bfb4ed6531a2d1eb210ce563142"
+      ],
+      "reference_target_sha256": [
+        "986591ec80210b7b5480608918cb6fe1a30346c84ea3d31d6517e995a50f6cb9",
+        "41b04b2857bc210a3724a218baa99ce36bbb5209266cce6dd301f48e04b8f82d"
+      ],
+      "losses": {
+        "raw_head": 0.8256377577781677,
+        "raw_head_logsigma_x": 0.23791390657424927,
+        "raw_head_logsigma_y": 0.43803995847702026,
+        "raw_head_centroid": 0.17147159576416016,
+        "raw_head_centroid_absolute": 0.061864592134952545,
+        "raw_head_shape": 0.42865413427352905,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 5.0,
+        "raw_head_logsigma": 0.6759538650512695,
+        "raw_head_geo": 1.2760796546936035,
+        "raw_density": 0.13274380564689636,
+        "raw_occupancy": 0.7105556726455688,
+        "raw_occupancy_bce": 0.7105556726455688,
+        "raw_occupancy_dice": 0.7411244511604309,
+        "raw_j_coarse": 2.1968228816986084,
+        "raw_j_centroid": 0.37522900104522705,
+        "raw_j_logsigma": 1.4062442779541016,
+        "raw_j_shape": 0.41534966230392456,
+        "count_j_coarse_parts": 5.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 3.0401225090026855
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.03384065598071828,
+              -0.0030919647067401274,
+              0.0002951930311839712,
+              -0.001719508766408806,
+              -0.003384813344554871,
+              -0.000548156399017119
+            ],
+            [
+              -0.0030919647067401274,
+              0.37580097302754556,
+              -0.03865671404561155,
+              0.00018523778799267587,
+              0.00039616463022240644,
+              -9.245900926646566e-05
+            ],
+            [
+              0.0002951930311839712,
+              -0.03865671404561155,
+              0.004277611300173234,
+              -3.160395639364988e-05,
+              -5.16124364794146e-05,
+              4.521571557336568e-06
+            ],
+            [
+              -0.001719508766408806,
+              0.00018523778799267587,
+              -3.160395639364988e-05,
+              0.0003232911953212625,
+              0.00039596975199063245,
+              0.00013926209726386474
+            ],
+            [
+              -0.003384813344554871,
+              0.00039616463022240644,
+              -5.16124364794146e-05,
+              0.00039596975199063245,
+              0.0007687594745384718,
+              0.0001570612589895659
+            ],
+            [
+              -0.000548156399017119,
+              -9.245900926646566e-05,
+              4.521571557336568e-06,
+              0.00013926209726386474,
+              0.0001570612589895659,
+              0.00010992025406691974
+            ]
+          ],
+          "norms": {
+            "density": 0.1839582995700881,
+            "occupancy_bce": 0.6130260785868294,
+            "occupancy_dice": 0.0654034502161257,
+            "j_centroid": 0.01798030020108848,
+            "j_logsigma": 0.027726512123569958,
+            "j_shape": 0.010484286054229908
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.027418026471862898,
+            "occupancy_dice:density": 0.024534999582047544,
+            "occupancy_dice:occupancy_bce": -0.9641515980565621,
+            "j_centroid:density": -0.5198619952624611,
+            "j_centroid:occupancy_bce": 0.016805587431734124,
+            "j_centroid:occupancy_dice": -0.026874714311049007,
+            "j_logsigma:density": -0.6636209645048377,
+            "j_logsigma:occupancy_bce": 0.023307812092513175,
+            "j_logsigma:occupancy_dice": -0.02846154434744741,
+            "j_logsigma:j_centroid": 0.7942730599457788,
+            "j_shape:density": -0.2842145059769073,
+            "j_shape:occupancy_bce": -0.014385714056061405,
+            "j_shape:occupancy_dice": 0.0065940143408262965,
+            "j_shape:j_centroid": 0.738749382776458,
+            "j_shape:j_logsigma": 0.5403000055518263
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.033840222036246814,
+              -0.00309302099999903,
+              0.00029469038661955604,
+              -0.001718711286486263,
+              -0.0033847654739131983,
+              -0.0005484982568877972
+            ],
+            [
+              -0.00309302099999903,
+              0.3758061943254223,
+              -0.03865563778098391,
+              0.00018546110086314904,
+              0.000397474027783562,
+              -9.412098010271042e-05
+            ],
+            [
+              0.00029469038661955604,
+              -0.03865563778098391,
+              0.004277244842671557,
+              -3.1585829248143016e-05,
+              -5.164017551544109e-05,
+              4.678762361348676e-06
+            ],
+            [
+              -0.001718711286486263,
+              0.00018546110086314904,
+              -3.1585829248143016e-05,
+              0.0003232106449597705,
+              0.0003958469314956359,
+              0.0001392611259639076
+            ],
+            [
+              -0.0033847654739131983,
+              0.000397474027783562,
+              -5.164017551544109e-05,
+              0.0003958469314956359,
+              0.0007688156616676434,
+              0.0001571928007147172
+            ],
+            [
+              -0.0005484982568877972,
+              -9.412098010271042e-05,
+              4.678762361348676e-06,
+              0.0001392611259639076,
+              0.0001571928007147172,
+              0.00010993710618636965
+            ]
+          ],
+          "norms": {
+            "density": 0.18395712010206838,
+            "occupancy_bce": 0.613030337198268,
+            "occupancy_dice": 0.06540064864106133,
+            "j_centroid": 0.01797806010001553,
+            "j_logsigma": 0.027727525343377534,
+            "j_shape": 0.010485089708074493
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02742737848275404,
+            "occupancy_dice:density": 0.02449442849420954,
+            "occupancy_dice:occupancy_bce": -0.9641593569712489,
+            "j_centroid:density": -0.5196889696169893,
+            "j_centroid:occupancy_bce": 0.01682782699066998,
+            "j_centroid:occupancy_dice": -0.026863797165507804,
+            "j_logsigma:density": -0.6635915840444184,
+            "j_logsigma:occupancy_bce": 0.023383831759268853,
+            "j_logsigma:occupancy_dice": -0.028477020186782706,
+            "j_logsigma:j_centroid": 0.7940966134488143,
+            "j_shape:density": -0.28437178184082823,
+            "j_shape:occupancy_bce": -0.014643076230885826,
+            "j_shape:occupancy_dice": 0.0068230221526949485,
+            "j_shape:j_centroid": 0.7387796494340771,
+            "j_shape:j_logsigma": 0.540691310957032
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.6288956844704219,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.6288956844704219,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 5,
+      "coarse_relative_eligible_parts": 5
+    },
+    {
+      "batch": 17,
+      "author": "Zhaomf",
+      "indices": [
+        647,
+        648
+      ],
+      "target_path": [
+        "font/train/new/ZhaomfBF/images_text_denoised/情.png",
+        "font/train/new/ZhaomfBF/images_text_denoised/禽.png"
+      ],
+      "reference_path": [
+        "font/train/new/ZhaomfBF/images_text_denoised/作.png",
+        "font/train/new/ZhaomfBF/images_text_denoised/轅.png"
+      ],
+      "reference_policy": "distinct-original-reference-v1",
+      "query_original_identity": [
+        "Zhaomf:49838cd12638d98dac75f5d56f5a9e171a3d352b6f0706fff5e4554a704b85d7",
+        "Zhaomf:72b76394a6aa69a39e1b63c86f47b6bdb80fdf989383b6d84540c0b2f9509992"
+      ],
+      "reference_original_identity": [
+        "Zhaomf:3d78598e82d22e85c1d63d419f4d7c3fd47a1977550a143dd54fbd0c8447def7",
+        "Zhaomf:9cef9c4c03c5ed9ee16c9c290e97cf1e5d1a3d3c0b48c5e3b16cec2348ee48bd"
+      ],
+      "query_original_sha256": [
+        "49838cd12638d98dac75f5d56f5a9e171a3d352b6f0706fff5e4554a704b85d7",
+        "72b76394a6aa69a39e1b63c86f47b6bdb80fdf989383b6d84540c0b2f9509992"
+      ],
+      "reference_original_sha256": [
+        "3d78598e82d22e85c1d63d419f4d7c3fd47a1977550a143dd54fbd0c8447def7",
+        "9cef9c4c03c5ed9ee16c9c290e97cf1e5d1a3d3c0b48c5e3b16cec2348ee48bd"
+      ],
+      "query_target_sha256": [
+        "def4298730530aa6a24401be4656a3f1e9e33cc1a43c72e64232f1c624d448b3",
+        "34131b9184b14e4505058cf9defc4461bfe0f886f404c514ecfea5034fda2eef"
+      ],
+      "reference_target_sha256": [
+        "34fbe059faf942bfb5719d29bc185fd1a5e625121c1306fa56817774781773b0",
+        "cb3f0440b2fb220208e66a58b0ca9b8677b92d188970e35beda7872760316404"
+      ],
+      "losses": {
+        "raw_head": 0.8427848815917969,
+        "raw_head_logsigma_x": 0.12922734022140503,
+        "raw_head_logsigma_y": 0.33694690465927124,
+        "raw_head_centroid": 0.23449310660362244,
+        "raw_head_centroid_absolute": 0.09977254271507263,
+        "raw_head_shape": 0.4440233111381531,
+        "count_batch": 2.0,
+        "count_jt": 2.0,
+        "count_head_parts": 5.0,
+        "raw_head_logsigma": 0.46617424488067627,
+        "raw_head_geo": 1.144690752029419,
+        "raw_density": 0.1307041347026825,
+        "raw_occupancy": 0.7072949409484863,
+        "raw_occupancy_bce": 0.7072949409484863,
+        "raw_occupancy_dice": 0.6863679885864258,
+        "raw_j_coarse": 1.596923828125,
+        "raw_j_centroid": 0.18544432520866394,
+        "raw_j_logsigma": 0.9671554565429688,
+        "raw_j_shape": 0.4443240761756897,
+        "count_j_coarse_parts": 5.0,
+        "count_j_coarse_shield": 0.0,
+        "count_coarse_partition_lost": 0.0,
+        "total": 2.434922933578491
+      },
+      "gradients": {
+        "all_trainable": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.02380279201058144,
+              -0.0018411911911653256,
+              0.00036218993680181555,
+              -0.00022073085870022435,
+              -0.002772236030115671,
+              -0.0009795877979814627
+            ],
+            [
+              -0.0018411911911653256,
+              0.24288402610515902,
+              -0.043440078412707805,
+              -0.0001530771778621154,
+              0.0004317443822037248,
+              0.00021126627510992257
+            ],
+            [
+              0.00036218993680181555,
+              -0.043440078412707805,
+              0.00800261863963847,
+              3.180726235540998e-05,
+              -0.00010439955821883729,
+              -4.921276676955744e-05
+            ],
+            [
+              -0.00022073085870022435,
+              -0.0001530771778621154,
+              3.180726235540998e-05,
+              0.0001699670887662652,
+              6.339758803497464e-05,
+              2.881951771309399e-05
+            ],
+            [
+              -0.002772236030115671,
+              0.0004317443822037248,
+              -0.00010439955821883729,
+              6.339758803497464e-05,
+              0.0008845537836399409,
+              0.00029637635437657073
+            ],
+            [
+              -0.0009795877979814627,
+              0.00021126627510992257,
+              -4.921276676955744e-05,
+              2.881951771309399e-05,
+              0.00029637635437657073,
+              0.0001448577901606296
+            ]
+          ],
+          "norms": {
+            "density": 0.1542815348983197,
+            "occupancy_bce": 0.49283265527474845,
+            "occupancy_dice": 0.0894573565428717,
+            "j_centroid": 0.013037142661115018,
+            "j_logsigma": 0.02974144891628417,
+            "j_shape": 0.012035688188077556
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.02421505506275962,
+            "occupancy_dice:density": 0.02624257022438411,
+            "occupancy_dice:occupancy_bce": -0.9853149294049816,
+            "j_centroid:density": -0.10974043668806305,
+            "j_centroid:occupancy_bce": -0.023824760987120656,
+            "j_centroid:occupancy_dice": 0.02727267973250667,
+            "j_logsigma:density": -0.6041630079602572,
+            "j_logsigma:occupancy_bce": 0.029455411642003045,
+            "j_logsigma:occupancy_dice": -0.03923923012998685,
+            "j_logsigma:j_centroid": 0.16350392977858635,
+            "j_shape:density": -0.5275437572063807,
+            "j_shape:occupancy_bce": 0.035617199655697394,
+            "j_shape:occupancy_dice": -0.04570785000340629,
+            "j_shape:j_centroid": 0.1836679433828638,
+            "j_shape:j_logsigma": 0.8279621841693623
+          },
+          "parameter_tensors": 41
+        },
+        "coarse": {
+          "terms": [
+            "density",
+            "occupancy_bce",
+            "occupancy_dice",
+            "j_centroid",
+            "j_logsigma",
+            "j_shape"
+          ],
+          "gram": [
+            [
+              0.023803253475659147,
+              -0.0018415037254941868,
+              0.0003622569826158273,
+              -0.0002193572976636471,
+              -0.0027722629955411193,
+              -0.0009789988389925508
+            ],
+            [
+              -0.0018415037254941868,
+              0.24287895680201643,
+              -0.04343855108758987,
+              -0.0001543286230960006,
+              0.00043361354047055656,
+              0.00020917167358436295
+            ],
+            [
+              0.0003622569826158273,
+              -0.04343855108758987,
+              0.008002166543082723,
+              3.205052715274381e-05,
+              -0.00010477512426876334,
+              -4.886192813724488e-05
+            ],
+            [
+              -0.0002193572976636471,
+              -0.0001543286230960006,
+              3.205052715274381e-05,
+              0.0001700465992766631,
+              6.318673417418652e-05,
+              2.876237268861076e-05
+            ],
+            [
+              -0.0027722629955411193,
+              0.00043361354047055656,
+              -0.00010477512426876334,
+              6.318673417418652e-05,
+              0.0008845371133112678,
+              0.0002963290694340537
+            ],
+            [
+              -0.0009789988389925508,
+              0.00020917167358436295,
+              -4.886192813724488e-05,
+              2.876237268861076e-05,
+              0.0002963290694340537,
+              0.00014477750591423977
+            ]
+          ],
+          "norms": {
+            "density": 0.1542830304202609,
+            "occupancy_bce": 0.4928275122210776,
+            "occupancy_dice": 0.08945482962413333,
+            "j_centroid": 0.013040191688647184,
+            "j_logsigma": 0.02974116866081876,
+            "j_shape": 0.012032352468002248
+          },
+          "cosine": {
+            "occupancy_bce:density": -0.024219183443659524,
+            "occupancy_dice:density": 0.026247915050890254,
+            "occupancy_dice:occupancy_bce": -0.9853184010384818,
+            "j_centroid:density": -0.10903098889456667,
+            "j_centroid:occupancy_bce": -0.024014168938073694,
+            "j_centroid:occupancy_dice": 0.027475614138117055,
+            "j_logsigma:density": -0.6041687213168112,
+            "j_logsigma:occupancy_bce": 0.02958352094368216,
+            "j_logsigma:occupancy_dice": -0.03938187250478274,
+            "j_logsigma:j_centroid": 0.16292356479207964,
+            "j_shape:density": -0.5273676319236352,
+            "j_shape:occupancy_bce": 0.03527421692923189,
+            "j_shape:occupancy_dice": -0.04539586150375492,
+            "j_shape:j_centroid": 0.1833117014676094,
+            "j_shape:j_logsigma": 0.8280673897693108
+          },
+          "parameter_tensors": 41
+        }
+      },
+      "weighted_preclip": {
+        "coarse": {
+          "norm": 0.5078801457292267,
+          "used_tensors": 41
+        }
+      },
+      "weighted_postclip": {
+        "coarse": {
+          "norm": 0.5078801457292267,
+          "used_tensors": 41
+        }
+      },
+      "head_relative_eligible_parts": 5,
+      "coarse_relative_eligible_parts": 5
+    }
+  ],
+  "configured_weights": {},
+  "model_config": {
+    "schema": "runc-v2-jt-structure-v1",
+    "experiment": "runc_v2",
+    "stage": "ib",
+    "head_width": 256,
+    "head_heads": 4,
+    "slots": 4,
+    "classes": 20,
+    "hidden_dim": 256,
+    "num_heads": 4,
+    "num_layers": 1,
+    "unfreeze_blocks": [
+      2,
+      5,
+      8,
+      11
+    ],
+    "encoder_width": 768,
+    "feature_width": 3072,
+    "grid_size": 28,
+    "patch_size": 16,
+    "output_size": 448,
+    "density_size": 112,
+    "tap_indices": [
+      2,
+      5,
+      8,
+      11
+    ]
+  },
+  "median_raw_norm": {
+    "density": 0.16032978757941793,
+    "occupancy_bce": 0.520174758535339,
+    "occupancy_dice": 0.08556075748312071,
+    "j_centroid": 0.017626994624308195,
+    "j_logsigma": 0.030151337420211914,
+    "j_shape": 0.0134955291920088
+  },
+  "authors": [
+    "Caoqb",
+    "Dongqc",
+    "Liugq",
+    "Longmen",
+    "Ouyx",
+    "Sushi",
+    "Yanzq",
+    "Zhangqb",
+    "Zhaomf"
+  ],
+  "interpretation": "measured gradients; no final budget or quality claim"
+}

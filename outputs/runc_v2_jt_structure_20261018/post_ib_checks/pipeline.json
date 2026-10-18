@@ -1,0 +1,45 @@
+{
+  "status": "post_checks_complete_pending_structure_review",
+  "time_utc": "2026-10-18T16:27:35.503272+00:00",
+  "controller_pid": 503241,
+  "records": [
+    {
+      "name": "condition",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "tools/runc_v2_condition_audit.py",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/clean_run2_ib/train_ib_config.json",
+        "--checkpoint",
+        "models/runc_v2_jt_structure_20261018/clean_run2/ib/checkpoint-step-000320.pth",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/post_ib_checks/condition",
+        "--device",
+        "cuda:0"
+      ],
+      "started_utc": "2026-10-18T16:26:56.434649+00:00",
+      "world_size": 1,
+      "pid": 503242,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T16:27:15.127490+00:00"
+    },
+    {
+      "name": "stage2",
+      "command": [
+        "/root/miniconda3/envs/fontify/bin/python",
+        "-m",
+        "tools.runc_v2",
+        "stage2-smoke",
+        "--config",
+        "outputs/runc_v2_jt_structure_20261018/post_ib_checks/stage2_interface_config.json",
+        "--output",
+        "outputs/runc_v2_jt_structure_20261018/post_ib_checks/stage2"
+      ],
+      "started_utc": "2026-10-18T16:27:15.128672+00:00",
+      "world_size": 1,
+      "pid": 503258,
+      "exit_code": 0,
+      "ended_utc": "2026-10-18T16:27:35.502316+00:00"
+    }
+  ]
+}

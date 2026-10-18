@@ -1,0 +1,19 @@
+{
+  "before": {
+    "sha256": "b3fad36b3c4e4e8074a0707e4235d45a89b9019b4f28dfafae267c610f51d2dc",
+    "parameter_count": 128884934
+  },
+  "after": {
+    "sha256": "b3fad36b3c4e4e8074a0707e4235d45a89b9019b4f28dfafae267c610f51d2dc",
+    "parameter_count": 128884934
+  },
+  "exact_unchanged": true,
+  "optimizer_steps": 2,
+  "world_size": 2,
+  "sample_counts_rank0": {
+    "Zhaomf:25cbc51d170ef460249f843d627fb83b23b7f02e316140a55ebbfc6e2ea72387": 1,
+    "Ouyx:4b5f019f595da42a12fcb7eee2b93aa2741fd8cfa78cfea8aae93371e6a39329": 1,
+    "Yanzq:45f36d2915f9faabedf49786b74993dea353e71600fda0e8e20e49add6726a1b": 1,
+    "Dongqc:83629e858bfc7706c0676670256f7751c72afe957fb04648d2bdeb0ef238f528": 1
+  }
+}
