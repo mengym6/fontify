@@ -1882,12 +1882,109 @@ def stage2_interface_smoke(config, model, output, device):
     frozen_before = state_sha256(model, frozen_only=True)
     indices = [pools["dual"][0], pools["bf_only"][0]]
     batch = collate_indices(dataset, indices, device, seed=811)
+    identity_record = assert_distinct_references(batch)
+    stats = batch.get("bf_mask_stats")
+    if not isinstance(stats, dict):
+        raise RuntimeError("stage-II smoke requires actual BF sampling statistics")
+    stats = {
+        name: value.detach().cpu().tolist() if torch.is_tensor(value) else value
+        for name, value in stats.items()
+    }
+    batch_size = batch["image"].shape[0]
+    for name in (
+        "requested",
+        "selected",
+        "source_layers",
+        "nonempty_source",
+        "nonempty_after_crop",
+    ):
+        if not isinstance(stats.get(name), list) or len(stats[name]) != batch_size:
+            raise RuntimeError(f"missing per-sample BF sampling statistic: {name}")
+    expected_selected = [min(11, count) for count in stats["source_layers"]]
+    if (
+        any(count < 1 for count in stats["source_layers"])
+        or any(count != 11 for count in stats["requested"])
+        or stats["selected"] != expected_selected
+    ):
+        raise RuntimeError("BF sampler must request 11 and select min(11, layers)")
+    if any(
+        count < 1
+        for name in ("nonempty_source", "nonempty_after_crop")
+        for count in stats[name]
+    ):
+        raise RuntimeError("BF semantic selection is empty before/after crop")
+    patch_count = batch["bf_patch_mask"].bool().sum((-2, -1))
+    area_count = batch["bf_loss_mask"].float().sum((1, 2, 3))
+    if bool((patch_count <= 0).any() | (area_count <= 0).any()):
+        raise RuntimeError("BF patch/local-loss support must be nonempty per sample")
+    encoder_checks = []
+
+    def checked_forward(label, image, target_canvas, bf_mask=None, inference=False):
+        captures = []
+        original_encoder = model.forward_encoder
+
+        def capture(images, target, mask, **kwargs):
+            captures.append((target.detach().clone(), mask.detach().clone()))
+            return original_encoder(images, target, mask, **kwargs)
+
+        model.forward_encoder = capture
+        try:
+            result = runc_v2_refine_forward(
+                model,
+                image,
+                target_canvas,
+                bf_mask=bf_mask,
+                inference=inference,
+            )
+        finally:
+            model.forward_encoder = original_encoder
+        masks = result["masks"]
+        if len(captures) != len(masks) + 1:
+            raise RuntimeError("stage-II did not perform one frozen encoding per round")
+        half = target_canvas.shape[-2] // 2
+        if bool(torch.count_nonzero(captures[0][0][:, :, half:])):
+            raise RuntimeError("initial stage-I encoding exposed lower GT pixels")
+        for number, mask in enumerate(masks):
+            current = result["intermediates"][number]
+            pixels = mask[:, None].bool().repeat_interleave(model.patch_size, 2)
+            pixels = pixels.repeat_interleave(model.patch_size, 3)
+            lower = torch.where(
+                pixels, torch.zeros_like(current[:, :, half:]), current[:, :, half:]
+            )
+            expected_target = torch.cat((target_canvas[:, :, :half], lower), 2)
+            expected_mask = torch.cat((torch.zeros_like(mask), mask), 1).flatten(1)
+            actual_target, actual_mask = captures[number + 1]
+            if not torch.equal(actual_target, expected_target) or not torch.equal(
+                actual_mask, expected_mask
+            ):
+                raise RuntimeError(
+                    "second encoder input differs from masked generated P0/P1"
+                )
+        if not torch.equal(captures[-1][0], result["masked_p0"]):
+            raise RuntimeError("reported masked P0 differs from actual encoder input")
+        if not inference and not torch.equal(result["mask"].bool(), bf_mask.bool()):
+            raise RuntimeError(
+                "actual BF reconstruction mask differs from supplied mask"
+            )
+        encoder_checks.append(
+            {
+                "pass": label,
+                "encoder_calls": len(captures),
+                "rounds": len(masks),
+                "first_lower_gt_hidden": True,
+                "second_input_matches_generated": True,
+                "first_refinement_source": "model-generated P0",
+                "last_encoder_target_sha256": tensor_sha256(captures[-1][0]),
+            }
+        )
+        return result
+
     optimizer = torch.optim.AdamW(model.bf_refiner.parameters(), lr=1e-4)
     optimizer.zero_grad(set_to_none=True)
     amp = config["training"].get("amp", False)
     with torch.autocast(device.type, dtype=torch.bfloat16, enabled=amp):
-        outputs = runc_v2_refine_forward(
-            model,
+        outputs = checked_forward(
+            "semantic_training",
             batch["image"],
             safe_target(batch),
             bf_mask=batch["bf_patch_mask"],
@@ -1902,9 +1999,10 @@ def stage2_interface_smoke(config, model, output, device):
         )
         image_loss = per_pixel.mean()
         area = batch["bf_loss_mask"]
-        local_loss = (
-            (per_pixel * area).sum((1, 2, 3)) / area.sum((1, 2, 3)).clamp_min(1e-6)
-        ).mean()
+        local_per_sample = (per_pixel * area).sum((1, 2, 3)) / area.sum(
+            (1, 2, 3)
+        ).clamp_min(1e-6)
+        local_loss = local_per_sample.mean()
         j_value, j_parts, _ = DualJietiLoss().to(device)(
             outputs["p1"],
             batch["target"],
@@ -1915,10 +2013,39 @@ def stage2_interface_smoke(config, model, output, device):
         total = image_loss + local_loss + j_value
     if outputs["p0"].requires_grad or outputs["head"]["occupancy_logits"].requires_grad:
         raise RuntimeError("stage-II must stop stage-I P0/Head gradients")
-    if float(j_parts["per_sample"][1]) != 0:
+    if float(j_parts["per_sample"][1].detach()) != 0:
         raise RuntimeError("BF-only sample received J(P1) supervision")
     if not bool(torch.isfinite(total)):
         raise FloatingPointError("nonfinite stage-II interface loss")
+    parameters = list(model.bf_refiner.parameters())
+
+    def refiner_gradient(value):
+        values = (
+            torch.autograd.grad(value, parameters, retain_graph=True, allow_unused=True)
+            if value.requires_grad
+            else []
+        )
+        square = 0.0
+        used = 0
+        for value in values:
+            if value is not None:
+                if not bool(torch.isfinite(value).all()):
+                    raise FloatingPointError("nonfinite isolated Refiner gradient")
+                square += float(value.float().square().sum())
+                used += 1
+        return {"norm": math.sqrt(square), "used_parameter_tensors": used}
+
+    isolated_gradients = {
+        "bf_local_dual": refiner_gradient(local_per_sample[0]),
+        "bf_local_bf_only": refiner_gradient(local_per_sample[1]),
+        "dual_j_per_sample": refiner_gradient(j_parts["per_sample"][0]),
+        "bf_only_j_per_sample": refiner_gradient(j_parts["per_sample"][1]),
+    }
+    for name in ("bf_local_dual", "bf_local_bf_only", "dual_j_per_sample"):
+        if isolated_gradients[name]["norm"] <= 0:
+            raise RuntimeError(f"stage-II isolated Refiner gradient is zero: {name}")
+    if isolated_gradients["bf_only_j_per_sample"]["norm"] != 0:
+        raise RuntimeError("BF-only J(P1) produced a Refiner gradient")
     total.backward()
     gradient = grouped_gradient_norms(model)
     if not any(value["norm"] > 0 for value in gradient.values()):
@@ -1939,26 +2066,40 @@ def stage2_interface_smoke(config, model, output, device):
     altered["target"][:, :, half:] = torch.randn_like(target)
     altered.pop("input_target", None)
     with torch.no_grad():
-        normal = runc_v2_refine_forward(
-            model,
+        normal = checked_forward(
+            "semantic_eval",
             batch["image"],
             safe_target(batch),
             bf_mask=batch["bf_patch_mask"],
         )
-        changed = runc_v2_refine_forward(
-            model,
+        changed = checked_forward(
+            "semantic_hidden_gt_replaced",
             altered["image"],
             safe_target(altered),
             bf_mask=batch["bf_patch_mask"],
         )
-        automatic = runc_v2_refine_forward(
-            model,
+        automatic = checked_forward(
+            "automatic_eval",
             batch["image"],
             safe_target(batch),
             inference=True,
         )
-    if not torch.equal(normal["p1"], changed["p1"]):
-        raise RuntimeError("BF prediction changed when hidden GT was replaced")
+        automatic_changed = checked_forward(
+            "automatic_hidden_gt_replaced",
+            altered["image"],
+            safe_target(altered),
+            inference=True,
+        )
+    invariance = {}
+    for mode, left, right in (
+        ("semantic", normal, changed),
+        ("automatic", automatic, automatic_changed),
+    ):
+        invariance[mode] = {}
+        for name in ("p0", "p1", "mask", "masked_p0"):
+            if not torch.equal(left[name], right[name]):
+                raise RuntimeError(f"{mode} {name} changed when hidden GT was replaced")
+            invariance[mode][name] = True
     path = Path(output) / "refiner-interface-only.pth"
     state = {
         "schema": "runc-v2-refiner-interface-only-v1",
@@ -1985,18 +2126,40 @@ def stage2_interface_smoke(config, model, output, device):
         "bf_pool_counts": {name: len(values) for name, values in pools.items()},
         "bf_annotation_layers": 11,
         "aggregate_bf_types": False,
+        "bf_mask_stats": stats,
+        "expected_selected_layers": expected_selected,
+        "bf_patch_mask_count": patch_count.cpu().tolist(),
+        "bf_local_support_count": area_count.cpu().tolist(),
+        "semantic_mask_exactly_preserved": True,
+        "sampled_pools": ["dual", "bf_only"],
+        "sampled_indices": indices,
+        "sampled_authors": batch.get("author", batch.get("calligrapher")),
+        "target_path": batch["target_path"],
+        "reference_path": batch["reference_path"],
+        **identity_record,
         "source_stage_one_checkpoint_sha256": sha256_file(config["checkpoint"]),
         "metadata": source_record(config),
         "backend": backend_record(device),
         "amp": amp,
         "loss": float(total.detach()),
         "gradient": gradient,
+        "isolated_refiner_gradients": isolated_gradients,
+        "encoder_input_checks": encoder_checks,
+        "hidden_gt_invariance": invariance,
         "frozen_before": frozen_before,
         "frozen_after": frozen_after,
         "stage_one_exact_unchanged": True,
         "hidden_gt_replacement_equal": True,
         "bf_only_j_zero": True,
         "strict_refiner_restore": True,
+        "strict_refiner_restore_scope": (
+            "same Refiner instance strict tensor/dtype/byte reload; "
+            "full-model reconstruction is not exercised here"
+        ),
+        "sample_scope": "two fixed samples; no nine-source or full-pool quality claim",
+        "precision_scope": (
+            "training uses configured autocast; invariance/automatic forwards use FP32"
+        ),
         "shape": {key: list(normal[key].shape) for key in ("p0", "p1", "masked_p0")},
         "dtype": {key: str(normal[key].dtype) for key in ("p0", "p1", "masked_p0")},
         "automatic_mask_shape": list(automatic["mask"].shape),

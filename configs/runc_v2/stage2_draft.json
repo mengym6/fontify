@@ -1,0 +1,40 @@
+{
+  "schema": "runc-v2-stage2-protocol-draft-v1",
+  "status": "draft_not_executable",
+  "execution_authorized": false,
+  "prerequisites": [
+    "Stage-I Head and P0 technical review",
+    "User final structure acceptance",
+    "Explicit subsequent BF training authorization",
+    "Actual stage-II gradient calibration and budget decision"
+  ],
+  "initialization": "Accepted clean stage-I snapshot; exact SHA pending acceptance",
+  "data": {
+    "reference_policy": "distinct-original-reference-v1",
+    "unique_bf_bearing_targets": 818,
+    "dual_targets": 466,
+    "bf_only_targets": 352,
+    "jt_only_targets": 0,
+    "bf_annotation_sampling": "Uniform random min(11, available original annotation layers), then union; no category aggregation"
+  },
+  "model": {
+    "frozen": ["ViT", "JT Head", "Coarse Head"],
+    "trainable": ["BF Refiner"],
+    "second_encoder_input": "Predicted P0 with sampled BF semantic patch masking",
+    "inference_mask": "Automatic predicted-image mask; no GT"
+  },
+  "losses": {
+    "bf_local": "Predicted P1 versus GT inside real BF region",
+    "full_image": "Predicted P1 versus GT full query",
+    "jieti": "J(P1) only on JT-labeled dual targets; BF-only zero",
+    "weights": null
+  },
+  "training": {
+    "seed_proposal": 0,
+    "optimizer": "AdamW, BF Refiner only",
+    "learning_rate": null,
+    "effective_batch": null,
+    "updates": null
+  },
+  "current_scope": "One-update interface smoke only; no formal BF training"
+}
