@@ -17,6 +17,24 @@ def complete_accumulation_steps(micro_batches, accumulation):
     return micro_batches - micro_batches % accumulation
 
 
+def training_preview(model, patch_prediction, mask, extra=None):
+    """Display the original-mask pen forward without another model call."""
+    if getattr(model, "dual_view", False):
+        return extra["pen_prediction"], extra["pen_mask"]
+    return model.unpatchify(patch_prediction), mask
+
+
+def validation_frame(image, target, prediction, pixel_mask):
+    """Use the legacy x/masked-target/prediction/GT panel order."""
+    frame = torch.cat(
+        (image, target * (1 - pixel_mask), prediction, target), dim=2,
+    ).permute(1, 2, 0).float().cpu().numpy()
+    return np.clip(
+        (frame * np.array([0.229, 0.224, 0.225])
+         + np.array([0.485, 0.456, 0.406])) * 255, 0, 255,
+    ).astype(np.uint8)
+
+
 def unpack_batch(batch, device):
     """Move supervision separately from the four image/mask inputs."""
     if isinstance(batch, dict):
@@ -75,6 +93,12 @@ def evaluate_dual(data_loader, model, device, epoch, args, log_writer=None):
     ).to(device)
     sums = torch.zeros(8, dtype=torch.float64, device=device)
     frames = []
+    image_count = 0
+    image_limit = getattr(args, "val_tb_image_limit", 0)
+    images_per_batch = max(1, getattr(args, "val_tb_images_per_batch", 1))
+    image_frequency = max(1, getattr(args, "val_tb_image_freq", 1))
+    write_tb = (log_writer is not None and misc.is_main_process()
+                and (epoch + 1) % image_frequency == 0)
     for batch in data_loader:
         image = batch["image"].to(device)
         target = batch["target"].to(device)
@@ -105,16 +129,23 @@ def evaluate_dual(data_loader, model, device, epoch, args, log_writer=None):
                 )
                 sums[6] += value.double()
                 sums[7] += 1
-        if misc.is_main_process() and getattr(args, "vis_every_epoch", False):
-            for index in range(min(4 - len(frames), len(l1))):
-                frame = torch.cat(
-                    (image[index], target[index] * (1 - pixel_mask[index]),
-                     pred[index], target[index]), dim=2,
-                ).permute(1, 2, 0).float().cpu().numpy()
-                frame = np.clip(
-                    (frame * np.array([0.229, 0.224, 0.225])
-                     + np.array([0.485, 0.456, 0.406])) * 255, 0, 255,
-                ).astype(np.uint8)
+        save_grid = (misc.is_main_process()
+                     and getattr(args, "vis_every_epoch", False))
+        show_count = min(images_per_batch, len(l1))
+        if image_limit > 0:
+            show_count = min(show_count, max(0, image_limit - image_count))
+        grid_count = min(max(0, 4 - len(frames)), len(l1)) if save_grid else 0
+        for index in range(max(show_count if write_tb else 0, grid_count)):
+            frame = validation_frame(
+                image[index], target[index], pred[index], pixel_mask[index],
+            )
+            if write_tb and index < show_count:
+                log_writer.add_image(
+                    f"epoch:{epoch} val x; im_masked; y; tgt",
+                    frame, image_count, dataformats="HWC",
+                )
+                image_count += 1
+            if index < grid_count:
                 frames.append(frame)
     if misc.is_dist_avail_and_initialized():
         torch.distributed.all_reduce(sums)
@@ -136,6 +167,4 @@ def evaluate_dual(data_loader, model, device, epoch, args, log_writer=None):
         vis_dir.mkdir(parents=True, exist_ok=True)
         grid = np.concatenate(frames, axis=0)
         Image.fromarray(grid).save(vis_dir / f"epoch_{epoch:03d}.png")
-        if log_writer is not None:
-            log_writer.add_image("dual/val_full", grid, epoch, dataformats="HWC")
     return result

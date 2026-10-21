@@ -516,9 +516,11 @@ def train_one_epoch(model: torch.nn.Module,
             with torch.no_grad():
                 imagenet_mean = np.array([0.485, 0.456, 0.406])
                 imagenet_std = np.array([0.229, 0.224, 0.225])
-                y = y[[0]]
                 raw = model.module if hasattr(model, "module") else model
-                y = raw.unpatchify(y)
+                from util.dual_training import training_preview
+
+                y, mask = training_preview(raw, y, mask, jieti_extra)
+                y = y[[0]].float()
                 y = torch.einsum('nchw->nhwc', y).detach().cpu()
                 mask = mask[[0]]
                 mask = mask.detach().float().cpu()

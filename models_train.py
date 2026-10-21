@@ -920,6 +920,8 @@ class Fontify(nn.Module):
         extra = {
             "L_pen": pen[0], "L_full": full[0], "J": jieti,
             "L_H": head_loss, "H": head_loss,
+            "pen_prediction": pen_prediction.detach(),
+            "pen_mask": mask.detach().flatten(1),
             "centroid": jparts["centroid"],
             "logsigma": jparts["logsigma"], "shape": jparts["shape"],
             "j_centroid": jparts["centroid"],
