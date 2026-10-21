@@ -103,6 +103,12 @@ def prepare(data, protocol):
     summary["merged_before_safe_reference_filter"] = before
     summary["merged_records"] = len(merged)
     summary["pools"] = dict(Counter(row["pool_type"] for row in merged))
+    summary["by_calligrapher_before_reference_filter"] = summary["by_calligrapher"]
+    summary["by_calligrapher"] = {
+        author: dict(Counter(row["pool_type"] for row in merged
+                             if row["calligrapher"] == author))
+        for author in sorted({row["calligrapher"] for row in merged})
+    }
     summary["excluded_without_safe_same_writer_pool_reference"] = [
         {
             "target_path": row["target_path"],
@@ -146,9 +152,13 @@ def prepare(data, protocol):
             continue
         fixed[row["target_path"]] = dataset.pairs[rng.choice(safe)]
     path = data / "val_pairs_fixed_strict.json"
-    with path.open("x") as stream:
-        json.dump(fixed, stream, ensure_ascii=False, indent=2)
-        stream.write("\n")
+    encoded = json.dumps(fixed, ensure_ascii=False, indent=2) + "\n"
+    if path.exists():
+        if path.read_text() != encoded:
+            raise ValueError("Existing strict fixed pairs differ; refusing overwrite")
+    else:
+        with path.open("x") as stream:
+            stream.write(encoded)
     roles = Counter("JT" if "JT" in row["type"] else "BF" for row in fixed.values())
     if not all(roles[role] for role in ("BF", "JT")):
         raise ValueError("Strict fixed evaluation must cover JT and BF")
