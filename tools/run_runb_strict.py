@@ -166,6 +166,10 @@ def main():
             "--native-geometry",
             "pad_square",
             "--strict-reference",
+            "--bf-audit-source",
+            DATA / "dual_targets_v1",
+            "--bf-audit-metadata-sha256",
+            "c9e3eec178e2df0dc648058a508ac45f5cc4c77556a821fd26c9e3a1c78486b6",
         ],
     )
     run(

@@ -102,3 +102,28 @@ def test_strict_validation_rejects_old_self_pairs(strict_data):
         DualDataset(
             root, [val], cache, RandomMask(), is_train=False, fixed_pair_path=fixed
         )
+
+
+def test_sealed_bf_audit_reuse_rejects_changed_assets(base_data):
+    from tools.build_dual_targets import reuse_sealed_bf_audit
+
+    root, merged, _, _, _, _, cache = base_data
+    prior = json.loads((cache / "metadata.json").read_text())
+    pair = next(row for row in merged if row["has_bf"])
+    audit = reuse_sealed_bf_audit(root, pair, "pad_square", prior)
+    assert audit["different_mask_pixels"] == 0
+    assert audit["verification"] == "reused-certificate-with-identical-input-sha256"
+    changed = root / pair["bf_semantic_mask_path"]
+    changed.write_bytes(changed.read_bytes() + b"changed")
+    with pytest.raises(ValueError, match="input changed"):
+        reuse_sealed_bf_audit(root, pair, "pad_square", prior)
+
+
+def test_sealed_bf_audit_reuse_rejects_wrong_geometry(base_data):
+    from tools.build_dual_targets import reuse_sealed_bf_audit
+
+    root, merged, _, _, _, _, cache = base_data
+    prior = json.loads((cache / "metadata.json").read_text())
+    pair = next(row for row in merged if row["has_bf"])
+    with pytest.raises(ValueError, match="certificate"):
+        reuse_sealed_bf_audit(root, pair, "direct_resize", prior)

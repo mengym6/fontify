@@ -96,6 +96,8 @@ def build_cache(
     fixed_pair_path=None,
     native_geometry="pad_square",
     strict_reference=False,
+    bf_audit_source=None,
+    bf_audit_metadata_sha256=None,
 ):
     """Write arrays plus source/cache hashes, reporting any coordinate failure."""
     root, output_dir = Path(root), Path(output_dir)
@@ -105,6 +107,21 @@ def build_cache(
     from util.bf_geometry import AUDIT_SCHEMA, BFGeometryAuditor
 
     bf_renderer = BFGeometryAuditor(root, native_geometry)
+    prior_bf = None
+    if bf_audit_source:
+        prior_path = Path(bf_audit_source) / "metadata.json"
+        if not bf_audit_metadata_sha256 or (
+            sha256_file(prior_path) != bf_audit_metadata_sha256
+        ):
+            raise ValueError("Prior BF audit metadata hash differs from pinned source")
+        prior_bf = json.loads(prior_path.read_text())
+        if (prior_bf.get("status") != "complete"
+                or prior_bf.get("source_seal") != SOURCE_SEAL
+                or prior_bf.get("native_geometry") != native_geometry
+                or prior_bf.get("bf_coordinate_audit", {}).get("status") != "passed"
+                or sha256_file(Path(bf_audit_source) / "index.json")
+                != prior_bf.get("index_sha256")):
+            raise ValueError("Prior BF audit is incomplete or has different geometry")
     bf_audits = {}
     output_dir.mkdir(parents=True, exist_ok=False)
     (output_dir / "layers").mkdir()
@@ -130,7 +147,10 @@ def build_cache(
                 digest(path)
             source_inputs.append(paths)
             if pair["has_bf"] and pair["target_path"] not in bf_audits:
-                bf_audits[pair["target_path"]] = bf_renderer.audit(pair)
+                bf_audits[pair["target_path"]] = (
+                    reuse_sealed_bf_audit(root, pair, native_geometry, prior_bf)
+                    if prior_bf is not None else bf_renderer.audit(pair)
+                )
             if not pair["has_jt"] or pair["target_path"] in index:
                 continue
             regions, text, classes, entry = renderer.render(pair)
@@ -196,6 +216,13 @@ def build_cache(
     }
     if strict_reference:
         metadata["reference_policy"] = STRICT_REFERENCE_POLICY
+    if prior_bf is not None:
+        metadata["bf_audit_reuse"] = {
+            "source_cache": str(bf_audit_source),
+            "source_metadata_sha256": bf_audit_metadata_sha256,
+            "verification": "all original/target/mask/annotation SHA256 rechecked",
+            "fresh_rasterization_claimed": False,
+        }
     if fixed_pair_path:
         metadata["fixed_pair_sha256"] = sha256_file(fixed_pair_path)
         import hashlib
@@ -214,6 +241,28 @@ def build_cache(
     return metadata
 
 
+def reuse_sealed_bf_audit(root, pair, native_geometry, prior):
+    """Reuse a coordinate certificate only for identical sealed BF inputs."""
+    audit = prior["bf_coordinate_audit"]
+    entry = audit["records"].get(pair["target_path"])
+    paths = record_source_paths(pair)
+    fields = ("original_path", "target_path", "bf_semantic_mask_path",
+              "bf_annotation_path")
+    if (not entry or entry.get("native_geometry") != native_geometry
+            or entry.get("mask_path") != pair["bf_semantic_mask_path"]
+            or entry.get("annotation_path") != paths["bf_annotation_path"]
+            or entry.get("different_mask_pixels") != 0
+            or not entry.get("native_size_verified")
+            or entry.get("gt_text_iou", 0) < 0.995
+            or entry.get("gt_text_mae", 1) > 0.001):
+        raise ValueError("No valid prior BF coordinate certificate for this target")
+    for name in fields:
+        path = paths[name]
+        if sha256_file(Path(root) / path) != prior["source_sha256"].get(path):
+            raise ValueError(f"Sealed BF coordinate input changed: {path}")
+    return {**entry, "verification": "reused-certificate-with-identical-input-sha256"}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data_path", "--data-path", required=True)
@@ -221,6 +270,8 @@ def main(argv=None):
     parser.add_argument("--fixed_pair_path", "--fixed-pair-path")
     parser.add_argument("--output_dir", "--output-dir", required=True)
     parser.add_argument("--strict-reference", action="store_true")
+    parser.add_argument("--bf-audit-source")
+    parser.add_argument("--bf-audit-metadata-sha256")
     parser.add_argument(
         "--native_geometry",
         "--native-geometry",
@@ -247,6 +298,8 @@ def main(argv=None):
         args.fixed_pair_path,
         native_geometry=args.native_geometry,
         strict_reference=args.strict_reference,
+        bf_audit_source=args.bf_audit_source,
+        bf_audit_metadata_sha256=args.bf_audit_metadata_sha256,
     )
     print(
         json.dumps(
