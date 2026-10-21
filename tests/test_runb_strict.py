@@ -127,3 +127,30 @@ def test_sealed_bf_audit_reuse_rejects_wrong_geometry(base_data):
     pair = next(row for row in merged if row["has_bf"])
     with pytest.raises(ValueError, match="certificate"):
         reuse_sealed_bf_audit(root, pair, "direct_resize", prior)
+
+
+def test_strict_singleton_pool_is_excluded_not_self_paired():
+    from tools.prepare_runb_strict import filter_unpairable
+
+    rows = [
+        {
+            "calligrapher": "A",
+            "pool_type": pool,
+            "original_path": f"raw{index}",
+            "target_path": f"target{index}",
+        }
+        for index, pool in enumerate(("jt_only", "bf_only", "bf_only"))
+    ]
+    hashes = {
+        path: str(index) * 64
+        for index, path in enumerate(
+            [
+                name
+                for row in rows
+                for name in (row["original_path"], row["target_path"])
+            ]
+        )
+    }
+    retained, excluded = filter_unpairable(rows, hashes)
+    assert retained == rows[1:]
+    assert excluded == rows[:1]

@@ -29,6 +29,26 @@ def load_lists(directory):
     ]
 
 
+def filter_unpairable(records, source_hashes):
+    """Exclude isolated same-writer/pool targets without falling back to self."""
+    pools = {}
+    for row in records:
+        pools.setdefault((row["calligrapher"], row["pool_type"]), []).append(row)
+    retained, excluded = [], []
+    for row in records:
+        candidates = pools[(row["calligrapher"], row["pool_type"])]
+        destination = (
+            retained
+            if any(
+                references_distinct(row, reference, source_hashes)
+                for reference in candidates
+            )
+            else excluded
+        )
+        destination.append(row)
+    return retained, excluded
+
+
 def prepare(data, protocol):
     """Keep all held-out identities separate; never fall back to self pairing."""
     from PIL import Image
@@ -78,6 +98,19 @@ def prepare(data, protocol):
         raise ValueError(f"Server strict data leakage: {overlap}")
 
     merged, summary = merge_records(train, data)
+    before = len(merged)
+    merged, excluded = filter_unpairable(merged, hashes)
+    summary["merged_before_safe_reference_filter"] = before
+    summary["merged_records"] = len(merged)
+    summary["pools"] = dict(Counter(row["pool_type"] for row in merged))
+    summary["excluded_without_safe_same_writer_pool_reference"] = [
+        {
+            "target_path": row["target_path"],
+            "writer": row["calligrapher"],
+            "pool": row["pool_type"],
+        }
+        for row in excluded
+    ]
     merged_dir = data / "train_json_dual_strict"
     merged_dir.mkdir(exist_ok=False)
     (merged_dir / "train_dual.json").write_text(
