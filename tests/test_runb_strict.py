@@ -11,6 +11,7 @@ from test_dual_data import dataset
 from tools.dual_view_protocol import choose_fixed_rows
 from util.strict_reference import STRICT_REFERENCE_POLICY, references_distinct
 
+
 @pytest.fixture
 def base_data(tmp_path):
     from test_dual_data import synthetic_data
