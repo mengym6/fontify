@@ -11,16 +11,20 @@ from test_dual_data import dataset
 from tools.dual_view_protocol import choose_fixed_rows
 from util.strict_reference import STRICT_REFERENCE_POLICY, references_distinct
 
-pytest_plugins = ["test_dual_data"]
+@pytest.fixture
+def base_data(tmp_path):
+    from test_dual_data import synthetic_data
+
+    return synthetic_data.__wrapped__(tmp_path)
 
 
 @pytest.fixture
-def strict_data(synthetic_data):
-    metadata = synthetic_data[-1] / "metadata.json"
+def strict_data(base_data):
+    metadata = base_data[-1] / "metadata.json"
     value = json.loads(metadata.read_text())
     value["reference_policy"] = STRICT_REFERENCE_POLICY
     metadata.write_text(json.dumps(value))
-    return synthetic_data
+    return base_data
 
 
 def test_identity_rejects_original_and_target_aliases():
@@ -37,8 +41,8 @@ def test_identity_rejects_original_and_target_aliases():
         references_distinct(first, second, {})
 
 
-def test_default_legacy_pairing_is_unchanged(synthetic_data):
-    value = dataset(synthetic_data)
+def test_default_legacy_pairing_is_unchanged(base_data):
+    value = dataset(base_data)
     assert value.reference_candidates is None
     sample = value.get_pair(0, ref_index=0, augmentation_seed=0)
     assert sample["target_path"] == sample["reference_path"]
