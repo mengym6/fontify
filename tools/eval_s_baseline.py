@@ -41,21 +41,58 @@ def eval_metadata(args):
 
     fixed = Path(args.fixed_pair_path)
     data = fixed.read_bytes()
-    if hashlib.md5(data).hexdigest() != CLEAN_FIXED_MD5:
-        raise ValueError("run B evaluation requires the approved clean fixed pairs")
-    if len(json.loads(data)) != 240:
-        raise ValueError("run B evaluation requires exactly 240 fixed pairs")
     cache = Path(args.dual_target_cache)
     cache_meta = json.loads((cache / "metadata.json").read_text())
+    strict = cache_meta.get("reference_policy") == "distinct-original-reference-v1"
+    if strict:
+        validate_strict_eval_inputs(args, cache_meta)
+    else:
+        if hashlib.md5(data).hexdigest() != CLEAN_FIXED_MD5:
+            raise ValueError("run B evaluation requires the approved clean fixed pairs")
+        if len(json.loads(data)) != 240:
+            raise ValueError("run B evaluation requires exactly 240 fixed pairs")
     if cache_meta.get("definition") != DUAL_SCHEMA:
         raise ValueError("Target cache has the wrong J definition")
-    return {
+    result = {
         "fixed_pair_sha256": file_sha256(fixed),
         "val_manifest_sha256": hash_files(args.val_json_path),
         "target_cache_sha256": hash_files(
             [cache / "index.json", cache / "metadata.json"]
         ),
     }
+    if strict:
+        result["fixed_pair_count"] = len(json.loads(data))
+    return result
+
+
+def validate_strict_eval_inputs(args, metadata):
+    """Accept a new strict cohort only when its exact inputs are cache-sealed."""
+    from tools.build_dual_manifest import normalize_record
+    from util.dual_targets import SOURCE_SEAL
+    from util.strict_reference import references_distinct
+
+    if (metadata.get("status") != "complete"
+            or metadata.get("source_seal") != SOURCE_SEAL
+            or metadata.get("fixed_pair_sha256") != file_sha256(args.fixed_pair_path)):
+        raise ValueError("Strict evaluation fixed-pair/cache seal mismatch")
+    approved_hashes = set(metadata["input_sha256"].values())
+    records = {}
+    for path in args.val_json_path:
+        if file_sha256(path) not in approved_hashes:
+            raise ValueError("Strict validation JSON differs from sealed cache")
+        for row in json.loads(Path(path).read_text()):
+            records[row["target_path"]] = row
+    fixed = json.loads(Path(args.fixed_pair_path).read_text())
+    if not fixed or not set(fixed) <= set(records):
+        raise ValueError("Strict fixed queries are absent from validation JSON")
+    for key, reference in fixed.items():
+        if reference["target_path"] not in records:
+            raise ValueError("Strict reference is outside validation JSON")
+        query, partner = normalize_record(records[key]), normalize_record(reference)
+        if (query["calligrapher"] != partner["calligrapher"]
+                or query["pool_type"] != partner["pool_type"]
+                or not references_distinct(query, partner, metadata["source_sha256"])):
+            raise ValueError("Unsafe strict evaluation reference")
 
 
 def validate_eval_coefficients(payload, metadata):
@@ -438,7 +475,7 @@ def main():
     jmod = make_jieti_loss(args.j_definition, coef).to(args.device)
     result, rows = evaluate(model, dataset, jmod, args.device, args.j_definition)
     if metadata:
-        if len(rows) != 240 or not all(
+        if len(rows) != metadata.get("fixed_pair_count", 240) or not all(
             math.isfinite(result[key]) for key in ("L1_JT", "L1_BF", "J")
         ):
             raise ValueError("Incomplete or nonfinite clean evaluation")

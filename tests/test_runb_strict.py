@@ -154,3 +154,28 @@ def test_strict_singleton_pool_is_excluded_not_self_paired():
     retained, excluded = filter_unpairable(rows, hashes)
     assert retained == rows[1:]
     assert excluded == rows[:1]
+
+
+def test_strict_eval_accepts_new_sealed_cohort_and_rejects_tampering(strict_data):
+    from argparse import Namespace
+
+    from tools.eval_s_baseline import eval_metadata, file_sha256
+
+    _, _, _, _, val, fixed, cache = strict_data
+    rows = json.loads(val.read_text())
+    mapping = {}
+    for row in rows:
+        peers = [other for other in rows if other["type"] == row["type"]
+                 and other["target_path"] != row["target_path"]]
+        mapping[row["target_path"]] = peers[0]
+    fixed.write_text(json.dumps(mapping))
+    metadata = json.loads((cache / "metadata.json").read_text())
+    metadata["fixed_pair_sha256"] = file_sha256(fixed)
+    (cache / "metadata.json").write_text(json.dumps(metadata))
+    args = Namespace(fixed_pair_path=fixed, dual_target_cache=cache,
+                     val_json_path=[val])
+    result = eval_metadata(args)
+    assert result["fixed_pair_count"] == len(rows)
+    val.write_text("[]")
+    with pytest.raises(ValueError, match="validation JSON"):
+        eval_metadata(args)
