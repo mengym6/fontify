@@ -206,6 +206,8 @@ def main(argv=None):
                     references = dataset.pair_type_dict[
                         (record["calligrapher"], record["pool_type"])
                     ]
+                    if dataset.reference_candidates is not None:
+                        references = dataset.reference_candidates[index]
                     rows.append(dataset.get_pair(
                         index, rng.choice(references),
                         args.seed + rank * 10000 + iteration * 100 + offset,

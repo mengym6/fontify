@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tools.build_dual_manifest import normalize_record
+from util.strict_reference import STRICT_REFERENCE_POLICY
 from util.dual_targets import (
     CACHE_SCHEMA,
     DEFINITION,
@@ -94,6 +95,7 @@ def build_cache(
     input_paths=(),
     fixed_pair_path=None,
     native_geometry="pad_square",
+    strict_reference=False,
 ):
     """Write arrays plus source/cache hashes, reporting any coordinate failure."""
     root, output_dir = Path(root), Path(output_dir)
@@ -192,6 +194,8 @@ def build_cache(
         },
         "failures": failures,
     }
+    if strict_reference:
+        metadata["reference_policy"] = STRICT_REFERENCE_POLICY
     if fixed_pair_path:
         metadata["fixed_pair_sha256"] = sha256_file(fixed_pair_path)
         import hashlib
@@ -216,6 +220,7 @@ def main(argv=None):
     parser.add_argument("--json_paths", "--json-paths", nargs="+", required=True)
     parser.add_argument("--fixed_pair_path", "--fixed-pair-path")
     parser.add_argument("--output_dir", "--output-dir", required=True)
+    parser.add_argument("--strict-reference", action="store_true")
     parser.add_argument(
         "--native_geometry",
         "--native-geometry",
@@ -241,6 +246,7 @@ def main(argv=None):
         paths,
         args.fixed_pair_path,
         native_geometry=args.native_geometry,
+        strict_reference=args.strict_reference,
     )
     print(
         json.dumps(

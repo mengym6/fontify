@@ -8,6 +8,7 @@ NPROC=${NPROC:-4}
 BATCH_SIZE=${BATCH_SIZE:-2}
 MASTER_PORT=${MASTER_PORT:-29557}
 DATA_PATH=${DATA_PATH:-fontdata_example}
+VAL_JSON_DIR=${VAL_JSON_DIR:-$DATA_PATH/val_json_clean_v2}
 TRAIN_MANIFEST=${TRAIN_MANIFEST:-$DATA_PATH/train_json_dual_v1/train_dual.json}
 TARGET_CACHE=${TARGET_CACHE:-$DATA_PATH/dual_targets_v1}
 FIXED_PAIRS=${FIXED_PAIRS:-$DATA_PATH/val_pairs_fixed_clean.json}
@@ -38,7 +39,7 @@ if (( 64 % (NPROC * BATCH_SIZE) != 0 )); then
 fi
 ACCUM_ITER=$((64 / (NPROC * BATCH_SIZE)))
 shopt -s nullglob
-VAL_MANIFESTS=("$DATA_PATH"/val_json_clean_v2/*.json)
+VAL_MANIFESTS=("$VAL_JSON_DIR"/*.json)
 if (( ${#VAL_MANIFESTS[@]} == 0 )); then
     echo 'No clean v2 validation manifests found' >&2
     exit 2

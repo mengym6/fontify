@@ -15,6 +15,7 @@ from torchvision.transforms import functional as TF
 from torchvision.transforms.functional import InterpolationMode
 
 from tools.build_dual_manifest import normalize_record
+from util.strict_reference import STRICT_REFERENCE_POLICY, references_distinct
 from util.dual_targets import (
     CACHE_SCHEMA,
     DEFINITION,
@@ -214,6 +215,36 @@ class DualDataset(Dataset):
                         raise ValueError(f"Instance cache source changed: {path}")
                     verified.add(path)
 
+        self.reference_policy = self._cache_metadata.get("reference_policy")
+        self.reference_candidates = None
+        if self.reference_policy is not None:
+            if self.reference_policy != STRICT_REFERENCE_POLICY:
+                raise ValueError("Unknown strict reference policy")
+            source_hashes = self._cache_metadata["source_sha256"]
+            if self.is_train:
+                self.reference_candidates = {}
+                for index, query in enumerate(self.pairs):
+                    key = (query["calligrapher"], query["pool_type"])
+                    candidates = tuple(
+                        candidate for candidate in self.pair_type_dict[key]
+                        if references_distinct(
+                            query, self.pairs[candidate], source_hashes
+                        )
+                    )
+                    if not candidates:
+                        raise ValueError("No distinct-original reference candidate")
+                    self.reference_candidates[index] = candidates
+            else:
+                for reference in self.pairs:
+                    query = self._fixed_pairs[reference["target_path"]]
+                    self._assert_distinct_reference(query, reference)
+
+    def _assert_distinct_reference(self, query, reference):
+        if self.reference_policy and not references_distinct(
+            query, reference, self._cache_metadata["source_sha256"]
+        ):
+            raise ValueError("Self-reference GT leakage in strict Run B")
+
     def __len__(self):
         return len(self.pairs)
 
@@ -313,7 +344,12 @@ class DualDataset(Dataset):
             if self.is_train:
                 key = (query["calligrapher"], query["pool_type"])
                 if ref_index is None:
-                    ref_index = random.choice(self.pair_type_dict[key])
+                    candidates = (
+                        self.reference_candidates[index]
+                        if self.reference_candidates is not None
+                        else self.pair_type_dict[key]
+                    )
+                    ref_index = random.choice(candidates)
                 reference = self.pairs[ref_index]
                 if (reference["calligrapher"], reference["pool_type"]) != key:
                     raise ValueError("Dual pairing may not cross author or pool")
@@ -324,6 +360,7 @@ class DualDataset(Dataset):
                         "Validation pairing is fixed by the clean pair file"
                     )
                 top, bottom = query, self._fixed_pairs[query["target_path"]]
+            self._assert_distinct_reference(bottom, top)
             if self.is_train:
                 dummy = Image.new("RGB", (self.image_size, self.image_size))
                 crop = RandomResizedCrop.get_params(

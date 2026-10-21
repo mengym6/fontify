@@ -443,7 +443,8 @@ def _pool(record):
     )
 
 
-def choose_fixed_rows(records, weights, indices, count, rng):
+def choose_fixed_rows(records, weights, indices, count, rng,
+                      reference_candidates=None):
     """Draw distinct targets with D weights and uniform within-pool refs."""
     available = list(indices)
     count = min(count, len(available))
@@ -457,7 +458,11 @@ def choose_fixed_rows(records, weights, indices, count, rng):
         ]
         available.remove(index)
         record = records[index]
-        reference = rng.choice(groups[(_writer(record), _pool(record))])
+        candidates = (
+            reference_candidates[index] if reference_candidates is not None
+            else groups[(_writer(record), _pool(record))]
+        )
+        reference = rng.choice(candidates)
         rows.append(
             {
                 "target_index": index,
@@ -491,12 +496,14 @@ def create_samples(args):
         )
     rng = random.Random(args.seed)
     all_rows = range(len(dataset))
+    references = dataset.reference_candidates
     groups = {
         "jt": choose_fixed_rows(
-            dataset.pairs, dataset.weights, jt, args.targets, rng
+            dataset.pairs, dataset.weights, jt, args.targets, rng, references
         ),
         "bf_only": choose_fixed_rows(
-            dataset.pairs, dataset.weights, bf, args.diagnostic_targets, rng
+            dataset.pairs, dataset.weights, bf, args.diagnostic_targets, rng,
+            references,
         ),
         "mixed": choose_fixed_rows(
             dataset.pairs,
@@ -504,6 +511,7 @@ def create_samples(args):
             all_rows,
             args.diagnostic_targets,
             rng,
+            references,
         ),
     }
     if {row["pool"] for row in groups["jt"]} != {"dual", "jt_only"}:
@@ -538,6 +546,7 @@ def create_samples(args):
         "train_manifest_sha256": hash_files(args.json_path),
         "target_cache_sha256": cache_hash(args.target_cache),
         "groups": groups,
+        "reference_policy": dataset.reference_policy,
     }
     write_new_json(args.output, result)
     print(
@@ -562,6 +571,11 @@ def check_samples(value, args):
         raise ValueError(
             "sample manifest does not match current instance cache"
         )
+    policy = read_json(Path(args.target_cache) / "metadata.json").get(
+        "reference_policy"
+    )
+    if manifest.get("reference_policy") != policy:
+        raise ValueError("Probe reference policy differs from target cache")
     if not 64 <= len(manifest["groups"]["jt"]) <= 128:
         raise ValueError(
             "sample manifest must contain 64 through 128 JT targets"
@@ -1050,6 +1064,9 @@ def validate_training_inputs(args):
     if blind.get("fixed_pair_sha256") != sha256_file(args.fixed_pair_path):
         raise ValueError("blind manifest belongs to another validation set")
     args.dual_blind_manifest_sha256 = sha256_file(blind_path)
+    args.dual_reference_policy = read_json(
+        Path(args.dual_target_cache) / "metadata.json"
+    ).get("reference_policy")
     mapped = argparse.Namespace(
         json_path=args.json_path,
         val_json_path=args.val_json_path,
