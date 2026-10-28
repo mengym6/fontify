@@ -23,7 +23,8 @@ codex/runc
 清理与恢复
 ------------
 
-本地与 origin 仅保留以上三条分支。其余实验和修复分支删除前，已保存：
+本地仅保留以上三条分支；origin 尚未同步，等待确认远程删除范围。
+其余实验和修复分支删除前，已保存：
 
 * outputs/git_cleanup_20261028/repository-before.bundle：完整 Git 历史备份；
 * outputs/git_cleanup_20261028/refs-before.txt：原分支名及完整提交号；
