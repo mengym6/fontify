@@ -557,6 +557,11 @@ class Fontify(nn.Module):
 
     def forward_encoder(self, imgs, tgts, bool_masked_pos,
                         return_quadrants=False):
+        from util.pixel_mask import corrupt_before_embedding, is_pixel_mask
+        if is_pixel_mask(bool_masked_pos, tgts):
+            tgts, bool_masked_pos = corrupt_before_embedding(
+                tgts, bool_masked_pos, self.patch_size,
+            )
         x = self.patch_embed(imgs)
         y = self.patch_embed(tgts)
         batch_size, Hp, Wp, _ = x.size()
@@ -642,14 +647,19 @@ class Fontify(nn.Module):
         epoch: 当前训练epoch，用于动态损失权重计算
         voro/valid_parts/is_jt: 结体 loss 的部件划分、有效部件掩码与 JT 标志（可选）
         """
-        mask = mask[:, :, None].repeat(1, 1, self.patch_size**2 * 3)
-        mask = self.unpatchify(mask)
+        from util.pixel_mask import expand_mask, is_pixel_mask
+        pixel_input = is_pixel_mask(mask, tgts)
+        if pixel_input:
+            mask = expand_mask(mask, tgts, self.patch_size)
+        else:
+            mask = mask[:, :, None].repeat(1, 1, self.patch_size**2 * 3)
+            mask = self.unpatchify(mask)
 
         # ignore if the unmasked pixels are all zeros
         imagenet_mean=torch.tensor([0.485, 0.456, 0.406]).to(tgts.device)[None, :, None, None]
         imagenet_std=torch.tensor([0.229, 0.224, 0.225]).to(tgts.device)[None, :, None, None]
         inds_ign = ((tgts * imagenet_std + imagenet_mean) * (1 - 1.*mask)).sum((1, 2, 3)) < 100*3
-        if inds_ign.sum() > 0:
+        if not pixel_input and inds_ign.sum() > 0:
             valid[inds_ign] = 0.
 
         # 结体 loss 的拼接图：遮盖区(mask=1)用预测，可见区用 GT。用乘 valid 之前

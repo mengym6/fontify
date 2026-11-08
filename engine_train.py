@@ -524,8 +524,8 @@ def train_one_epoch(model: torch.nn.Module,
                 y = torch.einsum('nchw->nhwc', y).detach().cpu()
                 mask = mask[[0]]
                 mask = mask.detach().float().cpu()
-                mask = mask.unsqueeze(-1).repeat(1, 1, raw.patch_size ** 2 * 3)  # (N, H*W, p*p*3)
-                mask = raw.unpatchify(mask)  # 1 is removing, 0 is keeping
+                from util.pixel_mask import expand_mask
+                mask = expand_mask(mask, targets[[0]].cpu(), raw.patch_size)
                 mask = torch.einsum('nchw->nhwc', mask).detach().cpu()
                 x = samples[[0]]
                 x = x.detach().float().cpu()

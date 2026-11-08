@@ -20,6 +20,10 @@ EVAL_CALIBRATION=${EVAL_CALIBRATION:-$DUAL_ROOT/eval_coef.json}
 S_BASELINE=${S_BASELINE:-$DUAL_ROOT/s_baseline_dual.json}
 BLIND_MANIFEST=${BLIND_MANIFEST:-$DUAL_ROOT/blind_manifest.json}
 OUTPUT_DIR=${OUTPUT_DIR:-models/finetune_dual_view_runb}
+PIXEL_ARGS=()
+if [[ "${DUAL_PIXEL_MASK:-0}" == 1 ]]; then
+    PIXEL_ARGS+=(--dual_pixel_mask)
+fi
 
 if ! [[ "$NPROC" =~ ^[1-9][0-9]*$ && "$BATCH_SIZE" =~ ^[1-9][0-9]*$ ]]; then
     echo 'NPROC and BATCH_SIZE must be positive integers' >&2
@@ -91,7 +95,7 @@ PY
 
 "$PYTHON" -m torch.distributed.run --nproc_per_node="$NPROC" \
     --master_port="$MASTER_PORT" main_train.py \
-    --dual_view --dual_target_cache "$TARGET_CACHE" \
+    --dual_view "${PIXEL_ARGS[@]}" --dual_target_cache "$TARGET_CACHE" \
     --dual_calibration_json "$TRAIN_CALIBRATION" \
     --dual_eval_calibration_json "$EVAL_CALIBRATION" \
     --dual_parent_checkpoint "$PARENT_CHECKPOINT" \

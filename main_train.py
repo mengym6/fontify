@@ -121,6 +121,8 @@ def get_args_parser():
                         help='encoder 双流融合权重 λ∈(0,1)：(1-λ)·电脑字路 + λ·风格字路；0.5 即原式')
     parser.add_argument('--dual_view', action='store_true',
                         help='启用双视图 run B；默认沿用原模型和数据路径')
+    parser.add_argument('--dual_pixel_mask', action='store_true',
+                        help='BF polygon pixels union background; pixel reconstruction')
     parser.add_argument('--dual_target_cache', default=None,
                         help='448 JT 实例/text 层缓存目录')
     parser.add_argument('--dual_calibration_json', default=None,
@@ -531,7 +533,8 @@ def main(args, ds_init):
             jieti_pool=args.jieti_pool, jieti_valid_ink=args.jieti_valid_ink,
         )
         dataset_train = DualDataset(
-            args.data_path, args.json_path, is_train=True, **dual_kwargs,
+            args.data_path, args.json_path, is_train=True,
+            pixel_masking=args.dual_pixel_mask, **dual_kwargs,
         )
         dataset_val = DualDataset(
             args.data_path, args.val_json_path, is_train=False,

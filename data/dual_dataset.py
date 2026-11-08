@@ -80,6 +80,7 @@ class DualDataset(Dataset):
         crop_scale=(0.9999, 1.0),
         crop_ratio=(0.75, 4.0 / 3.0),
         verify_sources=True,
+        pixel_masking=False,
     ):
         self.root = Path(root)
         self.target_cache_dir = Path(target_cache_dir)
@@ -90,6 +91,7 @@ class DualDataset(Dataset):
         self.mask_coverage_threshold = mask_coverage_threshold
         self.jieti_pool, self.jieti_valid_ink = jieti_pool, jieti_valid_ink
         self.crop_scale, self.crop_ratio = crop_scale, crop_ratio
+        self.pixel_masking = bool(pixel_masking)
         if image_size != 448 or patch_size != 16:
             raise ValueError("Run B requires 448-square images and 16-pixel patches")
         if num_mask_annotations_bf < 1:
@@ -256,6 +258,9 @@ class DualDataset(Dataset):
         semantic = None
         if self.is_train and pair["has_bf"]:
             semantic = transform_layers(self._bf_mask(pair), crop)[0]
+            if self.pixel_masking:
+                background = np.asarray(target.convert("L")) >= 230
+                semantic = np.logical_or(semantic, background).astype(np.uint8)
         if needs_targets and pair["has_jt"]:
             raw = load_cached_targets(
                 self.target_cache_dir,
@@ -322,16 +327,23 @@ class DualDataset(Dataset):
                     raise ValueError("Both BF rows must have semantic masks")
                 pixels = np.concatenate((upper[2], lower[2]), axis=0)
                 grid = self.image_size // self.patch_size
-                coverage = pixels.reshape(
-                    2 * grid, self.patch_size, grid, self.patch_size
-                ).mean((1, 3))
-                mask = (coverage > self.mask_coverage_threshold).astype(np.int64)
+                if self.pixel_masking:
+                    mask = pixels.astype(np.int64)
+                else:
+                    coverage = pixels.reshape(
+                        2 * grid, self.patch_size, grid, self.patch_size
+                    ).mean((1, 3))
+                    mask = (coverage > self.mask_coverage_threshold).astype(np.int64)
             else:
                 mask = np.asarray(self.masked_position_generator(), dtype=np.int64)
+                if self.pixel_masking:
+                    mask = mask.repeat(self.patch_size, 0).repeat(self.patch_size, 1)
             expected = (
                 2 * self.image_size // self.patch_size,
                 self.image_size // self.patch_size,
             )
+            if self.is_train and self.pixel_masking:
+                expected = (2 * self.image_size, self.image_size)
             if mask.shape != expected:
                 raise ValueError(f"Mask shape {mask.shape} differs from {expected}")
             sample = {
