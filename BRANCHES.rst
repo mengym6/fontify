@@ -26,26 +26,25 @@ codex/runc
     现有 experiments/runc_components/ 是历史直接生成模型，不是扩散桥。
     具体代码边界与历史复现配置见 experiments/runc_components/README.rst。
 
-2026-10-28 清理与恢复记录
-------------
+本地实验产物（2026-11-18）
+--------------------------
 
-本地与 origin 仅保留以上三条分支；远程删除范围已由用户明确确认。
-其余实验和修复分支删除前，已保存：
+桌面工作区的 ``outputs/`` 仅存放以下三组评测和生成结果，不含原始训练权重：
 
-* outputs/git_cleanup_20261028/repository-before.bundle：完整 Git 历史备份；
-* outputs/git_cleanup_20261028/refs-before.txt：原分支名及完整提交号；
-* outputs/git_cleanup_20261028/PROGRESS-before.md：整理前的进度记录。
+* ``RunB_Fix_Pixel_ep66/``：像素遮盖续训 best ep66。
+* ``RunB_ep49/``：原 Run B best ep49，不是同轮数的消融模型。
+* ``全解冻_baseline_ep50/``：修正 VGG 归一化的全解冻 baseline。
 
-例如需单独恢复补实验源码，可运行：
+Run C 仍保留在 ``codex/runc`` 分支，不是第四个本地输出目录。
+这些产物不随 Git 分发；从仓库检出代码不会还原本机图像或评测数据。
 
-::
+2026-10-28 清理记录（历史）
+---------------------------
 
-    git clone -b codex/calliphase-phase-ablation outputs/git_cleanup_20261028/repository-before.bundle /tmp/fontify-phase-ablation-recovered
+当时清理分支前曾生成未纳入 Git 的历史 bundle 和引用清单。2026-11-18
+清理本地产物后，这些文件不再位于 ``outputs/git_cleanup_20261028/``。
+当时的分支列表不代表当前分支；以 ``git branch -a`` 为准。
 
-bundle 位于忽略目录，不随 GitHub 推送。旧本地 worktree 保持原文件和提交，
-改为 detached HEAD；没有删除数据、权重、实验输出或服务器目录。
-本次仅整理本地及 GitHub 分支，不切换或更新服务器正在使用的代码。
-
-验证：baseline 脚本与原 1c8206e 逐字节一致，实际启动参数通过当前解析器；
+当时的验证：baseline 脚本与原 1c8206e 逐字节一致，实际启动参数通过当前解析器；
 baseline、BF 坐标、双视图训练及 TensorBoard 共40项CPU回归通过。
 本次没有重新进行GPU训练。
