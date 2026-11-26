@@ -76,7 +76,7 @@ tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs/dashboard_full --ho
 
 四条loss读取实际one-to-one分支box+mask+cls+L1加权贡献，沿用共同分母，BF+JT等于该分支四项之和。验证不计算辅助语义项，所以两端曲线均排除该项；实际E2E反传仍包含两个分支与辅助项。曲线是可比较的主任务量，不能称为全部反传目标。细项和mAP仍保留在results.csv。
 
-`previews/validation`是唯一图卡：每epoch写入同一批60张验证图，跨9个来源固定抽样。图卡的样本选择器切换0–59，epoch滑块切换轮次。每张仍为输入/BF GT/BF预测/JT GT/JT预测五列；60张PNG也完整保存于`runs/<运行名>/previews/epoch_XXX/`。`fixed_samples.json`绑定新划分身份，训练中不重新抽样。启动脚本默认保留1000个epoch的图片历史。
+**每个epoch单独一个预览card**：`previews/epoch_001`、`previews/epoch_002`……。每个card内包含同一批固定60张验证图，跨9个来源抽样，样本选择器切换0–59；查看另一轮时选择对应epoch的card。固定图像身份和顺序跨epoch不变。每张仍为输入/BF GT/BF预测/JT GT/JT预测五列；60张PNG也完整保存于`runs/<运行名>/previews/epoch_XXX/`。`fixed_samples.json`绑定划分身份，训练中不重新抽样。新展示方式从使用此版本启动的下一次训练生效，正在运行的训练保留原展示。
 
 ## 预测与后验评估
 

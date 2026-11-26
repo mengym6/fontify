@@ -81,7 +81,7 @@ def main() -> None:
     from live_visualization import (
         gt_instances, label_for, panel_image, prediction_instances, sha256,
         summary_writer_class, annotation_tasks, fixed_samples, write_image_card,
-        validation_authors,
+        validation_authors, preview_image_tag,
     )
     from region_metrics import (
         aggregate_region_metrics, deduplicate_gt_instances,
@@ -131,6 +131,8 @@ def main() -> None:
         "zero_denominator": "null in JSON; omitted from TensorBoard",
         "tensorboard_main_rates": "BF/metrics and JT/metrics: recall_pct, precision_pct, iou_pct only",
         "tensorboard_directory": str(tensorboard_dir) if writer else None,
+        "tensorboard_image_tag": preview_image_tag(args.checkpoint_epoch) if preview_manifest else None,
+        "tensorboard_image_card_policy": "one independent card for the supplied checkpoint epoch",
     }
     try:
         for index, source in enumerate(images):

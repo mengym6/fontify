@@ -1,4 +1,4 @@
-"""Grouped losses, full-val region metrics, and one multi-sample image card.
+"""Grouped losses, full-val metrics, and one 60-sample image card per epoch.
 
 Preview inference loads the current last.pt into a separate YOLO object. The
 training model, EMA, optimizer, and their mode/dtype are never passed to predict.
@@ -22,7 +22,11 @@ DASHBOARD_SCALAR_TAGS = {
     *{f"{group}/metrics/{metric}_pct" for group in ("BF", "JT")
       for metric in ("recall", "precision", "iou")},
 }
-PREVIEW_IMAGE_TAG = "previews/validation"
+PREVIEW_IMAGE_TAG_TEMPLATE = "previews/epoch_{epoch:03d}"
+
+
+def preview_image_tag(epoch: int) -> str:
+    return PREVIEW_IMAGE_TAG_TEMPLATE.format(epoch=epoch)
 
 
 def dashboard_directory(run_directory: Path) -> Path:
@@ -60,11 +64,11 @@ def _read_group_losses(model):
     return read_group_loss_accumulators(model)
 
 
-def image_tensor_summary(tag: str, png_paths: list[Path]):
+def image_tensor_summary(tag: str, png_paths: list[Path], *, epoch: int | None = None):
     """Make one v2 image tensor: [width, height, png0, ...], not a mosaic.
 
-    TensorBoard Images exposes len(string_val)-2 samples under a single tag;
-    sample n selects string_val[n+2], while its step selector selects epoch.
+    TensorBoard Images exposes len(string_val)-2 samples in this tag's card.
+    Each epoch has its own tag; sample n selects string_val[n+2].
     """
     from PIL import Image
     from tensorboard.compat.proto import summary_pb2, tensor_pb2, tensor_shape_pb2, types_pb2
@@ -90,15 +94,19 @@ def image_tensor_summary(tag: str, png_paths: list[Path]):
         string_val=values,
     )
     metadata = create_summary_metadata(
-        display_name="Fixed validation samples",
-        description="Select sample 0..59 and epoch; each sample shows input, BF GT/prediction, JT GT/prediction.",
+        display_name=f"Epoch {epoch:03d} · fixed validation samples" if epoch is not None else tag,
+        description=(f"Epoch {epoch:03d}. " if epoch is not None else "") +
+                    f"Select sample 0..{len(png_paths) - 1} from the fixed sample manifest. "
+                    "Each sample shows input, BF GT/prediction, JT GT/prediction. "
+                    "Other epochs appear in separate cards with the same sample ordering.",
     )
     metadata.data_class = summary_pb2.DATA_CLASS_BLOB_SEQUENCE
     return summary_pb2.Summary(value=[summary_pb2.Summary.Value(tag=tag, tensor=tensor, metadata=metadata)])
 
 
 def write_image_card(writer, png_paths: list[Path], step: int) -> None:
-    writer.file_writer.add_summary(image_tensor_summary(PREVIEW_IMAGE_TAG, png_paths), global_step=step)
+    summary = image_tensor_summary(preview_image_tag(step), png_paths, epoch=step)
+    writer.file_writer.add_summary(summary, global_step=step)
 
 
 def primary_rank() -> bool:
@@ -400,7 +408,7 @@ class LiveVisualization:
             event_dir = dashboard_directory(Path(trainer.save_dir))
             self.writer = self.writer_type(str(event_dir))
             protocol = {
-                "schema": "calli-grouped-dashboard-v2", "event_directory": str(event_dir),
+                "schema": "calli-grouped-dashboard-v3", "event_directory": str(event_dir),
                 "scalar_tags": sorted(DASHBOARD_SCALAR_TAGS),
                 "common_loss_components": list(COMMON_LOSS_NAMES),
                 "loss_definition": (
@@ -409,7 +417,9 @@ class LiveVisualization:
                     "These are additive task contributions, not the complete E2E objective; "
                     "train-only sem_loss is excluded and missing groups are omitted."
                 ),
-                "image_tag": PREVIEW_IMAGE_TAG, "image_encoding": "v2 DT_STRING [width,height,png0,...]",
+                "image_tag_template": PREVIEW_IMAGE_TAG_TEMPLATE,
+                "image_card_policy": "one independent card per epoch; fixed sample order within each card",
+                "image_encoding": "v2 DT_STRING [width,height,png0,...]",
                 "preview_schedule": "every epoch", "requested_preview_count": self.count,
                 "details": "Native loss components, mAP, and LR remain in results.csv; region counts remain in JSON.",
                 "history": "Existing event files under the old run/tensorboard directory are unchanged.",
@@ -501,7 +511,8 @@ class LiveVisualization:
                 "evaluation_interval_epochs": 1,
                 "evaluation_schedule": "every epoch",
                 "unknown_task_policy": "exclude unannotated task from metrics; show both predictions",
-                "tensorboard_image_tag": PREVIEW_IMAGE_TAG,
+                "tensorboard_image_tag": preview_image_tag(step),
+                "tensorboard_image_card_policy": "one card per epoch; same fixed sample manifest",
                 "ground_truth_policy": "deduplicate equal class_id and pixel-identical binary mask",
                 "native_duplicate_note": (
                     "Native Ultralytics removes duplicate label rows during loading. This report "

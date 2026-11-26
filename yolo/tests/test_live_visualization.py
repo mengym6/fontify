@@ -332,6 +332,8 @@ class LiveVisualizationTests(unittest.TestCase):
             self.assertEqual(old_event.read_bytes(), b"historical events")
             protocol = json.loads((run / "dashboard_protocol.json").read_text())
             self.assertIn("not the complete E2E", protocol["loss_definition"])
+            self.assertEqual(protocol["schema"], "calli-grouped-dashboard-v3")
+            self.assertEqual(protocol["image_tag_template"], "previews/epoch_{epoch:03d}")
             values = {key: .5 for key in live.DASHBOARD_SCALAR_TAGS}
             values.update({"train/seg_loss": 99, "val/box_loss": 99, "metrics/mAP50(M)": 99,
                            "lr/pg0": 99, "diagnostics/BF/gt_count": 99,
@@ -385,8 +387,10 @@ class LiveVisualizationTests(unittest.TestCase):
             self.assertEqual(len(writer.images), 0)
             self.assertEqual(len(writer.summaries), 1)
             self.assertEqual(len(writer.summaries[0][0].value[0].tensor.string_val), 62)
+            self.assertEqual(writer.summaries[0][0].value[0].tag, "previews/epoch_005")
             metadata = json.loads((run / "previews/epoch_005/preview.json").read_text())
             self.assertEqual(metadata["checkpoint_epoch_zero_based"], 4)
+            self.assertEqual(metadata["tensorboard_image_tag"], "previews/epoch_005")
             self.assertEqual(metadata["evaluated_images"], len(images))
             self.assertEqual(metadata["preview_images"], 60)
             self.assertEqual(len(list((run / "previews/epoch_005").glob("*.png"))), 60)
@@ -474,9 +478,11 @@ class LiveVisualizationTests(unittest.TestCase):
                     evaluator.main()
             self.assertFalse((root / "new_eval").exists())
 
-    def test_image_tensor_single_tag_preserves_all_60_png_samples(self):
+    def test_two_epoch_cards_each_preserve_60_samples_and_one_step(self):
         import io
-        from tensorboard.compat.proto import types_pb2, summary_pb2
+        from tensorboard.compat.proto import types_pb2, summary_pb2, event_pb2
+        from tensorboard.summary.writer.event_file_writer import EventFileWriter
+        from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
         with tempfile.TemporaryDirectory() as temp:
             paths = []
             for index in range(60):
@@ -484,20 +490,33 @@ class LiveVisualizationTests(unittest.TestCase):
                 Image.new("RGB", (10, 8), (index, 0, 0)).save(path)
                 paths.append(path)
             writer = FakeWriter()
-            live.write_image_card(writer, paths, 2)
-            self.assertEqual(len(writer.summaries), 1)
-            summary, step = writer.summaries[0]
-            self.assertEqual(step, 2)
-            self.assertEqual(len(summary.value), 1)
-            value = summary.value[0]
-            self.assertEqual(value.tag, "previews/validation")
-            self.assertEqual(value.tensor.dtype, types_pb2.DT_STRING)
-            self.assertEqual(value.tensor.tensor_shape.dim[0].size, 62)
-            self.assertEqual(value.metadata.plugin_data.plugin_name, "images")
-            self.assertEqual(value.metadata.data_class, summary_pb2.DATA_CLASS_BLOB_SEQUENCE)
-            self.assertEqual(list(value.tensor.string_val[:2]), [b"10", b"8"])
-            with Image.open(io.BytesIO(value.tensor.string_val[61])) as sample59:
-                self.assertEqual(sample59.getpixel((0, 0)), (59, 0, 0))
+            for epoch in (1, 2):
+                live.write_image_card(writer, paths, epoch)
+            self.assertEqual(len(writer.summaries), 2)
+            events = EventFileWriter(str(Path(temp) / "events"))
+            for epoch, (summary, step) in enumerate(writer.summaries, start=1):
+                self.assertEqual(step, epoch)
+                self.assertEqual(len(summary.value), 1)
+                value = summary.value[0]
+                self.assertEqual(value.tag, f"previews/epoch_{epoch:03d}")
+                self.assertEqual(value.metadata.display_name, f"Epoch {epoch:03d} · fixed validation samples")
+                self.assertIn(f"Epoch {epoch:03d}.", value.metadata.summary_description)
+                self.assertEqual(value.tensor.dtype, types_pb2.DT_STRING)
+                self.assertEqual(value.tensor.tensor_shape.dim[0].size, 62)
+                self.assertEqual(value.metadata.plugin_data.plugin_name, "images")
+                self.assertEqual(value.metadata.data_class, summary_pb2.DATA_CLASS_BLOB_SEQUENCE)
+                self.assertEqual(list(value.tensor.string_val[:2]), [b"10", b"8"])
+                events.add_event(event_pb2.Event(step=step, summary=summary))
+            events.flush()
+            events.close()
+            reader = EventAccumulator(str(Path(temp) / "events"), size_guidance={"tensors": 0}).Reload()
+            self.assertEqual(sorted(reader.Tags()["tensors"]), ["previews/epoch_001", "previews/epoch_002"])
+            for epoch in (1, 2):
+                entries = reader.Tensors(f"previews/epoch_{epoch:03d}")
+                self.assertEqual([entry.step for entry in entries], [epoch])
+                self.assertEqual(len(entries[0].tensor_proto.string_val) - 2, 60)
+                with Image.open(io.BytesIO(entries[0].tensor_proto.string_val[61])) as sample59:
+                    self.assertEqual(sample59.getpixel((0, 0)), (59, 0, 0))
 
     def test_annotation_tasks_is_explicit_and_missing_rows_fail(self):
         with tempfile.TemporaryDirectory() as temp:

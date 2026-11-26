@@ -48,7 +48,7 @@ SAVE_PERIOD="${SAVE_PERIOD:-10}"
 PREVIEW_EVERY=1                          # 每个epoch都输出固定验证图
 PREVIEW_COUNT=60                         # 单card的60个样本，整个训练保持相同
 TB_PORT="${TB_PORT:-6006}"
-TB_IMAGE_STEPS="${TB_IMAGE_STEPS:-1000}"  # TB界面保留的epoch数量，必须为正数
+TB_IMAGE_STEPS="${TB_IMAGE_STEPS:-1000}"  # 每个预览tag保留的event数量，必须为正数
 # ==========================================================
 
 MODE="${1:-train}"
