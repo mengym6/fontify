@@ -1,8 +1,0 @@
-{
-  "train": [
-    "train.json"
-  ],
-  "val_seen": [
-    "val_seen.json"
-  ]
-}

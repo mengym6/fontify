@@ -4,11 +4,14 @@
 AGENTS.md
 .claude
 docs/
+/aaai/
+/aaai_rebuttal_source/
 # VSCode local settings
 .vscode/
 
 # Python cache
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *.pyo
 
@@ -43,6 +46,16 @@ fontdata_example/val_json_new/
 figures
 fontdata_example/train_json_clean_v2/
 fontdata_example/val_json_clean_v2/
+/fontdata_example/**/*.json
+
+# YOLO: track code and its usage guide, keep data/artifacts local
+!/yolo/README.md
+/yolo/dataset/
+/yolo/previews/
+/yolo/predictions/
+/yolo/models/
+/yolo/runs/
+/yolo/dataset_colab_resolved.yaml
 # Large generated files
 *.zip
 *.png
@@ -54,4 +67,3 @@ fontdata_example/val_json_clean_v2/
 
 # Jupyter
 .ipynb_checkpoints/
-、
