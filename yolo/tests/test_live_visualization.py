@@ -1,6 +1,8 @@
 """CPU-only callback contract tests; real GPU inference is validated separately."""
 
 import importlib.util
+import csv
+import io
 import json
 import os
 from pathlib import Path
@@ -303,6 +305,12 @@ class LiveVisualizationTests(unittest.TestCase):
                 ("JT/metrics/mask_mAP50_pct", 60.0, 1),
                 ("JT/metrics/mask_mAP50_95_pct", 45.0, 1),
             ])
+            with (root / "run/metrics.csv").open(newline="") as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["epoch"], "1")
+            self.assertEqual(rows[0]["BF/metrics/mask_mAP50_pct"], "20.0")
+            self.assertEqual(rows[0]["BF/loss/train_combined"], "")
 
     def test_missing_validator_sidechannel_never_falls_back_to_native_metrics(self):
         for validator in (None, SimpleNamespace()):
@@ -376,15 +384,8 @@ class LiveVisualizationTests(unittest.TestCase):
             callback.on_start(SimpleNamespace(save_dir=run))
             self.assertEqual(directories, [str(root / "dashboard_full/old_run")])
             self.assertEqual(old_event.read_bytes(), b"historical events")
-            protocol = json.loads((run / "dashboard_protocol.json").read_text())
-            self.assertIn("not the complete E2E", protocol["loss_definition"])
-            self.assertEqual(protocol["schema"], "calli-grouped-dashboard-v4")
-            self.assertEqual(protocol["image_tag_template"], "previews/epoch_{epoch:03d}")
-            self.assertEqual(protocol["best_checkpoint_selection"], "unchanged official fitness: box.map + seg.map")
-            self.assertIn("conf=0.25", protocol["official_mask_ap_source"]["preview_independence"])
-            self.assertIn("trainer.validator.grouped_mask_map", protocol["official_mask_ap_source"]["source"])
-            self.assertIn("unchanged", protocol["official_mask_ap_source"]["native_results_csv"])
-            self.assertEqual(len(protocol["scalar_tags"]), 14)
+            self.assertFalse((run / "dashboard_protocol.json").exists())
+            self.assertEqual(len(live.DASHBOARD_SCALAR_TAGS), 14)
             values = {key: .5 for key in live.DASHBOARD_SCALAR_TAGS}
             values.update({"train/seg_loss": 99, "val/box_loss": 99, "metrics/mAP50(M)": 99,
                            "lr/pg0": 99, "diagnostics/BF/gt_count": 99,
@@ -426,7 +427,8 @@ class LiveVisualizationTests(unittest.TestCase):
                                             boxes=Boxes(), masks=Masks(40, 48))]
             py_state = random.getstate()
             with patch.dict("sys.modules", {"torch": torch, "ultralytics": SimpleNamespace(YOLO=IndependentYOLO)}):
-                callback._preview(trainer, 5)
+                callback.on_epoch_start(trainer)
+                callback.on_fit_end(trainer)
             self.assertEqual(len(calls), len(images))
             self.assertEqual(len({call["source"] for call in calls}), len(images))
             for call in calls:
@@ -440,30 +442,41 @@ class LiveVisualizationTests(unittest.TestCase):
             self.assertEqual(len(writer.summaries), 1)
             self.assertEqual(len(writer.summaries[0][0].value[0].tensor.string_val), 62)
             self.assertEqual(writer.summaries[0][0].value[0].tag, "previews/epoch_005")
-            metadata = json.loads((run / "previews/epoch_005/preview.json").read_text())
-            self.assertEqual(metadata["checkpoint_epoch_zero_based"], 4)
-            self.assertEqual(metadata["tensorboard_image_tag"], "previews/epoch_005")
-            self.assertEqual(metadata["evaluated_images"], len(images))
-            self.assertEqual(metadata["preview_images"], 60)
-            self.assertEqual(len(list((run / "previews/epoch_005").glob("*.png"))), 60)
-            self.assertEqual(metadata["samples"][0]["pred_instances"], 2)
-            report = json.loads((run / "region_metrics/epoch_005.json").read_text())
-            self.assertTrue(report["full_validation"])
-            self.assertEqual(len(report["per_image"]), len(images))
-            self.assertEqual(report["summary"]["BF"]["gt_count"], 33)
-            self.assertEqual(report["summary"]["JT"]["pred_count"], 33)
-            self.assertEqual(report["summary"]["BF"]["labeled_images"], 33)
-            self.assertEqual(report["summary"]["JT"]["labeled_images"], 33)
-            self.assertEqual(report["summary"]["all"]["labeled_images"], 66)
+            files = {path.relative_to(run).as_posix() for path in run.rglob("*") if path.is_file()}
+            self.assertEqual(files, {"weights/last.pt", "previews/fixed_samples.json", "metrics.csv"})
+            with (run / "metrics.csv").open(newline="") as stream:
+                curve_rows = list(csv.DictReader(stream))
+            self.assertEqual(len(curve_rows), 1)
+            self.assertEqual(curve_rows[0]["epoch"], "5")
             scalar_names = {key for key, _, _ in writer.scalars}
             self.assertIn("BF/metrics/recall_pct", scalar_names)
             self.assertIn("BF/metrics/precision_pct", scalar_names)
             self.assertFalse(any(key.startswith(("overview/", "diagnostics/")) for key in scalar_names))
-            if report["summary"]["BF"]["mean_matched_iou"] is None:
+            if curve_rows[0]["BF/metrics/iou_pct"] == "":
                 self.assertNotIn("BF/metrics/iou_pct", scalar_names)
-            for file in (run / "previews/epoch_005").glob("*.png"):
-                with Image.open(file) as image:
+            encoded = writer.summaries[0][0].value[0].tensor.string_val
+            for index, row in enumerate(callback.manifest["samples"]):
+                with Image.open(io.BytesIO(encoded[index + 2])) as image:
                     self.assertEqual(image.size, (48 * 5, 40 + 88))
+                    source_index = int(Path(row["image"]).stem.rsplit("_", 1)[1])
+                    self.assertEqual(image.getpixel((0, 62)), (source_index,) * 3)
+
+    def test_one_curve_csv_appends_all_14_metrics_with_one_header(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "metrics.csv"
+            values = {key: float(index) for index, key in enumerate(sorted(live.DASHBOARD_SCALAR_TAGS))}
+            live.append_metrics_csv(path, 1, values)
+            live.append_metrics_csv(path, 2, {"BF/metrics/recall_pct": 50.0})
+            with path.open(newline="") as stream:
+                reader = csv.DictReader(stream)
+                rows = list(reader)
+                self.assertEqual(reader.fieldnames, list(live.METRIC_CSV_FIELDS))
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(len(rows[0]), 15)
+            for key, value in values.items():
+                self.assertEqual(float(rows[0][key]), value)
+            self.assertEqual(rows[1]["BF/metrics/recall_pct"], "50.0")
+            self.assertEqual(rows[1]["JT/loss/train_combined"], "")
 
     def test_disabling_images_keeps_every_epoch_full_val_metrics_hook(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -536,14 +549,14 @@ class LiveVisualizationTests(unittest.TestCase):
         from tensorboard.summary.writer.event_file_writer import EventFileWriter
         from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
         with tempfile.TemporaryDirectory() as temp:
-            paths = []
+            pngs = []
             for index in range(60):
-                path = Path(temp) / f"{index:02d}.png"
-                Image.new("RGB", (10, 8), (index, 0, 0)).save(path)
-                paths.append(path)
+                with io.BytesIO() as buffer:
+                    Image.new("RGB", (10, 8), (index, 0, 0)).save(buffer, format="PNG")
+                    pngs.append(buffer.getvalue())
             writer = FakeWriter()
             for epoch in (1, 2):
-                live.write_image_card(writer, paths, epoch)
+                live.write_image_card(writer, pngs, epoch)
             self.assertEqual(len(writer.summaries), 2)
             events = EventFileWriter(str(Path(temp) / "events"))
             for epoch, (summary, step) in enumerate(writer.summaries, start=1):
@@ -569,6 +582,15 @@ class LiveVisualizationTests(unittest.TestCase):
                 self.assertEqual(len(entries[0].tensor_proto.string_val) - 2, 60)
                 with Image.open(io.BytesIO(entries[0].tensor_proto.string_val[61])) as sample59:
                     self.assertEqual(sample59.getpixel((0, 0)), (59, 0, 0))
+            self.assertFalse(list(Path(temp).rglob("*.png")))
+
+    def test_path_inputs_remain_supported_for_explicit_posthoc_export(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "explicit_export.png"
+            Image.new("RGB", (10, 8), "white").save(path)
+            writer = FakeWriter()
+            live.write_image_card(writer, [path], 1)
+            self.assertEqual(writer.summaries[0][0].value[0].tensor.string_val[2], path.read_bytes())
 
     def test_annotation_tasks_is_explicit_and_missing_rows_fail(self):
         with tempfile.TemporaryDirectory() as temp:

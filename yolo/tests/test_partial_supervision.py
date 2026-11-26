@@ -7,6 +7,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,12 +39,43 @@ class MetadataTests(unittest.TestCase):
                 partial.image_task_valid(root / "images/missing.png", root, loaded)
 
     def test_mixed_image_augmentation_is_rejected(self):
-        for name in ("mosaic", "mixup", "copy_paste", "cutmix"):
+        for name in ("mixup", "copy_paste", "cutmix"):
             with self.subTest(name=name), self.assertRaisesRegex(ValueError, name):
                 partial.reject_mixed_image_augmentation(SimpleNamespace(**{name: .1}))
+        partial.reject_mixed_image_augmentation(SimpleNamespace(mosaic=1))
         partial.reject_mixed_image_augmentation(SimpleNamespace(mosaic=1), augment=False)
         with self.assertRaisesRegex(ValueError, "overlap_mask"):
             partial.reject_mixed_image_augmentation(SimpleNamespace(overlap_mask=True))
+
+    def test_mosaic_donors_use_the_primary_task_pool(self):
+        class NativeMosaicInterface:
+            def get_params(self, labels):
+                return {"indexes": self.get_indexes()}
+        mosaic_class = partial._same_task_mosaic_class(NativeMosaicInterface)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            flags = [(True, False), (True, False), (False, True),
+                     (False, True), (True, True), (True, True)]
+            availability = {f"images/{i}.png": {"has_bf": valid[0], "has_jt": valid[1]}
+                            for i, valid in enumerate(flags)}
+            pools = {valid: [i for i, item in enumerate(flags) if item == valid] for valid in flags}
+            dataset = SimpleNamespace(availability_root=root, annotation_availability=availability,
+                                      mosaic_task_flags=flags, mosaic_task_pools=pools, buffer=[1, 3, 5])
+            mosaic = mosaic_class()
+            mosaic.dataset, mosaic.n, mosaic.buffer_enabled = dataset, 4, True
+            for primary in (0, 2, 4):
+                # Empty surviving labels must not erase known task flags.
+                labels = {"im_file": str(root / f"images/{primary}.png"), "cls": []}
+                selected = mosaic.get_params(labels)["indexes"]
+                self.assertEqual(selected, [primary + 1] * 3)
+                self.assertTrue(all(flags[index] == flags[primary] for index in selected))
+                self.assertIsNone(mosaic._active_task_valid)
+            dataset.buffer = [2, 4]  # no BF donor in native buffer: fall back to the BF pool
+            selected = mosaic.get_params({"im_file": str(root / "images/0.png")})["indexes"]
+            self.assertTrue(set(selected).issubset({0, 1}))
+            mosaic.buffer_enabled = False
+            selected = mosaic.get_params({"im_file": str(root / "images/2.png")})["indexes"]
+            self.assertTrue(set(selected).issubset({2, 3}))
 
     def test_group_state_selects_one2one_and_preserves_unknown_none(self):
         empty = SimpleNamespace()
@@ -76,6 +108,55 @@ class MetadataTests(unittest.TestCase):
 
 @unittest.skipIf(torch is None, "Requires torch + pinned Ultralytics; no optimizer updates are performed")
 class TensorContracts(unittest.TestCase):
+    def test_native_mosaic_and_close_mosaic_keep_task_flags(self):
+        from PIL import Image
+        from ultralytics.cfg import get_cfg
+        from ultralytics.data.augment import Mosaic
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "images/train").mkdir(parents=True)
+            (root / "labels/train").mkdir(parents=True)
+            flags = [(True, False), (True, False), (False, True),
+                     (False, True), (True, True), (True, True)]
+            availability = {}
+            for index, valid in enumerate(flags):
+                image = root / f"images/train/image_{index}.png"
+                Image.new("RGB", (64, 64), "white").save(image)
+                classes = ([0] if valid[0] else []) + ([50] if valid[1] else [])
+                (root / f"labels/train/image_{index}.txt").write_text(
+                    "\n".join(f"{class_id} .2 .2 .8 .2 .8 .8 .2 .8" for class_id in classes))
+                availability[image.relative_to(root).as_posix()] = {"has_bf": valid[0], "has_jt": valid[1]}
+            (root / "availability.json").write_text(json.dumps(availability))
+            data = {"path": str(root), "nc": 70, "names": {i: str(i) for i in range(70)},
+                    "annotation_availability": "availability.json"}
+            hyp = get_cfg(overrides={"mosaic": 1., "mixup": 0., "copy_paste": 0., "cutmix": 0.,
+                                     "overlap_mask": False, "fliplr": 0., "flipud": 0., "task": "segment"})
+            dataset = partial.PartialYOLODataset(
+                img_path=str(root / "images/train"), data=data, imgsz=64, batch_size=3,
+                augment=True, hyp=hyp, cache=False, rect=False, pad=0., task="segment",
+            )
+            native_mosaic = dataset.transforms.transforms[0].transforms[0]
+            self.assertIsInstance(native_mosaic, Mosaic)
+            self.assertEqual(type(native_mosaic).__name__, "SameTaskMosaic")
+            original = dataset.get_image_and_label
+            for primary in (0, 2, 4):
+                seen = []
+                def record(index, *args, **kwargs):
+                    seen.append(index)
+                    return original(index, *args, **kwargs)
+                with patch.object(dataset, "get_image_and_label", side_effect=record):
+                    item = dataset[primary]
+                self.assertEqual(len(seen), 4)
+                self.assertTrue(all(dataset.mosaic_task_flags[index] == flags[primary] for index in seen))
+                self.assertEqual(item["task_valid"].tolist(), list(flags[primary]))
+            dataset.close_mosaic(hyp)
+            self.assertEqual(dataset.transforms.transforms[0].transforms[0].p, 0.)
+            seen = []
+            with patch.object(dataset, "get_image_and_label", side_effect=record):
+                item = dataset[0]
+            self.assertEqual(seen, [0])
+            self.assertEqual(item["task_valid"].tolist(), [True, False])
+
     def test_fp16_zero_graph_connection_does_not_overflow(self):
         values = torch.full((256, 256), 16., dtype=torch.float16, requires_grad=True)
         self.assertTrue(torch.isinf(values.sum()))

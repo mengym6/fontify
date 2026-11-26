@@ -5,6 +5,8 @@ from contextlib import redirect_stdout, nullcontext
 import importlib.util
 import io
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -22,10 +24,12 @@ SPEC.loader.exec_module(train)
 
 DEFAULTS = {
     "optimizer": "auto", "lr0": .01, "lrf": .01, "weight_decay": .0005,
-    "warmup_epochs": 3.0, "save_period": 10, "cos_lr": False, "amp": True,
-    "box": 7.5, "cls": .5, "dfl": 1.5, "translate": .03, "scale": .1,
+    "warmup_epochs": 3.0, "save_period": -1, "cos_lr": False, "amp": True,
+    "box": 7.5, "cls": .5, "dfl": 1.5, "translate": .1, "scale": .5,
     "shear": 0.0, "degrees": 0.0, "freeze": 0, "mask_ratio": 4,
-    "warmup_bias_lr": .1, "momentum": .937, "hsv_v": .1,
+    "warmup_bias_lr": .1, "momentum": .937, "hsv_h": .015, "hsv_s": .7, "hsv_v": .4,
+    "mosaic": 1.0, "fliplr": 0.0, "flipud": 0.0, "perspective": 0.0,
+    "epochs": 60, "batch": 24, "imgsz": 640, "seed": 42, "patience": 0, "plots": False,
 }
 MANUAL_ARGUMENTS = [
     "--optimizer", "AdamW", "--lr0", ".0003", "--lrf", ".1",
@@ -34,14 +38,15 @@ MANUAL_ARGUMENTS = [
     "--box-weight", "5", "--cls-weight", ".7", "--dfl-weight", "1.2",
     "--translate", ".05", "--scale", ".15", "--shear", "1", "--degrees", "0",
     "--freeze", "4", "--mask-ratio", "2",
-    "--warmup-bias-lr", "0", "--momentum", ".9", "--hsv-v", ".15",
+    "--warmup-bias-lr", "0", "--momentum", ".9", "--hsv-h", ".01",
+    "--hsv-s", ".2", "--hsv-v", ".15", "--mosaic", ".5",
 ]
 MANUAL_SETTINGS = {
     "optimizer": "AdamW", "lr0": .0003, "lrf": .1, "weight_decay": .002,
     "warmup_epochs": 1.5, "save_period": 5, "cos_lr": True, "amp": False,
     "box": 5.0, "cls": .7, "dfl": 1.2, "translate": .05, "scale": .15,
     "shear": 1.0, "degrees": 0.0, "freeze": 4, "mask_ratio": 2,
-    "warmup_bias_lr": 0.0, "momentum": .9, "hsv_v": .15,
+    "warmup_bias_lr": 0.0, "momentum": .9, "hsv_h": .01, "hsv_s": .2, "hsv_v": .15, "mosaic": .5,
 }
 
 
@@ -61,7 +66,7 @@ class TrainingArgumentTests(unittest.TestCase):
         return ["train.py", "--data", str(data), "--model", str(model),
                 "--project", str(root / "runs")]
 
-    def test_dry_run_preserves_original_defaults_and_explains_auto(self):
+    def test_dry_run_uses_official_augmentation_with_flips_disabled(self):
         with TemporaryDirectory() as temp:
             arguments = self.make_input(Path(temp)) + ["--dry-run"]
             output = io.StringIO()
@@ -82,6 +87,28 @@ class TrainingArgumentTests(unittest.TestCase):
             plan = json.loads(output.getvalue())
             self.assertEqual({key: plan["train_settings"][key] for key in MANUAL_SETTINGS}, MANUAL_SETTINGS)
             self.assertIn("new run only", plan["optimizer_note"])
+
+    def test_launcher_defaults_and_augmentation_overrides_match_cli(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.make_input(root)
+            environment = os.environ.copy()
+            for key in ("EPOCHS", "BATCH", "TRANSLATE", "SCALE", "HSV_H", "HSV_S", "HSV_V", "MOSAIC", "SAVE_PERIOD"):
+                environment.pop(key, None)
+            environment.update(PYTHON_BIN=sys.executable, DATA_YAML=str(root / "data.yaml"),
+                               MODEL=str(root / "initial.pt"), PROJECT_DIR=str(root / "runs"),
+                               RUN_NAME="argument_check")
+            command = ["bash", str(MODULE.parent / "start_train.sh"), "--dry-run"]
+            result = subprocess.run(command, env=environment, text=True, capture_output=True, check=True)
+            settings = json.loads(result.stdout)["train_settings"]
+            for key in ("epochs", "batch", "translate", "scale", "hsv_h", "hsv_s", "hsv_v", "mosaic", "save_period", "plots"):
+                self.assertEqual(settings[key], DEFAULTS[key])
+            environment.update(HSV_H=".02", HSV_S=".3", HSV_V=".6", MOSAIC=".4")
+            result = subprocess.run(command, env=environment, text=True, capture_output=True, check=True)
+            settings = json.loads(result.stdout)["train_settings"]
+            self.assertEqual({key: settings[key] for key in ("hsv_h", "hsv_s", "hsv_v", "mosaic")},
+                             {"hsv_h": .02, "hsv_s": .3, "hsv_v": .6, "mosaic": .4})
+            self.assertFalse((root / "runs").exists())
 
     def test_auxiliary_weights_are_separate_from_native_ultralytics_kwargs(self):
         with TemporaryDirectory() as temp:
@@ -122,7 +149,8 @@ class TrainingArgumentTests(unittest.TestCase):
             ("save_period", -2),
             ("box_weight", -1), ("cls_weight", float("nan")), ("dfl_weight", -1),
             ("sem_weight", -1), ("warmup_bias_lr", float("inf")),
-            ("momentum", 1), ("hsv_v", 1.1),
+            ("momentum", 1), ("hsv_h", float("nan")), ("hsv_s", -.1),
+            ("hsv_v", 1.1), ("mosaic", 1.01),
             ("translate", 1.1), ("scale", -.1), ("shear", 90), ("degrees", 181),
             ("freeze", -1), ("mask_ratio", 0),
         ]
@@ -183,6 +211,11 @@ class TrainingArgumentTests(unittest.TestCase):
             self.assertEqual({key: calls[0][key] for key in MANUAL_SETTINGS}, MANUAL_SETTINGS)
             self.assertTrue(calls[0]["save"])
             self.assertFalse(calls[0]["overlap_mask"])
+            self.assertFalse(calls[0]["plots"])
+            # Only the YAML actually consumed by Ultralytics/resume remains.
+            configs = Path(temp) / "runs/_configs"
+            self.assertEqual(len(list(configs.glob("dataset_*.yaml"))), 1)
+            self.assertFalse(list(configs.glob("launch_*.json")))
 
     def test_semantic_weight_is_connected_to_callback_not_native_kwargs(self):
         with TemporaryDirectory() as temp:

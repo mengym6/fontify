@@ -14,7 +14,7 @@
 - `task_valid[B,2]`从`annotation_availability.json`进入loss。框、实例mask和L1仅使用实际GT；类别BCE及辅助语义项屏蔽未知任务。
 - 辅助语义目标按类别合并实例为multi-hot，允许同一像素同时属于BF/JT，避免原单类别目标压掉另一任务。
 - 验证只统计有该任务标注的图；预览仍展示两种预测，缺失GT列标记`UNANNOTATED`。
-- `overlap_mask=False`保留重叠实例。禁用翻转、Mosaic、MixUp、Copy-paste等会破坏标签语义或混合未知域的增强。
+- `overlap_mask=False`保留重叠实例。恢复官方增强强度：`translate=0.1`、`scale=0.5`、`hsv_h=0.015`、`hsv_s=0.7`、`hsv_v=0.4`、`mosaic=1`；保留用户要求的禁用翻转。Mosaic只从同标注类型池取图，仍使用官方拼接与几何变换，最后10轮按官方逻辑关闭Mosaic。官方默认旋转/剪切/透视、MixUp/Copy-paste/CutMix均为0，不另外加入反色。
 
 新划分从COCO `models/yolo26s-seg.pt`开始。旧Calli模型可能已见过新验证图，训练和后验评估入口会拒绝将缺少相同split记录的Calli权重用于新划分。旧`dataset/`与旧运行保留作历史复核，不能直接横向比较新旧划分得分。
 
@@ -40,7 +40,7 @@ EPOCHS=60 BATCH=24 RUN_NAME=calli_full_my_run bash start_train.sh
 touch runs/<运行名>/STOP
 ```
 
-正常结束会按Ultralytics逻辑剥离last/best优化器状态；中断续训应使用尚未完成的完整checkpoint，或保留的周期checkpoint。继续训练前检查checkpoint状态，不能将已完成的权重冒充中断恢复点。
+默认只保存`weights/best.pt`和`last.pt`，关闭周期checkpoint。正常结束会按Ultralytics逻辑剥离last/best优化器状态；中断续训使用尚未完成的完整checkpoint。继续训练前检查checkpoint状态，不能将已完成的权重冒充中断恢复点。
 
 `OPTIMIZER=auto`会自行选择优化器与学习率，忽略手填`LR0`；需要控制学习率时选AdamW或SGD。原始训练超参数保留为可调选项，本版本没有自动采用上一轮分析产生的新优化方案。
 
@@ -80,9 +80,11 @@ tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs/dashboard_full --ho
 
 分组mAP使用`seg.all_ap`及`seg.ap_class_index`，不会把验证集中不存在类别的填充值混入平均；有GT但没有正确预测的类别AP计0。固定Ultralytics版本，避免版本间AP插值口径变化影响比较。TB共14条标量：BF/JT各5条评价曲线及2条loss。新曲线从下一次使用此版本的训练开始，历史events保持原样。
 
-四条loss读取实际one-to-one分支box+mask+cls+L1加权贡献，沿用共同分母，BF+JT等于该分支四项之和。验证不计算辅助语义项，所以两端曲线均排除该项；实际E2E反传仍包含两个分支与辅助项。曲线是可比较的主任务量，不能称为全部反传目标。细项和mAP仍保留在results.csv。
+四条loss读取实际one-to-one分支box+mask+cls+L1加权贡献，沿用共同分母，BF+JT等于该分支四项之和。验证不计算辅助语义项，所以两端曲线均排除该项；实际E2E反传仍包含两个分支与辅助项。曲线是可比较的主任务量，不能称为全部反传目标。官方细项和整体mAP保留在`results.csv`，14条TB曲线同时汇总到单个`metrics.csv`。
 
-**每个epoch单独一个预览card**：`previews/epoch_001`、`previews/epoch_002`……。每个card内包含同一批固定60张验证图，跨9个来源抽样，样本选择器切换0–59；查看另一轮时选择对应epoch的card。固定图像身份和顺序跨epoch不变。每张仍为输入/BF GT/BF预测/JT GT/JT预测五列；60张PNG也完整保存于`runs/<运行名>/previews/epoch_XXX/`。`fixed_samples.json`绑定划分身份，训练中不重新抽样。新展示方式从使用此版本启动的下一次训练生效，正在运行的训练保留原展示。
+**每个epoch单独一个预览card**：`previews/epoch_001`、`previews/epoch_002`……。每个card内包含同一批固定60张验证图，跨9个来源抽样，样本选择器切换0–59；查看另一轮时选择对应epoch的card。固定图像身份和顺序跨epoch不变。每张仍为输入/BF GT/BF预测/JT GT/JT预测五列；图片只在内存编码后写入TB，不生成独立PNG、逐轮预览JSON或逐图指标文件。`previews/fixed_samples.json`绑定划分身份，训练中不重新抽样。
+
+运行目录默认只保留`weights/`、`args.yaml`、`results.csv`、`metrics.csv`、恢复训练必需的loss/partial配置和固定预览清单；TB在`dashboard_full/`。原生batch预览、混淆矩阵等绘图默认关闭。数据构建不再自动生成标签预览。
 
 ## 预测与后验评估
 

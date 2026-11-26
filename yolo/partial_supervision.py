@@ -11,6 +11,8 @@ from __future__ import annotations
 import json
 import hashlib
 import os
+import random
+from collections import defaultdict
 from pathlib import Path
 
 
@@ -47,13 +49,59 @@ def image_task_valid(image: str | Path, data_root: str | Path, availability) -> 
 
 def reject_mixed_image_augmentation(hyp, augment=True) -> None:
     if augment:
-        for name in ("mosaic", "mixup", "copy_paste", "cutmix"):
+        for name in ("mixup", "copy_paste", "cutmix"):
             if float(getattr(hyp, name, 0) or 0) != 0:
                 raise ValueError(f"Partial annotation does not support cross-image {name}; set it to 0")
     if getattr(hyp, "overlap_mask", False):
         raise ValueError("Partial BF/JT supervision requires overlap_mask=False to preserve each instance")
     if getattr(hyp, "single_cls", False) or getattr(hyp, "classes", None) is not None:
         raise ValueError("Partial BF/JT supervision requires the complete 70-class label space")
+
+
+def _same_task_mosaic_class(native_class):
+    """Change donor sampling only; retain the native mosaic geometry and RNG."""
+    class SameTaskMosaic(native_class):
+        def get_params(self, labels):
+            previous = getattr(self, "_active_task_valid", None)
+            self._active_task_valid = image_task_valid(
+                labels["im_file"], self.dataset.availability_root, self.dataset.annotation_availability,
+            )
+            try:
+                return super().get_params(labels)
+            finally:
+                self._active_task_valid = previous
+
+        def get_indexes(self):
+            flags = self._active_task_valid
+            pool = self.dataset.mosaic_task_pools[flags]
+            if self.buffer_enabled:
+                buffered = [index for index in self.dataset.buffer
+                            if self.dataset.mosaic_task_flags[index] == flags]
+                return random.choices(buffered or pool, k=self.n - 1)
+            return [random.choice(pool) for _ in range(self.n - 1)]
+
+    SameTaskMosaic.__qualname__ = "SameTaskMosaic"
+    return SameTaskMosaic
+
+
+def _mosaic_class():
+    if "SameTaskMosaic" not in globals():
+        from ultralytics.data.augment import Mosaic
+        globals()["SameTaskMosaic"] = _same_task_mosaic_class(Mosaic)
+    return globals()["SameTaskMosaic"]
+
+
+def replace_mosaic_sources(transforms):
+    """Replace Mosaic nodes in this dataset's Compose; no global monkeypatch."""
+    from ultralytics.data.augment import Compose, Mosaic
+    for index, transform in enumerate(transforms.transforms):
+        if isinstance(transform, Mosaic):
+            transforms.transforms[index] = _mosaic_class()(
+                transform.dataset, imgsz=transform.imgsz, p=transform.p, n=transform.n,
+            )
+        elif isinstance(transform, Compose):
+            replace_mosaic_sources(transform)
+    return transforms
 
 
 def _branches(model):
@@ -374,6 +422,19 @@ def _training_classes():
             reject_mixed_image_augmentation(kwargs["hyp"], augment=kwargs.get("augment", False))
             super().__init__(*args, data=data, **kwargs)
 
+        def build_transforms(self, hyp=None):
+            transforms = super().build_transforms(hyp)
+            if self.augment:
+                self.mosaic_task_flags = [
+                    image_task_valid(image, self.availability_root, self.annotation_availability)
+                    for image in self.im_files
+                ]
+                self.mosaic_task_pools = defaultdict(list)
+                for index, flags in enumerate(self.mosaic_task_flags):
+                    self.mosaic_task_pools[flags].append(index)
+                replace_mosaic_sources(transforms)
+            return transforms
+
         def __getitem__(self, index):
             item = super().__getitem__(index)
             item["task_valid"] = torch.tensor(
@@ -453,6 +514,8 @@ def _training_classes():
 
 
 def __getattr__(name):
+    if name == "SameTaskMosaic":
+        return _mosaic_class()
     if name in {"PartialYOLODataset", "PartialSegmentationTrainer", "PartialSegmentationValidator"}:
         classes = _training_classes()
         globals().update(classes)

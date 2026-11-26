@@ -7,6 +7,8 @@ training model, EMA, optimizer, and their mode/dtype are never passed to predict
 from __future__ import annotations
 
 import hashlib
+import csv
+import io
 import json
 import math
 import os
@@ -30,6 +32,7 @@ DASHBOARD_SCALAR_TAGS = {
     *OFFICIAL_MASK_MAP_TAGS.values(),
 }
 PREVIEW_IMAGE_TAG_TEMPLATE = "previews/epoch_{epoch:03d}"
+METRIC_CSV_FIELDS = ("epoch", *sorted(DASHBOARD_SCALAR_TAGS))
 
 
 def preview_image_tag(epoch: int) -> str:
@@ -81,7 +84,7 @@ def _read_group_losses(model):
     return read_group_loss_accumulators(model)
 
 
-def image_tensor_summary(tag: str, png_paths: list[Path], *, epoch: int | None = None):
+def image_tensor_summary(tag: str, png_paths: list[Path | bytes], *, epoch: int | None = None):
     """Make one v2 image tensor: [width, height, png0, ...], not a mosaic.
 
     TensorBoard Images exposes len(string_val)-2 samples in this tag's card.
@@ -94,14 +97,15 @@ def image_tensor_summary(tag: str, png_paths: list[Path], *, epoch: int | None =
     if not png_paths:
         raise ValueError("An image card requires at least one PNG")
     encoded, dimensions = [], None
-    for path in png_paths:
-        with Image.open(path) as image:
+    for source in png_paths:
+        png = source if isinstance(source, bytes) else Path(source).read_bytes()
+        with Image.open(io.BytesIO(png)) as image:
             if image.format != "PNG":
-                raise ValueError(f"Image card requires PNG input: {path}")
+                raise ValueError("Image card requires PNG input")
             if dimensions is not None and image.size != dimensions:
                 raise ValueError("All image-card samples must have the same dimensions")
             dimensions = image.size
-        encoded.append(Path(path).read_bytes())
+        encoded.append(png)
     width, height = dimensions
     values = [str(width).encode("ascii"), str(height).encode("ascii"), *encoded]
     tensor = tensor_pb2.TensorProto(
@@ -121,9 +125,20 @@ def image_tensor_summary(tag: str, png_paths: list[Path], *, epoch: int | None =
     return summary_pb2.Summary(value=[summary_pb2.Summary.Value(tag=tag, tensor=tensor, metadata=metadata)])
 
 
-def write_image_card(writer, png_paths: list[Path], step: int) -> None:
+def write_image_card(writer, png_paths: list[Path | bytes], step: int) -> None:
     summary = image_tensor_summary(preview_image_tag(step), png_paths, epoch=step)
     writer.file_writer.add_summary(summary, global_step=step)
+
+
+def append_metrics_csv(path: Path, epoch: int, values: dict) -> None:
+    """Keep one compact curve table; unavailable metrics remain empty cells."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    needs_header = not path.is_file() or path.stat().st_size == 0
+    with path.open("a", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=METRIC_CSV_FIELDS)
+        if needs_header:
+            writer.writeheader()
+        writer.writerow({"epoch": epoch, **{key: values.get(key) for key in METRIC_CSV_FIELDS[1:]}})
 
 
 def primary_rank() -> bool:
@@ -424,34 +439,6 @@ class LiveVisualization:
         if self.writer_type:
             event_dir = dashboard_directory(Path(trainer.save_dir))
             self.writer = self.writer_type(str(event_dir))
-            protocol = {
-                "schema": "calli-grouped-dashboard-v4", "event_directory": str(event_dir),
-                "scalar_tags": sorted(DASHBOARD_SCALAR_TAGS),
-                "common_loss_components": list(COMMON_LOSS_NAMES),
-                "loss_definition": (
-                    "BF/JT train_combined and val_combined read actual one-to-one criterion accumulators "
-                    "for four common weighted main terms, using the original shared denominators. "
-                    "These are additive task contributions, not the complete E2E objective; "
-                    "train-only sem_loss is excluded and missing groups are omitted."
-                ),
-                "image_tag_template": PREVIEW_IMAGE_TAG_TEMPLATE,
-                "image_card_policy": "one independent card per epoch; fixed sample order within each card",
-                "image_encoding": "v2 DT_STRING [width,height,png0,...]",
-                "preview_schedule": "every epoch", "requested_preview_count": self.count,
-                "official_mask_ap_source": {
-                    "metrics_keys": sorted(OFFICIAL_MASK_MAP_TAGS),
-                    "source": "trainer.validator.grouped_mask_map: native segmentation AP grouped into BF/JT",
-                    "native_results_csv": "unchanged; grouped AP keys are not appended to native stats/CSV",
-                    "display_conversion": "native fractions multiplied by 100; missing values omitted",
-                    "preview_independence": "not computed from the conf=0.25 fixed-preview predictions",
-                },
-                "best_checkpoint_selection": "unchanged official fitness: box.map + seg.map",
-                "details": "Native loss components, overall mAP, and LR remain in results.csv; grouped official mask AP is also displayed; region counts remain in JSON.",
-                "history": "Existing event files under the old run/tensorboard directory are unchanged.",
-            }
-            (Path(trainer.save_dir) / "dashboard_protocol.json").write_text(
-                json.dumps(protocol, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
             print(f"TensorBoard minimal dashboard enabled: {event_dir}", flush=True)
 
     def on_epoch_start(self, trainer) -> None:
@@ -487,8 +474,11 @@ class LiveVisualization:
                                   _read_group_losses(_loss_model(trainer, validation=True)))
         self._scalars(totals, step)
         grouped_mask_map = getattr(getattr(trainer, "validator", None), "grouped_mask_map", {})
-        self._scalars(official_mask_map_percentages(grouped_mask_map), step)
-        self._preview(trainer, step)
+        official_ap = official_mask_map_percentages(grouped_mask_map)
+        self._scalars(official_ap, step)
+        region_values = self._preview(trainer, step) or {}
+        append_metrics_csv(Path(trainer.save_dir) / "metrics.csv", step,
+                           {**totals, **official_ap, **region_values})
         stop_request = Path(trainer.save_dir) / "STOP"
         if stop_request.is_file():
             trainer.stop = True
@@ -498,7 +488,7 @@ class LiveVisualization:
         if self.writer:
             self.writer.flush()
 
-    def _preview(self, trainer, step: int) -> None:
+    def _preview(self, trainer, step: int) -> dict:
         from PIL import Image
         from ultralytics import YOLO
         from region_metrics import (
@@ -519,37 +509,14 @@ class LiveVisualization:
         preview_lookup = {(data_root / row["image"]).resolve(): (index, row)
                           for index, row in enumerate(rows)}
         sources = sorted({Path(source).resolve() for source in self.val_images})
-        authors = validation_authors(data_root, sources)
         known = annotation_tasks(self.data, sources)
         counts = RegionMetricsAccumulator(conf_threshold=.25, iou_threshold=.5, deduplicate_gt=True)
+        encoded_previews = [None] * len(rows)
         with preserve_rng():
             predictor = YOLO(str(checkpoint))
             checkpoint_matches_epoch(predictor.ckpt, trainer.epoch)
-            folder = Path(trainer.save_dir) / "previews" / f"epoch_{step:03d}"
-            folder.mkdir(parents=True, exist_ok=True)
-            provenance = {
-                "epoch": step, "checkpoint_epoch_zero_based": trainer.epoch,
-                "checkpoint": str(checkpoint), "checkpoint_sha256": sha256(checkpoint),
-                "checkpoint_note": "last.pt is overwritten later; SHA identifies the weights used here",
-                "source": "current epoch last.pt EMA", "conf_threshold": .25, "iou_threshold": .5,
-                "evaluated_split": "val", "full_validation": True,
-                "data_split_id": self.data.get("split_id"),
-                "evaluated_images": len(sources), "preview_images": len(rows),
-                "evaluation_interval_epochs": 1,
-                "evaluation_schedule": "every epoch",
-                "unknown_task_policy": "exclude unannotated task from metrics; show both predictions",
-                "tensorboard_image_tag": preview_image_tag(step),
-                "tensorboard_image_card_policy": "one card per epoch; same fixed sample manifest",
-                "ground_truth_policy": "deduplicate equal class_id and pixel-identical binary mask",
-                "native_duplicate_note": (
-                    "Native Ultralytics removes duplicate label rows during loading. This report "
-                    "independently deduplicates class+binary mask; raw/removed counts are measured, "
-                    "not assumed equal to the native loader warning."
-                ),
-            }
-            metadata = {**provenance, "samples": []}
             # Evaluate each validation image once, then reuse the same result for
-            # its fixed preview if selected. Never retain all 171 GPU mask sets.
+            # its in-memory preview if selected. Do not retain all GPU mask sets.
             for source in sources:
                 results = predictor.predict(
                     source=str(source), device=trainer.device, imgsz=trainer.args.imgsz,
@@ -567,42 +534,26 @@ class LiveVisualization:
                 predicted = prediction_instances(result)
                 relative = os.path.relpath(source, data_root)
                 counts.update(truth, predicted, image_id=relative, known_tasks=known[source])
-                if source in preview_lookup:
-                    index, row = preview_lookup[source]
-                    unique_truth, removed = deduplicate_gt_instances(truth)
+                if self.writer and source in preview_lookup:
+                    index, _ = preview_lookup[source]
+                    unique_truth, _ = deduplicate_gt_instances(truth)
                     preview = panel_image(image, unique_truth, predicted, self.data["names"], step,
                                           source.stem, known_tasks=known[source])
-                    filename = f"{index:02d}_{source.stem}.png"
-                    preview.save(folder / filename)
-                    metadata["samples"].append({
-                        "image": row["image"], "author": row.get("author", authors[source]),
-                        "preview": filename, "gt_instances_raw": len(truth),
-                        "gt_instances": len(unique_truth), "gt_duplicates_removed": removed,
-                        "pred_instances": len(predicted),
-                        "known_tasks": known[source],
-                    })
+                    with io.BytesIO() as buffer:
+                        preview.save(buffer, format="PNG")
+                        encoded_previews[index] = buffer.getvalue()
                 del results, result, truth, predicted
             summary = counts.summary()
-            metrics_dir = Path(trainer.save_dir) / "region_metrics"
-            metrics_dir.mkdir(parents=True, exist_ok=True)
-            metrics_path = metrics_dir / f"epoch_{step:03d}.json"
-            metrics_path.write_text(json.dumps(
-                {**provenance, "summary": summary, "per_image": counts.per_image},
-                ensure_ascii=False, indent=2, allow_nan=False,
-            ), encoding="utf-8")
-            self._scalars(tensorboard_scalars(summary), step)
-            metadata["region_metrics"] = str(metrics_path)
-            metadata["samples"].sort(key=lambda row: row["preview"])
+            region_values = tensorboard_scalars(summary)
+            self._scalars(region_values, step)
             if self.writer and rows:
-                if len(metadata["samples"]) != len(rows):
-                    raise RuntimeError("Not all fixed preview samples were exported")
-                write_image_card(self.writer, [folder / row["preview"] for row in metadata["samples"]], step)
-            (folder / "preview.json").write_text(
-                json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
+                if any(png is None for png in encoded_previews):
+                    raise RuntimeError("Not all fixed preview samples were encoded")
+                write_image_card(self.writer, encoded_previews, step)
             del predictor
-        print(f"Full-val region counts ({len(sources)} images): {metrics_path}; "
-              f"fixed previews ({len(rows)} images): {folder}", flush=True)
+        print(f"Epoch {step}: evaluated {len(sources)} validation images; "
+              f"TensorBoard previews={len(rows) if self.writer else 0}", flush=True)
+        return region_values
 
     def close(self, trainer=None) -> None:
         if self.writer:

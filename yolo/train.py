@@ -217,7 +217,10 @@ def validate_hyperparameters(args) -> None:
         ("scale", args.scale, 0 <= args.scale <= 1, "0 <= scale <= 1"),
         ("shear", args.shear, 0 <= args.shear < 90, "0 <= shear < 90 degrees"),
         ("degrees", args.degrees, 0 <= args.degrees <= 180, "0 <= degrees <= 180"),
+        ("hsv-h", args.hsv_h, 0 <= args.hsv_h <= 1, "0 <= hsv-h <= 1"),
+        ("hsv-s", args.hsv_s, 0 <= args.hsv_s <= 1, "0 <= hsv-s <= 1"),
         ("hsv-v", args.hsv_v, 0 <= args.hsv_v <= 1, "0 <= hsv-v <= 1"),
+        ("mosaic", args.mosaic, 0 <= args.mosaic <= 1, "0 <= mosaic <= 1"),
     )
     for name, value, in_range, description in checks:
         if not math.isfinite(value) or not in_range:
@@ -232,8 +235,8 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--data", type=Path, default=ROOT / "dataset_full" / "data.yaml")
     result.add_argument("--model", default="yolo26s-seg.pt")
-    result.add_argument("--epochs", type=int, default=100)
-    result.add_argument("--batch", type=int, default=8)
+    result.add_argument("--epochs", type=int, default=60)
+    result.add_argument("--batch", type=int, default=24)
     result.add_argument("--imgsz", type=int, default=640)
     result.add_argument("--patience", type=int, default=0, choices=(0,),
                         help="Early stopping is disabled; stop manually or reach the epoch limit")
@@ -249,7 +252,7 @@ def parser() -> argparse.ArgumentParser:
                         help="Initial bias learning rate during warmup; auto optimizer resets it to 0")
     result.add_argument("--momentum", type=float, default=.937,
                         help="SGD momentum/Adam beta1; optimizer=auto selects its own value")
-    result.add_argument("--save-period", type=int, default=10,
+    result.add_argument("--save-period", type=int, default=-1,
                         help="Periodic checkpoint interval; -1 or 0 disables periodic copies")
     result.add_argument("--cos-lr", action="store_true", help="Use cosine LR decay for a new run")
     result.add_argument("--no-amp", action="store_true", help="Disable mixed precision for a new run")
@@ -260,13 +263,16 @@ def parser() -> argparse.ArgumentParser:
                         help="Native dfl gain; YOLO26 reg_max=1 uses it for L1 regression")
     result.add_argument("--sem-weight", type=float, default=None,
                         help="Both E2E branches' semantic multiplier; new-run default 1, resume inherits saved config")
-    result.add_argument("--translate", type=float, default=.03)
-    result.add_argument("--scale", type=float, default=.10)
+    result.add_argument("--translate", type=float, default=.1)
+    result.add_argument("--scale", type=float, default=.5)
     result.add_argument("--shear", type=float, default=0.0, help="Maximum absolute shear angle in degrees")
     result.add_argument("--degrees", type=float, default=0.0, help="Maximum absolute rotation angle")
     result.add_argument("--freeze", type=int, default=0, help="Number of initial model layers to freeze")
     result.add_argument("--mask-ratio", type=int, default=4, help="Training-mask downsampling ratio")
-    result.add_argument("--hsv-v", type=float, default=.1, help="Brightness augmentation magnitude")
+    result.add_argument("--hsv-h", type=float, default=.015, help="Hue augmentation magnitude")
+    result.add_argument("--hsv-s", type=float, default=.7, help="Saturation augmentation magnitude")
+    result.add_argument("--hsv-v", type=float, default=.4, help="Brightness augmentation magnitude")
+    result.add_argument("--mosaic", type=float, default=1.0, help="Same-annotation-pool Mosaic probability")
     result.add_argument("--device", default="0", help="AutoDL GPU: 0; CPU: cpu")
     result.add_argument("--workers", type=int, default=2)
     result.add_argument("--seed", type=int, default=42)
@@ -319,16 +325,16 @@ def main() -> None:
         "patience": args.patience, "device": args.device, "workers": args.workers,
         "seed": args.seed, "project": str(args.project.expanduser().resolve()),
         "name": args.name, "overlap_mask": False, "fliplr": 0.0, "flipud": 0.0,
-        "mosaic": 0.0, "mixup": 0.0, "copy_paste": 0.0, "degrees": args.degrees,
+        "mosaic": args.mosaic, "mixup": 0.0, "copy_paste": 0.0, "degrees": args.degrees,
         "translate": args.translate, "scale": args.scale, "shear": args.shear, "perspective": 0.0,
-        "hsv_h": 0.0, "hsv_s": 0.0, "hsv_v": args.hsv_v,
+        "hsv_h": args.hsv_h, "hsv_s": args.hsv_s, "hsv_v": args.hsv_v,
         "optimizer": args.optimizer, "lr0": args.lr0, "lrf": args.lrf,
         "weight_decay": args.weight_decay, "warmup_epochs": args.warmup_epochs,
         "warmup_bias_lr": args.warmup_bias_lr, "momentum": args.momentum,
         "cos_lr": args.cos_lr, "amp": not args.no_amp,
         "box": args.box_weight, "cls": args.cls_weight, "dfl": args.dfl_weight,
         "freeze": args.freeze, "mask_ratio": args.mask_ratio,
-        "save": True, "save_period": args.save_period, "plots": True,
+        "save": True, "save_period": args.save_period, "plots": False,
     }
     plan = {
         "model": str(model_path), "resume": str(args.resume) if args.resume else None,
@@ -379,9 +385,6 @@ def main() -> None:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     runtime_yaml = config_dir / f"dataset_{stamp}.yaml"
     runtime_yaml.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
-    (config_dir / f"launch_{stamp}.json").write_text(
-        json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
     try:
         with isolated_logging_integrations():
             if args.resume:

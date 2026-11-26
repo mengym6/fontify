@@ -18,7 +18,7 @@ import numpy as np
 from PIL import Image
 
 from build_dataset import (
-    CLASSES, class_id_for, draw_preview, file_sha, mask_to_polygon,
+    CLASSES, class_id_for, file_sha, mask_to_polygon,
     polygon_mask, source_index,
 )
 
@@ -406,8 +406,7 @@ def build(args):
     for part in ('train', 'val'):
         for kind in ('images', 'labels'):
             (output / kind / part).mkdir(parents=True)
-    (output / 'previews').mkdir()
-    availability, preview_count = {}, Counter()
+    availability = {}
     for row in samples:
         source_image = Path(row.pop('_source_image'))
         row['image'] = f"images/{row['split']}/{row['id']}.png"
@@ -418,12 +417,6 @@ def build(args):
         lines = [export_label(item['class_id'], np.asarray(item['coordinates'])) for item in row['instances']]
         (output / row['label']).write_text('\n'.join(lines) + '\n', encoding='utf-8')
         availability[row['image']] = {key: row[key] for key in ('has_bf', 'has_jt', 'author', 'character', 'leak_group')}
-        if preview_count[(row['author'], row['split'])] < 1:
-            preview_instances = [{'class_id': item['class_id'], 'polygon': (np.asarray(item['coordinates']) * 448).tolist()}
-                                 for item in row['instances']]
-            with Image.open(output / row['image']) as image:
-                draw_preview(image, preview_instances, output / 'previews' / (row['id'] + '.jpg'), row['author'] + '/' + row['split'])
-            preview_count[(row['author'], row['split'])] += 1
     lines = ['path: .', 'train: images/train', 'val: images/val',
              'annotation_availability: annotation_availability.json', f'split_id: {split_id}', 'names:']
     lines.extend(f"  {item['id']}: {item['name']}" for item in CLASSES)

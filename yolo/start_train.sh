@@ -35,16 +35,19 @@ BOX_WEIGHT="${BOX_WEIGHT:-7.5}"
 CLS_WEIGHT="${CLS_WEIGHT:-0.5}"
 DFL_WEIGHT="${DFL_WEIGHT:-1.5}"            # YOLO26 reg_max=1时控制L1回归项
 SEM_WEIGHT="${SEM_WEIGHT:-1}"             # 两个E2E分支的辅助语义项倍率
-TRANSLATE="${TRANSLATE:-0.03}"
-SCALE="${SCALE:-0.10}"
+TRANSLATE="${TRANSLATE:-0.1}"
+SCALE="${SCALE:-0.5}"
 SHEAR="${SHEAR:-0}"
 DEGREES="${DEGREES:-0}"
 FREEZE="${FREEZE:-0}"
 MASK_RATIO="${MASK_RATIO:-4}"             # 训练mask下采样倍率；2保留更多小阶段细节
-HSV_V="${HSV_V:-0.1}"
+HSV_H="${HSV_H:-0.015}"
+HSV_S="${HSV_S:-0.7}"
+HSV_V="${HSV_V:-0.4}"
+MOSAIC="${MOSAIC:-1.0}"                 # 仅从相同标注池选取拼图来源
 COS_LR="${COS_LR:-0}"                    # 1=余弦调度；0=原默认调度
 AMP="${AMP:-1}"                          # 1=混合精度；0=关闭
-SAVE_PERIOD="${SAVE_PERIOD:-10}"
+SAVE_PERIOD="${SAVE_PERIOD:--1}"       # 默认只保留best/last，不保存周期副本
 PREVIEW_EVERY=1                          # 每个epoch都输出固定验证图
 PREVIEW_COUNT=60                         # 单card的60个样本，整个训练保持相同
 TB_PORT="${TB_PORT:-6006}"
@@ -75,7 +78,7 @@ ARGS=(
     --sem-weight "$SEM_WEIGHT"
     --translate "$TRANSLATE" --scale "$SCALE" --shear "$SHEAR" --degrees "$DEGREES"
     --freeze "$FREEZE" --mask-ratio "$MASK_RATIO"
-    --hsv-v "$HSV_V"
+    --hsv-h "$HSV_H" --hsv-s "$HSV_S" --hsv-v "$HSV_V" --mosaic "$MOSAIC"
     --save-period "$SAVE_PERIOD" --preview-every "$PREVIEW_EVERY"
     --preview-count "$PREVIEW_COUNT"
 )
