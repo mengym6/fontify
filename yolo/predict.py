@@ -52,7 +52,7 @@ def main() -> None:
     parser.add_argument("--source", type=Path, required=True, help="Image file or image directory")
     parser.add_argument("--output", type=Path,
                         default=ROOT / "predictions" / datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
-    parser.add_argument("--classes", type=Path, default=ROOT / "dataset" / "classes.json")
+    parser.add_argument("--classes", type=Path, default=ROOT / "dataset_full" / "classes.json")
     parser.add_argument("--device", default="0")
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--conf", type=float, default=0.25)

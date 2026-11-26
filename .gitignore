@@ -51,6 +51,7 @@ fontdata_example/val_json_clean_v2/
 # YOLO: track code and its usage guide, keep data/artifacts local
 !/yolo/README.md
 /yolo/dataset/
+/yolo/dataset_full/
 /yolo/previews/
 /yolo/predictions/
 /yolo/models/

@@ -9,16 +9,16 @@ cd "$SCRIPT_DIR"
 # ================= 在这里调整路径和超参数 =================
 # 也可临时覆盖，例如 EPOCHS=50 BATCH=4 bash start_train.sh。
 PYTHON_BIN="${PYTHON_BIN:-/root/autodl-tmp/fontify_yolo_env/bin/python}"
-DATA_YAML="${DATA_YAML:-$SCRIPT_DIR/dataset/data.yaml}"
+DATA_YAML="${DATA_YAML:-$SCRIPT_DIR/dataset_full/data.yaml}"
 MODEL="${MODEL:-yolo26s-seg.pt}"
 PROJECT_DIR="${PROJECT_DIR:-$SCRIPT_DIR/runs}"
-TB_LOGDIR="${TB_LOGDIR:-$PROJECT_DIR/dashboard}"  # 新简洁面板，避免读入旧多指标event
-RUN_NAME="${RUN_NAME:-calli_phase_jieti_$(date +%Y%m%d_%H%M%S)}"
+TB_LOGDIR="${TB_LOGDIR:-$PROJECT_DIR/dashboard_full}"  # 全量新版，旧看板保留在dashboard/
+RUN_NAME="${RUN_NAME:-calli_full_phase_jieti_$(date +%Y%m%d_%H%M%S)}"
 DEVICE="${DEVICE:-0}"
-EPOCHS="${EPOCHS:-100}"
-BATCH="${BATCH:-8}"
+EPOCHS="${EPOCHS:-60}"
+BATCH="${BATCH:-24}"
 IMGSZ="${IMGSZ:-640}"
-PATIENCE="${PATIENCE:-25}"
+PATIENCE=0                               # 禁用指标早停，由用户人工停止；epochs仍是上限
 WORKERS="${WORKERS:-2}"
 SEED="${SEED:-42}"
 
@@ -45,9 +45,10 @@ HSV_V="${HSV_V:-0.1}"
 COS_LR="${COS_LR:-0}"                    # 1=余弦调度；0=原默认调度
 AMP="${AMP:-1}"                          # 1=混合精度；0=关闭
 SAVE_PERIOD="${SAVE_PERIOD:-10}"
-PREVIEW_EVERY="${PREVIEW_EVERY:-5}"        # 首轮/每5轮/末轮：全val区域计数+固定图
-PREVIEW_COUNT="${PREVIEW_COUNT:-45}"      # 新run按9来源各5字；已有manifest保持原样
+PREVIEW_EVERY=1                          # 每个epoch都输出固定验证图
+PREVIEW_COUNT=60                         # 单card的60个样本，整个训练保持相同
 TB_PORT="${TB_PORT:-6006}"
+TB_IMAGE_STEPS="${TB_IMAGE_STEPS:-1000}"  # TB界面保留的epoch数量，必须为正数
 # ==========================================================
 
 MODE="${1:-train}"
@@ -87,7 +88,7 @@ if [[ "$MODE" == train ]]; then
     "$PYTHON_BIN" "$SCRIPT_DIR/train.py" "${ARGS[@]}" --dry-run >/dev/null
 fi
 
-"$PYTHON_BIN" - "$MODE" "$SCRIPT_DIR" "$PROJECT_DIR" "$RUN_NAME" "$TB_PORT" "$TB_LOGDIR" "${ARGS[@]}" <<'PY'
+"$PYTHON_BIN" - "$MODE" "$SCRIPT_DIR" "$PROJECT_DIR" "$RUN_NAME" "$TB_PORT" "$TB_LOGDIR" "$TB_IMAGE_STEPS" "${ARGS[@]}" <<'PY'
 import json
 import os
 import socket
@@ -97,10 +98,13 @@ import time
 import urllib.request
 from pathlib import Path
 
-mode, root, project, name, port_text, logdir_text, *training_args = sys.argv[1:]
+mode, root, project, name, port_text, logdir_text, image_steps_text, *training_args = sys.argv[1:]
 root, project = Path(root).resolve(), Path(project).expanduser().resolve()
 tb_logdir = Path(logdir_text).expanduser().resolve()
 port = int(port_text)
+image_steps = int(image_steps_text)
+if image_steps < 1:
+    raise ValueError("TB_IMAGE_STEPS 必须是正整数；0会隐藏图片历史")
 if not 1 <= port <= 65535:
     raise ValueError("TB_PORT 必须在 1–65535 范围内")
 if not name or Path(name).name != name or name in {".", ".."}:
@@ -132,7 +136,8 @@ else:
     with tb_log.open("a") as log:
         tb = subprocess.Popen(
             [sys.executable, "-m", "tensorboard.main", "--logdir", str(tb_logdir),
-             "--host", "127.0.0.1", "--port", str(port)],
+             "--host", "127.0.0.1", "--port", str(port),
+             "--samples_per_plugin", f"images={image_steps}"],
             cwd=root, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
             start_new_session=True,
         )
@@ -186,4 +191,5 @@ launch = {"pid": process.pid, "command": command, "started_at": time.time(),
 print(f"已后台启动训练 PID {process.pid}", flush=True)
 print(f"训练日志：{train_log}\n权重目录：{run_dir / 'weights'}", flush=True)
 print(f"查看日志：tail -f {train_log}", flush=True)
+print(f"人工停止：在运行目录创建 STOP 文件，程序会在当前epoch结束后退出：{run_dir / 'STOP'}", flush=True)
 PY

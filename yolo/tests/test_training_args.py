@@ -70,7 +70,7 @@ class TrainingArgumentTests(unittest.TestCase):
             plan = json.loads(output.getvalue())
             self.assertEqual({key: plan["train_settings"][key] for key in DEFAULTS}, DEFAULTS)
             self.assertIn("ignoring the supplied lr0", plan["optimizer_note"])
-            self.assertEqual(plan["visualization"]["tensorboard_root"], str((Path(temp) / "runs/dashboard").resolve()))
+            self.assertEqual(plan["visualization"]["tensorboard_root"], str((Path(temp) / "runs/dashboard_full").resolve()))
             self.assertFalse((Path(temp) / "runs").exists())
 
     def test_dry_run_reports_requested_manual_settings(self):

@@ -100,11 +100,46 @@ class RegionMetricsTests(unittest.TestCase):
 
     def test_both_empty_and_empty_aggregation_are_undefined(self):
         report = metrics.evaluate_regions([], [])
-        self.assertEqual(report, metrics.aggregate_region_metrics([]))
+        self.assertEqual(report["BF"]["labeled_images"], 1)
+        self.assertEqual(metrics.aggregate_region_metrics([])["BF"]["labeled_images"], 0)
         for group in report.values():
             for key in ("region_recall", "region_precision", "label_accuracy",
                         "label_aware_precision", "miss_rate"):
                 self.assertIsNone(group[key])
+
+    def test_unknown_task_predictions_are_not_false_positives(self):
+        report = metrics.evaluate_regions([region(0)], [region(0), region(50)], known_tasks={"BF"})
+        self.assertEqual(report["BF"]["labeled_images"], 1)
+        self.assertEqual(report["JT"]["labeled_images"], 0)
+        self.assertEqual(report["JT"]["pred_count"], 0)
+        self.assertEqual(report["JT"]["false_positive_count"], 0)
+        self.assertIsNone(report["JT"]["label_aware_precision"])
+        self.assertEqual(report["all"]["pred_count"], 1)
+        self.assertEqual(report["all"]["labeled_images"], 1)
+
+    def test_known_empty_task_predictions_are_false_positives(self):
+        report = metrics.evaluate_regions([], [region(50)], known_tasks={"JT": True})
+        self.assertEqual(report["JT"]["labeled_images"], 1)
+        self.assertEqual(report["JT"]["false_positive_count"], 1)
+        self.assertEqual(report["JT"]["label_aware_precision"], 0.0)
+
+    def test_partial_task_aggregation_counts_labeled_images_not_task_sum(self):
+        acc = metrics.RegionMetricsAccumulator()
+        acc.update([region(0)], [region(0), region(50)], known_tasks={"BF"})
+        acc.update([region(50)], [region(0), region(50)], known_tasks={"JT"})
+        acc.update([region(0), region(50)], [region(0), region(50)])
+        acc.update([], [region(0), region(50)], known_tasks=set())
+        result = acc.summary()
+        self.assertEqual(result["BF"]["labeled_images"], 2)
+        self.assertEqual(result["JT"]["labeled_images"], 2)
+        self.assertEqual(result["all"]["labeled_images"], 3)
+        self.assertEqual(result["all"]["pred_count"], 4)
+        self.assertEqual(result["all"]["label_aware_precision"], 1.0)
+
+    def test_invalid_known_tasks_rejected(self):
+        for tasks in ({"has_bf": True}, "BF", {"BF": "false"}, {"unknown"}):
+            with self.assertRaises(ValueError):
+                metrics.evaluate_regions([], [], known_tasks=tasks)
 
     def test_overlapping_instances_remain_separate(self):
         gt = [region(50, range(20)), region(51, range(5, 15))]
@@ -222,12 +257,12 @@ class RegionMetricsTests(unittest.TestCase):
         )
         scalars = metrics.tensorboard_scalars(report)
         self.assertEqual(scalars, {
-            "metrics/BF/recall_pct": 50.0,
-            "metrics/BF/precision_pct": 100.0,
-            "metrics/BF/iou_pct": 100.0,
-            "metrics/JT/recall_pct": 100.0,
-            "metrics/JT/precision_pct": 0.0,
-            "metrics/JT/iou_pct": 100.0,
+            "BF/metrics/recall_pct": 50.0,
+            "BF/metrics/precision_pct": 100.0,
+            "BF/metrics/iou_pct": 100.0,
+            "JT/metrics/recall_pct": 100.0,
+            "JT/metrics/precision_pct": 0.0,
+            "JT/metrics/iou_pct": 100.0,
         })
         self.assertTrue(all(isinstance(value, float) for value in scalars.values()))
 

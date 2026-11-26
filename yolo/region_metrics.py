@@ -23,12 +23,14 @@ counts and matched IoUs first, never averages per-image percentages.
 GT deduplication is opt-in and removes only same-class, pixel-identical masks.
 Different classes or overlapping instances are retained. Callers should use
 one confidence/IoU/deduplication policy for every report they aggregate.
+``known_tasks`` excludes unannotated tasks, including their predictions, from
+metrics. ``labeled_images`` counts eligible images separately for BF and JT.
 """
 
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
@@ -36,10 +38,34 @@ from scipy.optimize import linear_sum_assignment
 
 GROUPS = ("BF", "JT", "all")
 COUNT_FIELDS = (
+    "labeled_images",
     "raw_gt_count", "duplicate_gt_count", "removed_duplicate_gt_count",
     "gt_count", "pred_count", "matched_count", "label_correct_count",
     "missed_count", "false_positive_count",
 )
+
+
+def normalize_known_tasks(known_tasks=None) -> frozenset[str]:
+    """None means both tasks are annotated; an empty set means neither is.
+
+    Accept BF/JT names or a mapping such as {"BF": True, "JT": False}.
+    Unknown tasks are excluded from both GT and prediction metric counts.
+    """
+    if known_tasks is None:
+        return frozenset(("BF", "JT"))
+    if isinstance(known_tasks, str):
+        raise ValueError("known_tasks must be a collection or mapping, not a string")
+    if isinstance(known_tasks, Mapping):
+        if set(known_tasks).difference(("BF", "JT")):
+            raise ValueError("known_tasks supports only BF and JT")
+        if any(not isinstance(value, (bool, np.bool_)) for value in known_tasks.values()):
+            raise ValueError("known_tasks mapping values must be boolean")
+        tasks = {name for name, available in known_tasks.items() if available}
+    else:
+        tasks = set(known_tasks)
+    if tasks.difference(("BF", "JT")):
+        raise ValueError("known_tasks supports only BF and JT")
+    return frozenset(tasks)
 
 
 def _threshold(value: float, name: str, *, positive: bool = False) -> float:
@@ -162,7 +188,7 @@ def _sum_groups(groups: Iterable[dict]) -> dict:
     counts["matched_iou_sum"] = 0.0
     for group in groups:
         for key in COUNT_FIELDS:
-            counts[key] += group[key]
+            counts[key] += group.get(key, 1) if key == "labeled_images" else group[key]
         counts["matched_iou_sum"] += group["matched_iou_sum"]
     return _with_rates(counts)
 
@@ -174,6 +200,7 @@ def evaluate_regions(
     conf_threshold: float = 0.25,
     iou_threshold: float = 0.5,
     deduplicate_gt: bool = False,
+    known_tasks=None,
 ) -> dict:
     """Evaluate one image; return JSON-serializable BF, JT, and all summaries.
 
@@ -181,9 +208,11 @@ def evaluate_regions(
     confidence defaults to 1.0 when absent. Filtering occurs before geometric
     matching. ``duplicate_gt_count`` reports exact duplicates even when kept;
     ``removed_duplicate_gt_count`` is nonzero only with explicit deduplication.
+    ``known_tasks=None`` preserves the original fully annotated behavior.
     """
     conf_threshold = _threshold(conf_threshold, "conf_threshold")
     iou_threshold = _threshold(iou_threshold, "iou_threshold", positive=True)
+    tasks = normalize_known_tasks(known_tasks)
     filtered = []
     for instance in pred_instances:
         confidence = _threshold(instance.get("confidence", 1.0), "confidence")
@@ -194,6 +223,9 @@ def evaluate_regions(
         raise ValueError("GT and prediction masks must share the same HxW shape")
     result = {}
     for name, low, high in (("BF", 0, 50), ("JT", 50, 70)):
+        if name not in tasks:
+            result[name] = _sum_groups(())
+            continue
         raw = [item for item in truth if low <= item["class_id"] < high]
         unique_indices = _unique_indices(raw)
         duplicate_count = len(raw) - len(unique_indices)
@@ -203,6 +235,7 @@ def evaluate_regions(
         pairs = _match_iou(overlaps, iou_threshold)
         matched = len(pairs)
         result[name] = _with_rates({
+            "labeled_images": 1,
             "raw_gt_count": len(raw), "duplicate_gt_count": duplicate_count,
             "removed_duplicate_gt_count": duplicate_count if deduplicate_gt else 0,
             "gt_count": len(selected), "pred_count": len(predicted),
@@ -214,6 +247,7 @@ def evaluate_regions(
             "matched_iou_sum": float(sum(overlaps[gi, pi] for gi, pi in pairs)),
         })
     result["all"] = _sum_groups((result["BF"], result["JT"]))
+    result["all"]["labeled_images"] = int(bool(tasks))
     return result
 
 
@@ -222,6 +256,7 @@ def aggregate_region_metrics(per_image_reports: Iterable[dict]) -> dict:
     reports = list(per_image_reports)
     result = {name: _sum_groups(report[name] for report in reports) for name in ("BF", "JT")}
     result["all"] = _sum_groups((result["BF"], result["JT"]))
+    result["all"]["labeled_images"] = sum(report["all"].get("labeled_images", 1) for report in reports)
     return result
 
 
@@ -244,7 +279,7 @@ def tensorboard_scalars(report: dict) -> dict[str, float]:
         for display_name, key in primary.items():
             value = group.get(key)
             if value is not None:
-                output[f"metrics/{name}/{display_name}_pct"] = 100.0 * float(value)
+                output[f"{name}/metrics/{display_name}_pct"] = 100.0 * float(value)
     return output
 
 
@@ -261,8 +296,8 @@ class RegionMetricsAccumulator:
         self.per_image: list[dict] = []
 
     def update(self, gt_instances: Sequence[dict], pred_instances: Sequence[dict],
-               image_id: str | None = None) -> dict:
-        report = evaluate_regions(gt_instances, pred_instances, **self.options)
+               image_id: str | None = None, *, known_tasks=None) -> dict:
+        report = evaluate_regions(gt_instances, pred_instances, known_tasks=known_tasks, **self.options)
         report["image_id"] = str(image_id) if image_id is not None else None
         self.per_image.append(report)
         return report

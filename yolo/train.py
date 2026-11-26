@@ -7,6 +7,7 @@ The model is trained only when main() is explicitly invoked without --dry-run.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -40,6 +41,14 @@ def read_dataset(path: Path) -> dict:
     root = Path(str(data.get("path", "."))).expanduser()
     root = root.resolve() if root.is_absolute() else (path.parent / root).resolve()
     resolved = {"path": str(root), "names": names, "nc": len(names)}
+    if data.get("annotation_availability"):
+        availability = Path(str(data["annotation_availability"])).expanduser()
+        resolved["annotation_availability"] = str(
+            availability.resolve() if availability.is_absolute() else (root / availability).resolve()
+        )
+        if not isinstance(data.get("split_id"), str) or not data["split_id"]:
+            raise ValueError("Partially labelled data must have an explicit split_id")
+        resolved["split_id"] = data["split_id"]
     for split in ("train", "val", "test"):
         value = data.get(split)
         if not value:
@@ -102,6 +111,8 @@ def validate_dataset(data: dict) -> dict:
     report = {}
     previous = set()
     class_count = len(data["names"])
+    from partial_supervision import image_task_valid, load_annotation_availability
+    availability = load_annotation_availability(data)
     for split in ("train", "val", "test"):
         if split not in data:
             continue
@@ -112,7 +123,13 @@ def validate_dataset(data: dict) -> dict:
         previous.update(images)
         counts = [0] * class_count
         empty = 0
+        known_counts = {"BF": 0, "JT": 0}
         for image in images:
+            has_bf, has_jt = image_task_valid(image, data["path"], availability)
+            if not (has_bf or has_jt):
+                raise ValueError(f"Image has no available supervision: {image}")
+            known_counts["BF"] += has_bf
+            known_counts["JT"] += has_jt
             label = label_path(image)
             if not label.is_file():
                 raise FileNotFoundError(f"Missing segmentation label: {label}")
@@ -125,6 +142,8 @@ def validate_dataset(data: dict) -> dict:
                 class_id = int(row[0])
                 if not 0 <= class_id < class_count:
                     raise ValueError(f"Class ID outside data.yaml names: {label}")
+                if availability is not None and not (has_bf if class_id < 50 else has_jt):
+                    raise ValueError(f"Label belongs to a task marked unknown: {label}")
                 coords = [float(value) for value in row[1:]]
                 if any(not math.isfinite(value) or not 0 <= value <= 1 for value in coords):
                     raise ValueError(f"Nonfinite or nonnormalized polygon coordinate: {label}")
@@ -136,10 +155,35 @@ def validate_dataset(data: dict) -> dict:
         report[split] = {
             "images": len(images), "instances": sum(counts),
             "empty_labels": empty, "instances_per_class": counts,
+            "labelled_images": known_counts,
         }
     # Byte/image-identity grouping is recorded by the dataset builder. This
     # inexpensive launcher check deliberately does not claim to re-audit it.
     return report
+
+
+def validate_initialization_split(model_names: dict, checkpoint: Path, data: dict) -> None:
+    """Keep old Calli weights that saw new validation images out of a new split."""
+    if not data.get("split_id") or dict(model_names) != data["names"]:
+        return
+    sidecar = checkpoint.resolve().parent.parent / "partial_supervision.json"
+    if not sidecar.is_file():
+        raise ValueError(
+            "This Calli checkpoint has no new-split provenance. Use the original "
+            "COCO yolo26s-seg.pt; old Calli weights may have seen the new validation images."
+        )
+    source = json.loads(sidecar.read_text(encoding="utf-8"))
+    availability_sha = hashlib.sha256(Path(data["annotation_availability"]).read_bytes()).hexdigest()
+    if (source.get("schema") != "calli-partial-supervision-v1"
+            or source.get("split_id") != data["split_id"]
+            or source.get("availability_sha256") != availability_sha):
+        raise ValueError("Checkpoint and dataset split/task protocols differ; start from COCO")
+
+
+def create_partial_trainer(*args, **kwargs):
+    """Lazy factory keeps metadata checking usable without importing torch."""
+    from partial_supervision import PartialSegmentationTrainer
+    return PartialSegmentationTrainer(*args, **kwargs)
 
 
 def validate_resume_checkpoint(checkpoint: object) -> None:
@@ -186,12 +230,13 @@ def validate_hyperparameters(args) -> None:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
-    result.add_argument("--data", type=Path, default=ROOT / "dataset" / "data.yaml")
+    result.add_argument("--data", type=Path, default=ROOT / "dataset_full" / "data.yaml")
     result.add_argument("--model", default="yolo26s-seg.pt")
     result.add_argument("--epochs", type=int, default=100)
     result.add_argument("--batch", type=int, default=8)
     result.add_argument("--imgsz", type=int, default=640)
-    result.add_argument("--patience", type=int, default=25)
+    result.add_argument("--patience", type=int, default=0, choices=(0,),
+                        help="Early stopping is disabled; stop manually or reach the epoch limit")
     result.add_argument("--optimizer", default="auto",
                         choices=("auto", "SGD", "MuSGD", "Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp"),
                         help="auto selects optimizer and lr0 itself; choose AdamW/SGD to set lr0 manually")
@@ -233,11 +278,10 @@ def parser() -> argparse.ArgumentParser:
                         help="Resume output directory; defaults to LAST_PT's run/ directory")
     result.add_argument("--dry-run", action="store_true",
                         help="Validate data and print settings; no model import/download/update")
-    result.add_argument("--preview-every", type=int, default=5,
-                        help="Full-val region-count evaluation and preview interval; includes first/final epochs")
-    result.add_argument("--preview-count", type=int, default=45,
-                        help="New runs: author-stratified fixed images (default 9x5); existing manifests stay fixed; "
-                             "0 disables images, not periodic full-val count metrics")
+    result.add_argument("--preview-every", type=int, default=1, choices=(1,),
+                        help="Write full validation metrics and fixed previews every epoch")
+    result.add_argument("--preview-count", type=int, default=60, choices=(60,),
+                        help="Exactly 60 fixed validation images in one TensorBoard image card")
     result.add_argument("--no-tensorboard", action="store_true",
                         help="Explicitly disable TensorBoard scalars/images (PNG previews remain)")
     return result
@@ -293,10 +337,10 @@ def main() -> None:
         "auxiliary_loss": {"sem_weight": args.sem_weight},
         "visualization": {"tensorboard": not args.no_tensorboard,
                           "tensorboard_root": str((resume_output.parent if resume_output else Path(settings["project"]))
-                                                  / "dashboard"),
+                                                  / "dashboard_full"),
                           "preview_every": args.preview_every, "preview_count": args.preview_count,
                           "region_metrics_scope": "full validation",
-                          "region_metrics_schedule": "first/preview interval/final epochs",
+                          "region_metrics_schedule": "every epoch",
                           "region_conf_threshold": .25, "region_iou_threshold": .5},
         "note": "Resume restores the checkpoint optimizer and training schedule; "
                 "the printed new-run hyperparameters are not applied to resume."
@@ -326,6 +370,8 @@ def main() -> None:
         validate_resume_checkpoint(model.ckpt)
     if model.task != "segment":
         raise ValueError("This dataset requires an instance-segmentation (-seg) model")
+    if data.get("split_id"):
+        validate_initialization_split(model.names, Path(checkpoint), data)
     model.add_callback("on_train_start", make_semantic_loss_callback(args.sem_weight))
     live.attach(model)
     config_dir = Path(settings["project"]) / "_configs"
@@ -340,11 +386,12 @@ def main() -> None:
         with isolated_logging_integrations():
             if args.resume:
                 model.train(
-                    resume=True, data=str(runtime_yaml), device=args.device, workers=args.workers,
+                    trainer=create_partial_trainer,
+                    resume=True, data=str(runtime_yaml), device=args.device, workers=args.workers, patience=0,
                     save_dir=str(resume_output),
                 )
             else:
-                model.train(data=str(runtime_yaml), **settings)
+                model.train(trainer=create_partial_trainer, data=str(runtime_yaml), **settings)
     finally:
         live.close()
     print(f"Training finished. Actual output directory: {model.trainer.save_dir}")

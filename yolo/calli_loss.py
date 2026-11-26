@@ -98,6 +98,11 @@ def install_semantic_weight(model, semantic_weight: float) -> dict:
     def convert(branch):
         if not isinstance(branch, SegmentLoss26):
             raise TypeError('Semantic weighting requires the YOLO26 SegmentLoss26 criterion')
+        if getattr(branch, '_calli_partial', False):
+            # The partial criterion applies this multiplier after task-masked
+            # multi-hot semantic loss; do not wrap and multiply it a second time.
+            branch._calli_semantic_weight = weight
+            return branch
         if hasattr(branch, '_calli_semantic_weight'):
             branch._calli_semantic_weight = weight
             return branch

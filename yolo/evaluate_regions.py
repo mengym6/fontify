@@ -47,7 +47,7 @@ def write_gallery(output: Path, images: list[dict], checkpoint: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--weights", type=Path, required=True)
-    parser.add_argument("--data", type=Path, default=ROOT / "dataset/data.yaml")
+    parser.add_argument("--data", type=Path, default=ROOT / "dataset_full/data.yaml")
     parser.add_argument("--split", choices=("train", "val", "test"), default="val")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--device", default="0")
@@ -69,18 +69,19 @@ def main() -> None:
         raise FileNotFoundError(weights)
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"Use a new evaluation directory: {output}")
-    tensorboard_dir = output.parent / "dashboard" / output.name
+    from live_visualization import dashboard_directory
+    tensorboard_dir = dashboard_directory(output)
     if (not args.no_tensorboard and tensorboard_dir.exists()
             and any(tensorboard_dir.iterdir())):
         raise FileExistsError(f"Use a new evaluation name; dashboard already exists: {tensorboard_dir}")
 
-    import numpy as np
     from PIL import Image
     from ultralytics import YOLO
-    from train import read_dataset, split_images
+    from train import read_dataset, split_images, validate_initialization_split
     from live_visualization import (
         gt_instances, label_for, panel_image, prediction_instances, sha256,
-        summary_writer_class,
+        summary_writer_class, annotation_tasks, fixed_samples, write_image_card,
+        validation_authors,
     )
     from region_metrics import (
         aggregate_region_metrics, deduplicate_gt_instances,
@@ -91,11 +92,19 @@ def main() -> None:
     if args.split not in data:
         raise ValueError(f"No {args.split} split in data YAML")
     images = split_images(data[args.split])
+    known = annotation_tasks(data, images)
+    authors = validation_authors(Path(data["path"]).resolve(), images)
     model = YOLO(str(weights))
     if model.task != "segment" or dict(model.names) != data["names"] or len(model.names) != 70:
         raise ValueError("Checkpoint must match the dataset's 50 phase + 20 component classes")
+    validate_initialization_split(model.names, weights, data)
     output.mkdir(parents=True)
+    preview_manifest = fixed_samples(
+        Path(data["path"]), images, 60, 42, output / "fixed_samples.json",
+        split_id=data.get("split_id"),
+    ) if not args.no_tensorboard and args.save_previews else None
     writer = None if args.no_tensorboard else summary_writer_class()(str(tensorboard_dir))
+    preview_files = {}
     records, author_reports = [], defaultdict(list)
     checkpoint_sha = sha256(weights)
     protocol = {
@@ -117,8 +126,10 @@ def main() -> None:
         },
         "aggregation": "micro: sum counts before calculating rates",
         "gt_deduplication": "same class and identical original-resolution binary mask",
+        "annotation_availability": "per-image known_tasks; unknown task predictions excluded, not false positives",
+        "labeled_images": "each task counts images with its annotations; all counts images with any known task",
         "zero_denominator": "null in JSON; omitted from TensorBoard",
-        "tensorboard_main_rates": "metrics/BF and metrics/JT: recall_pct, precision_pct, iou_pct only",
+        "tensorboard_main_rates": "BF/metrics and JT/metrics: recall_pct, precision_pct, iou_pct only",
         "tensorboard_directory": str(tensorboard_dir) if writer else None,
     }
     try:
@@ -135,24 +146,23 @@ def main() -> None:
             truth = gt_instances(label_for(source), image.height, image.width)
             predictions = prediction_instances(result_list[0])
             counts = evaluate_regions(truth, predictions, conf_threshold=args.conf,
-                                      iou_threshold=args.match_iou, deduplicate_gt=True)
-            author = source.stem.split("_", 1)[0]
+                                      iou_threshold=args.match_iou, deduplicate_gt=True,
+                                      known_tasks=known[source.resolve()])
+            author = authors[source.resolve()]
             row = {"image": str(source.relative_to(data["path"])), "author": author,
                    "image_sha256": sha256(source), "label_sha256": sha256(label_for(source)),
-                   "metrics": counts}
+                   "metrics": counts, "known_tasks": known[source.resolve()]}
             if args.save_previews:
                 unique_truth, _ = deduplicate_gt_instances(truth)
                 panel = panel_image(image, unique_truth, predictions, data["names"],
                                     args.checkpoint_epoch, source.stem,
                                     checkpoint_label=f"{weights.name} | post-training evaluation",
-                                    confidence_threshold=args.conf)
+                                    confidence_threshold=args.conf, known_tasks=known[source.resolve()])
                 relative = Path("previews") / author / (source.stem + ".png")
                 (output / relative).parent.mkdir(parents=True, exist_ok=True)
                 panel.save(output / relative)
                 row["preview"] = str(relative)
-                if writer:
-                    writer.add_image(f"previews/{author}/{source.stem}", np.asarray(panel),
-                                     args.checkpoint_epoch, dataformats="HWC")
+                preview_files[source.resolve()] = output / relative
             records.append(row)
             author_reports[author].append(counts)
             del result_list, truth, predictions, image
@@ -167,6 +177,7 @@ def main() -> None:
             "source_files_sha256": {name: sha256(ROOT / name) for name in
                                     ("evaluate_regions.py", "region_metrics.py", "live_visualization.py")},
             "data_yaml_sha256": sha256(args.data.expanduser().resolve()),
+            "data_split_id": data.get("split_id"),
             "split": args.split, "images": len(images), "protocol": protocol,
             "groups": aggregate_region_metrics([row["metrics"] for row in records]),
             "by_author": {author: {"images": len(reports), "groups": aggregate_region_metrics(reports)}
@@ -179,6 +190,9 @@ def main() -> None:
         if writer:
             for key, value in tensorboard_scalars(summary["groups"]).items():
                 writer.add_scalar(key, value, args.checkpoint_epoch)
+            if preview_manifest:
+                write_image_card(writer, [preview_files[(Path(data["path"]) / row["image"]).resolve()]
+                                         for row in preview_manifest["samples"]], args.checkpoint_epoch)
             writer.add_text("protocol/definition", json.dumps(protocol, ensure_ascii=False, indent=2), args.checkpoint_epoch)
             writer.flush()
         if args.save_previews:
