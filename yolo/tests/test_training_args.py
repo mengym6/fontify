@@ -1,0 +1,151 @@
+"""Hyperparameter forwarding and resume contracts without loading torch/models."""
+
+import argparse
+from contextlib import redirect_stdout, nullcontext
+import importlib.util
+import io
+import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
+import unittest
+from unittest.mock import patch
+
+
+MODULE = Path(__file__).resolve().parents[1] / "train.py"
+SPEC = importlib.util.spec_from_file_location("calli_training_args", MODULE)
+train = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(train)
+
+
+DEFAULTS = {
+    "optimizer": "auto", "lr0": .01, "lrf": .01, "weight_decay": .0005,
+    "warmup_epochs": 3.0, "save_period": 10, "cos_lr": False, "amp": True,
+}
+MANUAL_ARGUMENTS = [
+    "--optimizer", "AdamW", "--lr0", ".0003", "--lrf", ".1",
+    "--weight-decay", ".002", "--warmup-epochs", "1.5", "--save-period", "5",
+    "--cos-lr", "--no-amp",
+]
+MANUAL_SETTINGS = {
+    "optimizer": "AdamW", "lr0": .0003, "lrf": .1, "weight_decay": .002,
+    "warmup_epochs": 1.5, "save_period": 5, "cos_lr": True, "amp": False,
+}
+
+
+class TrainingArgumentTests(unittest.TestCase):
+    def make_input(self, root):
+        for split in ("train", "val"):
+            image = root / "images" / split / "glyph.png"
+            label = root / "labels" / split / "glyph.txt"
+            image.parent.mkdir(parents=True)
+            label.parent.mkdir(parents=True)
+            image.touch()
+            label.write_text("0 .1 .1 .8 .1 .5 .8\n")
+        data = root / "data.yaml"
+        data.write_text("path: .\ntrain: images/train\nval: images/val\nnames: [phase]\n")
+        model = root / "initial.pt"
+        model.touch()
+        return ["train.py", "--data", str(data), "--model", str(model),
+                "--project", str(root / "runs")]
+
+    def test_dry_run_preserves_original_defaults_and_explains_auto(self):
+        with TemporaryDirectory() as temp:
+            arguments = self.make_input(Path(temp)) + ["--dry-run"]
+            output = io.StringIO()
+            with patch("sys.argv", arguments), redirect_stdout(output):
+                train.main()
+            plan = json.loads(output.getvalue())
+            self.assertEqual({key: plan["train_settings"][key] for key in DEFAULTS}, DEFAULTS)
+            self.assertIn("ignoring the supplied lr0", plan["optimizer_note"])
+            self.assertFalse((Path(temp) / "runs").exists())
+
+    def test_dry_run_reports_requested_manual_settings(self):
+        with TemporaryDirectory() as temp:
+            arguments = self.make_input(Path(temp)) + MANUAL_ARGUMENTS + ["--dry-run"]
+            output = io.StringIO()
+            with patch("sys.argv", arguments), redirect_stdout(output):
+                train.main()
+            plan = json.loads(output.getvalue())
+            self.assertEqual({key: plan["train_settings"][key] for key in MANUAL_SETTINGS}, MANUAL_SETTINGS)
+            self.assertIn("new run only", plan["optimizer_note"])
+
+    def test_invalid_floats_and_ranges_are_rejected(self):
+        defaults = train.parser().parse_args([])
+        invalid = [
+            ("lr0", 0), ("lr0", -1), ("lr0", 1.1), ("lr0", float("nan")),
+            ("lrf", -0.1), ("lrf", 1.1), ("lrf", float("inf")),
+            ("weight_decay", -0.1), ("weight_decay", 1.1), ("weight_decay", float("nan")),
+            ("warmup_epochs", -1), ("warmup_epochs", float("inf")),
+            ("save_period", -2),
+        ]
+        for name, value in invalid:
+            with self.subTest(name=name, value=value):
+                args = argparse.Namespace(**vars(defaults))
+                setattr(args, name, value)
+                with self.assertRaises(ValueError):
+                    train.validate_hyperparameters(args)
+
+    def test_valid_boundary_values_and_short_smoke_are_accepted(self):
+        args = train.parser().parse_args([
+            "--epochs", "2", "--lr0", "1", "--lrf", "0",
+            "--weight-decay", "0", "--warmup-epochs", "3", "--save-period", "-1",
+        ])
+        train.validate_hyperparameters(args)
+        args.save_period = 0
+        train.validate_hyperparameters(args)
+
+    def run_with_mock_model(self, root, extra, resume=False):
+        calls = []
+        class Model:
+            def __init__(self, path):
+                self.task = "segment"
+                self.ckpt = {"epoch": 2, "optimizer": {}}
+                self.trainer = SimpleNamespace(save_dir=root / "runs/mock")
+            def train(self, **kwargs):
+                calls.append(kwargs)
+        class Preview:
+            def __init__(self, *args):
+                pass
+            def attach(self, model):
+                pass
+            def close(self):
+                pass
+        arguments = self.make_input(root) + extra
+        if resume:
+            checkpoint = root / "existing/weights/last.pt"
+            checkpoint.parent.mkdir(parents=True)
+            checkpoint.touch()
+            arguments += ["--resume", str(checkpoint)]
+        modules = {
+            "ultralytics": SimpleNamespace(YOLO=Model),
+            "live_visualization": SimpleNamespace(
+                LiveVisualization=Preview, isolated_logging_integrations=nullcontext),
+        }
+        output = io.StringIO()
+        with patch.dict("sys.modules", modules), patch("sys.argv", arguments), redirect_stdout(output):
+            train.main()
+        return calls, output.getvalue()
+
+    def test_manual_settings_are_forwarded_to_new_training(self):
+        with TemporaryDirectory() as temp:
+            calls, _ = self.run_with_mock_model(Path(temp), MANUAL_ARGUMENTS)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual({key: calls[0][key] for key in MANUAL_SETTINGS}, MANUAL_SETTINGS)
+            self.assertTrue(calls[0]["save"])
+            self.assertFalse(calls[0]["overlap_mask"])
+
+    def test_resume_does_not_apply_new_hyperparameters(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            calls, output = self.run_with_mock_model(root, MANUAL_ARGUMENTS, resume=True)
+            self.assertEqual(len(calls), 1)
+            self.assertTrue(calls[0]["resume"])
+            self.assertTrue(set(MANUAL_SETTINGS).isdisjoint(calls[0]))
+            self.assertNotIn("epochs", calls[0])
+            self.assertEqual(calls[0]["save_dir"], str((root / "existing").resolve()))
+            self.assertIn("not applied to resume", output)
+
+
+if __name__ == "__main__":
+    unittest.main()

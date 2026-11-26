@@ -156,6 +156,20 @@ def validate_resume_checkpoint(checkpoint: object) -> None:
         )
 
 
+def validate_hyperparameters(args) -> None:
+    checks = (
+        ("lr0", args.lr0, 0 < args.lr0 <= 1, "0 < lr0 <= 1"),
+        ("lrf", args.lrf, 0 <= args.lrf <= 1, "0 <= lrf <= 1"),
+        ("weight-decay", args.weight_decay, 0 <= args.weight_decay <= 1, "0 <= weight-decay <= 1"),
+        ("warmup-epochs", args.warmup_epochs, args.warmup_epochs >= 0, "warmup-epochs >= 0"),
+    )
+    for name, value, in_range, description in checks:
+        if not math.isfinite(value) or not in_range:
+            raise ValueError(f"{name} must be finite and satisfy {description}")
+    if args.save_period < -1:
+        raise ValueError("save-period must be -1, 0, or a positive number of epochs")
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--data", type=Path, default=ROOT / "dataset" / "data.yaml")
@@ -164,6 +178,18 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--batch", type=int, default=8)
     result.add_argument("--imgsz", type=int, default=640)
     result.add_argument("--patience", type=int, default=25)
+    result.add_argument("--optimizer", default="auto",
+                        choices=("auto", "SGD", "MuSGD", "Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSProp"),
+                        help="auto selects optimizer and lr0 itself; choose AdamW/SGD to set lr0 manually")
+    result.add_argument("--lr0", type=float, default=.01,
+                        help="Initial learning rate; ignored by optimizer=auto")
+    result.add_argument("--lrf", type=float, default=.01, help="Final learning-rate fraction")
+    result.add_argument("--weight-decay", type=float, default=.0005)
+    result.add_argument("--warmup-epochs", type=float, default=3.0)
+    result.add_argument("--save-period", type=int, default=10,
+                        help="Periodic checkpoint interval; -1 or 0 disables periodic copies")
+    result.add_argument("--cos-lr", action="store_true", help="Use cosine LR decay for a new run")
+    result.add_argument("--no-amp", action="store_true", help="Disable mixed precision for a new run")
     result.add_argument("--device", default="0", help="AutoDL GPU: 0; CPU: cpu")
     result.add_argument("--workers", type=int, default=2)
     result.add_argument("--seed", type=int, default=42)
@@ -186,6 +212,7 @@ def parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = parser().parse_args()
+    validate_hyperparameters(args)
     if args.epochs < 1 or args.batch < 1 or args.imgsz < 32 or args.patience < 0:
         raise ValueError("epochs/batch must be positive, imgsz >= 32, patience >= 0")
     if args.preview_every < 1 or args.preview_count < 0:
@@ -216,7 +243,10 @@ def main() -> None:
         "mosaic": 0.0, "mixup": 0.0, "copy_paste": 0.0, "degrees": 0.0,
         "translate": 0.03, "scale": 0.10, "shear": 0.0, "perspective": 0.0,
         "hsv_h": 0.0, "hsv_s": 0.0, "hsv_v": 0.1,
-        "save": True, "save_period": 10, "plots": True,
+        "optimizer": args.optimizer, "lr0": args.lr0, "lrf": args.lrf,
+        "weight_decay": args.weight_decay, "warmup_epochs": args.warmup_epochs,
+        "cos_lr": args.cos_lr, "amp": not args.no_amp,
+        "save": True, "save_period": args.save_period, "plots": True,
     }
     plan = {
         "model": str(model_path), "resume": str(args.resume) if args.resume else None,
@@ -224,8 +254,13 @@ def main() -> None:
         "resolved_data": data, "dataset_check": report, "train_settings": settings,
         "visualization": {"tensorboard": not args.no_tensorboard,
                           "preview_every": args.preview_every, "preview_count": args.preview_count},
-        "note": "Resume restores the checkpoint schedule; new-run defaults are not reapplied."
+        "note": "Resume restores the checkpoint optimizer and training schedule; "
+                "the printed new-run hyperparameters are not applied to resume."
         if args.resume else "COCO initialization is not a trained Calli recognizer.",
+        "optimizer_note": (
+            "Ultralytics optimizer=auto selects the optimizer and initial learning rate, "
+            "ignoring the supplied lr0. Choose AdamW or SGD for a manually selected lr0."
+        ) if args.optimizer == "auto" else "Explicit optimizer and lr0 apply to a new run only.",
     }
     print(json.dumps(plan, ensure_ascii=False, indent=2))
     if args.dry_run:

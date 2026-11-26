@@ -42,35 +42,44 @@ yolo/
 python train.py --dry-run
 ```
 
-## 训练与实时查看
+## 统一启动脚本：参数、训练、TensorBoard
 
-默认输入大小为640、batch为8、最多100个epoch、早停耐心值为25。可以直接执行：
-
-```bash
-python train.py --epochs 100 --batch 8 --imgsz 640 --device 0
-```
-
-显存不足时先将 `--batch` 改为4。第一次正式训练会把 COCO 初始化权重下载到 `models/`；这份初始化本身不能识别本项目的阶段和结体类别。
-
-默认运行输出位于 `runs/calli_phase_jieti_yolo26s/`；同名目录已有运行时会顺延编号，**以程序打印的实际目录为准**。若希望终端断开后继续运行，可以使用：
+常用超参数集中在 **`start_train.sh` 顶部**：轮数、batch、输入分辨率、学习率、优化器、权重衰减、warmup、早停、AMP、存档间隔和预览间隔。默认保持现有训练配置。
 
 ```bash
-nohup python train.py --epochs 100 --batch 8 --imgsz 640 --device 0 > train.log 2>&1 &
+cd /root/autodl-tmp/fontify_yolo/yolo
+bash start_train.sh --dry-run  # 只检查数据与参数，不启动任何服务或训练
+bash start_train.sh           # 自动启动/复用TensorBoard，后台启动训练
 ```
 
-TensorBoard 默认启用：标量每个epoch更新；固定4个验证字的预测预览每5个epoch更新，首个和最后一个epoch也保存。预测图片同时写入该运行的 `previews/` 和 TensorBoard 的 **Images** 页面。这些图使用训练中的模型输出，和本目录 `previews/` 中的标注示例不同。
+启动后终端会显示训练PID、日志、权重目录和TensorBoard地址。可以关闭终端；训练和TensorBoard独立后台运行。同一目录已有训练时只准备TensorBoard并显示已有PID，不会再启动一份训练。
 
-另开一个服务器终端启动 TensorBoard：
+也可以一次性覆盖参数，不修改文件：
+
+```bash
+EPOCHS=80 BATCH=8 OPTIMIZER=AdamW LR0=0.0003 bash start_train.sh
+```
+
+**`OPTIMIZER=auto` 时，Ultralytics会自行选择优化器和初始学习率，手填 `LR0` 不生效。** 要调整初始学习率，请选择 `AdamW` 或 `SGD`。`COS_LR=1` 启用余弦调度；`AMP=0` 关闭混合精度。`RUN_NAME` 默认带启动时间，也可手动指定；同名结果不会覆盖。
+
+只启动或复用TensorBoard，不启动训练：
+
+```bash
+bash start_train.sh --tb-only
+```
+
+TensorBoard监听服务器 `127.0.0.1:6006`，日志根目录与脚本的 `PROJECT_DIR` 一致。端口被其他服务或其他日志目录占用时会明确提示；修改顶部 `TB_PORT` 可换端口。无需自动打开远程浏览器。
+
+在本地VS Code的 **Ports（端口）→ Forward a Port（转发端口）** 输入 `6006`，打开转发后的本机地址。曲线每轮更新，Images中的固定4个验证字在首轮、每5轮、结束轮更新。
+
+如果希望手动启动TensorBoard，可在服务器另一个终端执行：
 
 ```bash
 source /root/autodl-tmp/fontify_yolo_env/bin/activate
-cd /root/autodl-tmp/fontify_yolo/yolo
-tensorboard --logdir runs --host 127.0.0.1 --port 6006
+tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs --host 127.0.0.1 --port 6006
 ```
 
-在本地 VS Code 的 **Ports（端口）** 面板选择 **Forward a Port（转发端口）**，输入 `6006`，点击转发地址，即可在浏览器查看训练曲线和预测图。如果本地6006已占用，使用 VS Code 显示的实际转发地址。
-
-更新代码时通过 Git 拉取；现有 `dataset/`、`runs/`、`models/` 不由 Git 覆盖。训练过程中的最新权重、标量和预览都保存在服务器运行目录中。
+默认最多100轮、batch8、640输入、patience25。第一次训练会下载COCO初始化到 `models/`；现有数据、权重和运行结果均不由Git覆盖。当前在跑的训练不需要为新增启动脚本重启；修改脚本参数只影响下一次新训练。
 
 ## 验证、预测与续训
 
@@ -94,6 +103,7 @@ python train.py --resume runs/calli_phase_jieti_yolo26s/weights/last.pt --device
 
 | 文件／目录 | 用途 |
 |---|---|
+| `start_train.sh` | 顶部调整超参数；自动TensorBoard与后台训练 |
 | `train.py` | 训练入口，支持数据检查、实时可视化和续训 |
 | `live_visualization.py` | 每轮标量与固定样本分组预览，独立载入当前轮权重 |
 | `autodl_constraints.txt` | 已有CUDA PyTorch环境的NumPy/OpenCV兼容约束 |
