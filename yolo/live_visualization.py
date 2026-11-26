@@ -31,7 +31,7 @@ DASHBOARD_SCALAR_TAGS = {
       for metric in ("recall", "precision", "iou")},
     *OFFICIAL_MASK_MAP_TAGS.values(),
 }
-PREVIEW_IMAGE_TAG_TEMPLATE = "previews/epoch_{epoch:03d}"
+PREVIEW_IMAGE_TAG_TEMPLATE = "epoch:{epoch:03d}/validation"
 METRIC_CSV_FIELDS = ("epoch", *sorted(DASHBOARD_SCALAR_TAGS))
 
 
@@ -41,7 +41,7 @@ def preview_image_tag(epoch: int) -> str:
 
 def dashboard_directory(run_directory: Path) -> Path:
     run_directory = Path(run_directory)
-    return run_directory.parent / "dashboard_full" / run_directory.name
+    return run_directory.parent / "tensorboard" / run_directory.name
 
 
 def group_loss_totals(train_groups: dict, val_groups: dict) -> dict:
@@ -84,50 +84,16 @@ def _read_group_losses(model):
     return read_group_loss_accumulators(model)
 
 
-def image_tensor_summary(tag: str, png_paths: list[Path | bytes], *, epoch: int | None = None):
-    """Make one v2 image tensor: [width, height, png0, ...], not a mosaic.
-
-    TensorBoard Images exposes len(string_val)-2 samples in this tag's card.
-    Each epoch has its own tag; sample n selects string_val[n+2].
-    """
+def write_image_card(writer, png_paths: list[Path | bytes], step: int) -> None:
+    """Match Fontify: epoch in tag, sample index in the ordinary image step."""
+    import numpy as np
     from PIL import Image
-    from tensorboard.compat.proto import summary_pb2, tensor_pb2, tensor_shape_pb2, types_pb2
-    from tensorboard.plugins.image.metadata import create_summary_metadata
 
-    if not png_paths:
-        raise ValueError("An image card requires at least one PNG")
-    encoded, dimensions = [], None
-    for source in png_paths:
+    tag = preview_image_tag(step)
+    for index, source in enumerate(png_paths):
         png = source if isinstance(source, bytes) else Path(source).read_bytes()
         with Image.open(io.BytesIO(png)) as image:
-            if image.format != "PNG":
-                raise ValueError("Image card requires PNG input")
-            if dimensions is not None and image.size != dimensions:
-                raise ValueError("All image-card samples must have the same dimensions")
-            dimensions = image.size
-        encoded.append(png)
-    width, height = dimensions
-    values = [str(width).encode("ascii"), str(height).encode("ascii"), *encoded]
-    tensor = tensor_pb2.TensorProto(
-        dtype=types_pb2.DT_STRING,
-        tensor_shape=tensor_shape_pb2.TensorShapeProto(
-            dim=[tensor_shape_pb2.TensorShapeProto.Dim(size=len(values))]),
-        string_val=values,
-    )
-    metadata = create_summary_metadata(
-        display_name=f"Epoch {epoch:03d} · fixed validation samples" if epoch is not None else tag,
-        description=(f"Epoch {epoch:03d}. " if epoch is not None else "") +
-                    f"Select sample 0..{len(png_paths) - 1} from the fixed sample manifest. "
-                    "Each sample shows input, BF GT/prediction, JT GT/prediction. "
-                    "Other epochs appear in separate cards with the same sample ordering.",
-    )
-    metadata.data_class = summary_pb2.DATA_CLASS_BLOB_SEQUENCE
-    return summary_pb2.Summary(value=[summary_pb2.Summary.Value(tag=tag, tensor=tensor, metadata=metadata)])
-
-
-def write_image_card(writer, png_paths: list[Path | bytes], step: int) -> None:
-    summary = image_tensor_summary(preview_image_tag(step), png_paths, epoch=step)
-    writer.file_writer.add_summary(summary, global_step=step)
+            writer.add_image(tag, np.asarray(image.convert("RGB")), index, dataformats="HWC")
 
 
 def append_metrics_csv(path: Path, epoch: int, values: dict) -> None:

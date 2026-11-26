@@ -55,11 +55,11 @@ python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
 
 ## TensorBoard
 
-默认读取`runs/dashboard_full`，旧看板在`runs/dashboard`保留。服务器6006转发至本机即可访问；手动启动命令：
+默认读取`runs/tensorboard`，旧看板在`runs/dashboard`保留。服务器6006转发至本机即可访问；手动启动命令：
 
 ```bash
 source /root/autodl-tmp/fontify_yolo_env/bin/activate
-tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs/dashboard_full --host 127.0.0.1 --port 6006 --samples_per_plugin images=1000
+tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs/tensorboard --host 127.0.0.1 --port 6006 --samples_per_plugin images=1000
 ```
 
 每epoch对完整122张验证图评价。新增的官方mask mAP来自原生Validator，按细类别匹配、置信度排序和IoU阈值计算；BF/JT分别对实际有GT的类别求平均。原有三项诊断指标使用置信度0.25、mask IoU阈值0.5，组内先最大化一对一几何匹配数量，再最大化总IoU。所有曲线按任务分组：
@@ -82,9 +82,9 @@ tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs/dashboard_full --ho
 
 四条loss读取实际one-to-one分支box+mask+cls+L1加权贡献，沿用共同分母，BF+JT等于该分支四项之和。验证不计算辅助语义项，所以两端曲线均排除该项；实际E2E反传仍包含两个分支与辅助项。曲线是可比较的主任务量，不能称为全部反传目标。官方细项和整体mAP保留在`results.csv`，14条TB曲线同时汇总到单个`metrics.csv`。
 
-**每个epoch单独一个预览card**：`previews/epoch_001`、`previews/epoch_002`……。每个card内包含同一批固定60张验证图，跨9个来源抽样，样本选择器切换0–59；查看另一轮时选择对应epoch的card。固定图像身份和顺序跨epoch不变。每张仍为输入/BF GT/BF预测/JT GT/JT预测五列；图片只在内存编码后写入TB，不生成独立PNG、逐轮预览JSON或逐图指标文件。`previews/fixed_samples.json`绑定划分身份，训练中不重新抽样。
+**每个epoch单独一个预览card**：`epoch:001/validation`、`epoch:002/validation`……。每个epoch是独立的顶层折叠分组，展开只有一个图框。与Fontify原始`add_image`写法一致，epoch放在tag，图片序号0–59放在step，因此拖动图框进度条切换该轮的60张固定图；没有额外的多样本选择器。固定图像身份和顺序跨epoch不变。每张仍为输入/BF GT/BF预测/JT GT/JT预测五列；图片只在内存编码后写入TB，不生成独立PNG、逐轮预览JSON或逐图指标文件。`previews/fixed_samples.json`绑定划分身份，训练中不重新抽样。
 
-运行目录默认只保留`weights/`、`args.yaml`、`results.csv`、`metrics.csv`、恢复训练必需的loss/partial配置和固定预览清单；TB在`dashboard_full/`。原生batch预览、混淆矩阵等绘图默认关闭。数据构建不再自动生成标签预览。
+运行目录默认只保留`weights/`、`args.yaml`、`results.csv`、`metrics.csv`、恢复训练必需的loss/partial配置和固定预览清单；TB在`tensorboard/`。原生batch预览、混淆矩阵等绘图默认关闭。数据构建不再自动生成标签预览。
 
 ## 预测与后验评估
 

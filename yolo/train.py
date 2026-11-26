@@ -343,7 +343,7 @@ def main() -> None:
         "auxiliary_loss": {"sem_weight": args.sem_weight},
         "visualization": {"tensorboard": not args.no_tensorboard,
                           "tensorboard_root": str((resume_output.parent if resume_output else Path(settings["project"]))
-                                                  / "dashboard_full"),
+                                                  / "tensorboard"),
                           "preview_every": args.preview_every, "preview_count": args.preview_count,
                           "region_metrics_scope": "full validation",
                           "region_metrics_schedule": "every epoch",
