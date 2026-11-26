@@ -17,10 +17,17 @@ from pathlib import Path
 
 
 COMMON_LOSS_NAMES = ("box_loss", "seg_loss", "cls_loss", "l1_loss")
+OFFICIAL_MASK_MAP_TAGS = {
+    f"metrics/{group}/{source}": f"{group}/metrics/{destination}"
+    for group in ("BF", "JT")
+    for source, destination in (("mAP50(M)", "mask_mAP50_pct"),
+                                ("mAP50-95(M)", "mask_mAP50_95_pct"))
+}
 DASHBOARD_SCALAR_TAGS = {
     *{f"{group}/loss/{split}_combined" for group in ("BF", "JT") for split in ("train", "val")},
     *{f"{group}/metrics/{metric}_pct" for group in ("BF", "JT")
       for metric in ("recall", "precision", "iou")},
+    *OFFICIAL_MASK_MAP_TAGS.values(),
 }
 PREVIEW_IMAGE_TAG_TEMPLATE = "previews/epoch_{epoch:03d}"
 
@@ -44,6 +51,16 @@ def group_loss_totals(train_groups: dict, val_groups: dict) -> dict:
                 float(value) if value is not None and math.isfinite(float(value)) else None
             )
     return totals
+
+
+def official_mask_map_percentages(metrics: dict | None) -> dict[str, float]:
+    """Mirror native grouped mask AP fractions, without recomputing AP/fitness."""
+    output = {}
+    for source, destination in OFFICIAL_MASK_MAP_TAGS.items():
+        value = (metrics or {}).get(source)
+        if value is not None and math.isfinite(float(value)):
+            output[destination] = 100.0 * float(value)
+    return output
 
 
 def _loss_model(trainer, validation=False):
@@ -408,7 +425,7 @@ class LiveVisualization:
             event_dir = dashboard_directory(Path(trainer.save_dir))
             self.writer = self.writer_type(str(event_dir))
             protocol = {
-                "schema": "calli-grouped-dashboard-v3", "event_directory": str(event_dir),
+                "schema": "calli-grouped-dashboard-v4", "event_directory": str(event_dir),
                 "scalar_tags": sorted(DASHBOARD_SCALAR_TAGS),
                 "common_loss_components": list(COMMON_LOSS_NAMES),
                 "loss_definition": (
@@ -421,7 +438,15 @@ class LiveVisualization:
                 "image_card_policy": "one independent card per epoch; fixed sample order within each card",
                 "image_encoding": "v2 DT_STRING [width,height,png0,...]",
                 "preview_schedule": "every epoch", "requested_preview_count": self.count,
-                "details": "Native loss components, mAP, and LR remain in results.csv; region counts remain in JSON.",
+                "official_mask_ap_source": {
+                    "metrics_keys": sorted(OFFICIAL_MASK_MAP_TAGS),
+                    "source": "trainer.validator.grouped_mask_map: native segmentation AP grouped into BF/JT",
+                    "native_results_csv": "unchanged; grouped AP keys are not appended to native stats/CSV",
+                    "display_conversion": "native fractions multiplied by 100; missing values omitted",
+                    "preview_independence": "not computed from the conf=0.25 fixed-preview predictions",
+                },
+                "best_checkpoint_selection": "unchanged official fitness: box.map + seg.map",
+                "details": "Native loss components, overall mAP, and LR remain in results.csv; grouped official mask AP is also displayed; region counts remain in JSON.",
                 "history": "Existing event files under the old run/tensorboard directory are unchanged.",
             }
             (Path(trainer.save_dir) / "dashboard_protocol.json").write_text(
@@ -461,6 +486,8 @@ class LiveVisualization:
         totals = group_loss_totals(_read_group_losses(_loss_model(trainer)),
                                   _read_group_losses(_loss_model(trainer, validation=True)))
         self._scalars(totals, step)
+        grouped_mask_map = getattr(getattr(trainer, "validator", None), "grouped_mask_map", {})
+        self._scalars(official_mask_map_percentages(grouped_mask_map), step)
         self._preview(trainer, step)
         stop_request = Path(trainer.save_dir) / "STOP"
         if stop_request.is_file():

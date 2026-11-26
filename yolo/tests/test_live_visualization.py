@@ -274,16 +274,62 @@ class LiveVisualizationTests(unittest.TestCase):
                                       save_dir=root / "run",
                                       tloss=None, lr={"lr/pg0": .1},
                                       metrics={"metrics/mAP50(M)": .2,
+                                               **{key: .99 for key in live.OFFICIAL_MASK_MAP_TAGS},
+                                               "fitness": .87,
                                                **{f"val/{name}": 2.0 for name in live.COMMON_LOSS_NAMES}},
+                                      validator=SimpleNamespace(grouped_mask_map={
+                                          "metrics/BF/mAP50(M)": .2,
+                                          "metrics/BF/mAP50-95(M)": .15,
+                                          "metrics/JT/mAP50(M)": .6,
+                                          "metrics/JT/mAP50-95(M)": .45}),
+                                      fitness=.87, best_fitness=.92,
                                       label_loss_items=lambda values, prefix: {
                                           f"{prefix}/{name}": 1.0 for name in live.COMMON_LOSS_NAMES})
+            native_metrics = dict(trainer.metrics)
             callback.on_epoch_start(trainer)
             callback.on_fit_end(trainer)
             callback.on_fit_end(trainer)
+            self.assertEqual(trainer.metrics, native_metrics)
+            self.assertEqual(trainer.fitness, .87)
+            self.assertEqual(trainer.best_fitness, .92)
             trainer.epoch += 1  # native final_eval best.pt reporting hook
+            trainer.metrics = {key: .99 for key in live.OFFICIAL_MASK_MAP_TAGS}
+            trainer.validator.grouped_mask_map = {key: .88 for key in live.OFFICIAL_MASK_MAP_TAGS}
             callback.on_fit_end(trainer)
             self.assertEqual(previews, [1])
-            self.assertEqual(writer.scalars, [])  # no criterion sidechannel, no invented grouped losses
+            self.assertEqual(writer.scalars, [
+                ("BF/metrics/mask_mAP50_pct", 20.0, 1),
+                ("BF/metrics/mask_mAP50_95_pct", 15.0, 1),
+                ("JT/metrics/mask_mAP50_pct", 60.0, 1),
+                ("JT/metrics/mask_mAP50_95_pct", 45.0, 1),
+            ])
+
+    def test_missing_validator_sidechannel_never_falls_back_to_native_metrics(self):
+        for validator in (None, SimpleNamespace()):
+            with self.subTest(validator=validator), tempfile.TemporaryDirectory() as temp:
+                callback = live.LiveVisualization({"path": temp, "names": {}}, [], count=0, tensorboard=False)
+                callback.writer = FakeWriter()
+                callback._preview = lambda trainer, step: None
+                trainer = SimpleNamespace(epoch=0, save_dir=Path(temp), stop=False,
+                                          validator=validator,
+                                          metrics={key: .99 for key in live.OFFICIAL_MASK_MAP_TAGS})
+                callback.on_epoch_start(trainer)
+                callback.on_fit_end(trainer)
+                self.assertEqual(callback.writer.scalars, [])
+
+    def test_official_mask_ap_conversion_omits_unknown_and_ignores_preview_metrics(self):
+        values = {
+            "metrics/BF/mAP50(M)": .5, "metrics/BF/mAP50-95(M)": None,
+            "metrics/JT/mAP50(M)": float("nan"), "metrics/JT/mAP50-95(M)": 0.0,
+            "metrics/mAP50(M)": .99, "fitness": 1.5,
+            "BF/metrics/precision_pct": 80.0, "matched_count": 100,
+        }
+        self.assertEqual(live.official_mask_map_percentages(values), {
+            "BF/metrics/mask_mAP50_pct": 50.0,
+            "JT/metrics/mask_mAP50_95_pct": 0.0,
+        })
+        self.assertEqual(live.official_mask_map_percentages({}), {})
+        self.assertEqual(live.official_mask_map_percentages(None), {})
 
     def test_group_loss_totals_use_sidechannel_and_never_split_total(self):
         values = live.group_loss_totals({"BF": 2.0, "JT": 7.0, "common_total": 9.0},
@@ -332,12 +378,18 @@ class LiveVisualizationTests(unittest.TestCase):
             self.assertEqual(old_event.read_bytes(), b"historical events")
             protocol = json.loads((run / "dashboard_protocol.json").read_text())
             self.assertIn("not the complete E2E", protocol["loss_definition"])
-            self.assertEqual(protocol["schema"], "calli-grouped-dashboard-v3")
+            self.assertEqual(protocol["schema"], "calli-grouped-dashboard-v4")
             self.assertEqual(protocol["image_tag_template"], "previews/epoch_{epoch:03d}")
+            self.assertEqual(protocol["best_checkpoint_selection"], "unchanged official fitness: box.map + seg.map")
+            self.assertIn("conf=0.25", protocol["official_mask_ap_source"]["preview_independence"])
+            self.assertIn("trainer.validator.grouped_mask_map", protocol["official_mask_ap_source"]["source"])
+            self.assertIn("unchanged", protocol["official_mask_ap_source"]["native_results_csv"])
+            self.assertEqual(len(protocol["scalar_tags"]), 14)
             values = {key: .5 for key in live.DASHBOARD_SCALAR_TAGS}
             values.update({"train/seg_loss": 99, "val/box_loss": 99, "metrics/mAP50(M)": 99,
                            "lr/pg0": 99, "diagnostics/BF/gt_count": 99,
                            "overview/BF/region_recall_pct": 99, "final_best/metrics/mAP50(M)": 99})
+            values["fitness"] = 99
             callback._scalars(values, 1)
             self.assertEqual({key for key, _, _ in writer.scalars}, live.DASHBOARD_SCALAR_TAGS)
 

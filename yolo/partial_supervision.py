@@ -426,6 +426,14 @@ def _training_classes():
             filtered = filter_unknown_task_predictions(predictions, batch.get("task_valid"))
             return super().update_metrics(filtered, batch)
 
+        def get_stats(self):
+            from official_metrics import grouped_mask_map_scalars
+            stats = super().get_stats()
+            # Sidechannel only: keep the native CSV schema and returned stats
+            # exactly intact, including its box.map + seg.map fitness.
+            self.grouped_mask_map = grouped_mask_map_scalars(self.metrics.seg)
+            return stats
+
         def build_dataset(self, img_path, mode="val", batch=None):
             cfg = self.args
             fraction = get_split_fraction(cfg.fraction, cfg.split or "val")

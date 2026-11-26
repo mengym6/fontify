@@ -62,17 +62,23 @@ source /root/autodl-tmp/fontify_yolo_env/bin/activate
 tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs/dashboard_full --host 127.0.0.1 --port 6006 --samples_per_plugin images=1000
 ```
 
-全部评价每epoch遍历完整122张验证图；固定置信度0.25、mask IoU匹配阈值0.5。BF/JT各自组内，先最大化一对一匹配数量，再最大化总IoU。所有曲线按任务分组：
+每epoch对完整122张验证图评价。新增的官方mask mAP来自原生Validator，按细类别匹配、置信度排序和IoU阈值计算；BF/JT分别对实际有GT的类别求平均。原有三项诊断指标使用置信度0.25、mask IoU阈值0.5，组内先最大化一对一几何匹配数量，再最大化总IoU。所有曲线按任务分组：
 
 | BF标签（JT同理） | 定义 |
 |---|---|
+| `BF/metrics/mask_mAP50_pct` | 官方mask AP在IoU=0.5下，对BF有效类别取平均 |
+| `BF/metrics/mask_mAP50_95_pct` | 官方mask AP在IoU=0.5至0.95的10个阈值及BF有效类别上取平均 |
 | `BF/metrics/recall_pct` | 几何匹配数 / GT区域数，是否找全 |
 | `BF/metrics/precision_pct` | 几何匹配且细标签正确数 / 全部预测数，错标签和多框均扣分 |
 | `BF/metrics/iou_pct` | 几何成功匹配的mask IoU均值，轮廓重合程度 |
 | `BF/loss/train_combined` | BF训练主任务合并损失贡献 |
 | `BF/loss/val_combined` | BF验证主任务合并损失贡献 |
 
-按用户定义，查全先看区域找到没有，查准同时看细标签和多框，因此两者分子不同。IoU是成功匹配条件下的平均值，必须结合查全看；没有匹配时无定义，JSON记null、TB省略。不是像素准确率。
+漏检已经计入查全率及官方AP；precision的分母仅为预测数量，不单独包含FN。例如GT有10块，仅预测3块且都正确，precision=100%，recall=30%，并不代表整体识别正确。按当前诊断定义，查全先看区域找到没有，查准同时看细标签和多框，因此两者分子不同。IoU是成功匹配条件下的平均值，必须结合查全看；没有匹配时无定义，JSON记null、TB省略。不是像素准确率。
+
+**选模型完全保留Ultralytics 8.4.218官方规则：`fitness = box mAP50–95 + mask mAP50–95`。** 不使用BF/JT均值选模，也不把mAP50加入选模权重。两组mAP仅用于分任务观察；整体官方mAP和fitness仍由原生验证与checkpoint流程处理。缺失标注任务仍排除在评价域之外。
+
+分组mAP使用`seg.all_ap`及`seg.ap_class_index`，不会把验证集中不存在类别的填充值混入平均；有GT但没有正确预测的类别AP计0。固定Ultralytics版本，避免版本间AP插值口径变化影响比较。TB共14条标量：BF/JT各5条评价曲线及2条loss。新曲线从下一次使用此版本的训练开始，历史events保持原样。
 
 四条loss读取实际one-to-one分支box+mask+cls+L1加权贡献，沿用共同分母，BF+JT等于该分支四项之和。验证不计算辅助语义项，所以两端曲线均排除该项；实际E2E反传仍包含两个分支与辅助项。曲线是可比较的主任务量，不能称为全部反传目标。细项和mAP仍保留在results.csv。
 
@@ -91,7 +97,8 @@ python train.py --resume runs/<运行名>/weights/last.pt --device 0
 ## 主要文件
 
 - `build_full_dataset.py`：全量Calli转换、去噪图复制、分组9:1划分与清单。
-- `partial_supervision.py`：部分标注Dataset/Trainer/Validator、损失屏蔽和实际分组loss。
+- `partial_supervision.py`：部分标注Dataset/Trainer/Validator、损失屏蔽、实际分组loss及官方分组AP输出。
+- `official_metrics.py`：从原生mask AP结果提取BF/JT mAP，保留官方fitness。
 - `train.py`、`start_train.sh`：训练、参数入口与TB启动。
 - `live_visualization.py`、`region_metrics.py`：固定预览与BF/JT三指标。
 - `calli_loss.py`：辅助语义权重与恢复记录。
