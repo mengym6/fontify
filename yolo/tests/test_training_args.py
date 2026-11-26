@@ -25,10 +25,10 @@ SPEC.loader.exec_module(train)
 DEFAULTS = {
     "optimizer": "auto", "lr0": .01, "lrf": .01, "weight_decay": .0005,
     "warmup_epochs": 3.0, "save_period": -1, "cos_lr": False, "amp": True,
-    "box": 7.5, "cls": .5, "dfl": 1.5, "translate": .1, "scale": .5,
-    "shear": 0.0, "degrees": 0.0, "freeze": 0, "mask_ratio": 4,
+    "box": 7.5, "cls": .5, "dfl": 1.5, "translate": .07, "scale": .3,
+    "shear": 2.0, "degrees": 3.0, "freeze": 0, "mask_ratio": 4,
     "warmup_bias_lr": .1, "momentum": .937, "hsv_h": .015, "hsv_s": .7, "hsv_v": .4,
-    "mosaic": 1.0, "fliplr": 0.0, "flipud": 0.0, "perspective": 0.0,
+    "mosaic": 0.0, "fliplr": 0.0, "flipud": 0.0, "perspective": .0001,
     "epochs": 60, "batch": 24, "imgsz": 640, "seed": 42, "patience": 0, "plots": False,
 }
 MANUAL_ARGUMENTS = [
@@ -36,7 +36,7 @@ MANUAL_ARGUMENTS = [
     "--weight-decay", ".002", "--warmup-epochs", "1.5", "--save-period", "5",
     "--cos-lr", "--no-amp",
     "--box-weight", "5", "--cls-weight", ".7", "--dfl-weight", "1.2",
-    "--translate", ".05", "--scale", ".15", "--shear", "1", "--degrees", "0",
+    "--translate", ".05", "--scale", ".15", "--shear", "1", "--degrees", "0", "--perspective", ".0002",
     "--freeze", "4", "--mask-ratio", "2",
     "--warmup-bias-lr", "0", "--momentum", ".9", "--hsv-h", ".01",
     "--hsv-s", ".2", "--hsv-v", ".15", "--mosaic", ".5",
@@ -45,7 +45,7 @@ MANUAL_SETTINGS = {
     "optimizer": "AdamW", "lr0": .0003, "lrf": .1, "weight_decay": .002,
     "warmup_epochs": 1.5, "save_period": 5, "cos_lr": True, "amp": False,
     "box": 5.0, "cls": .7, "dfl": 1.2, "translate": .05, "scale": .15,
-    "shear": 1.0, "degrees": 0.0, "freeze": 4, "mask_ratio": 2,
+    "shear": 1.0, "degrees": 0.0, "perspective": .0002, "freeze": 4, "mask_ratio": 2,
     "warmup_bias_lr": 0.0, "momentum": .9, "hsv_h": .01, "hsv_s": .2, "hsv_v": .15, "mosaic": .5,
 }
 
@@ -66,7 +66,7 @@ class TrainingArgumentTests(unittest.TestCase):
         return ["train.py", "--data", str(data), "--model", str(model),
                 "--project", str(root / "runs")]
 
-    def test_dry_run_uses_official_augmentation_with_flips_disabled(self):
+    def test_dry_run_uses_requested_next_version_augmentation(self):
         with TemporaryDirectory() as temp:
             arguments = self.make_input(Path(temp)) + ["--dry-run"]
             output = io.StringIO()
@@ -93,7 +93,7 @@ class TrainingArgumentTests(unittest.TestCase):
             root = Path(temp)
             self.make_input(root)
             environment = os.environ.copy()
-            for key in ("EPOCHS", "BATCH", "TRANSLATE", "SCALE", "HSV_H", "HSV_S", "HSV_V", "MOSAIC", "SAVE_PERIOD"):
+            for key in ("EPOCHS", "BATCH", "TRANSLATE", "SCALE", "SHEAR", "DEGREES", "PERSPECTIVE", "HSV_H", "HSV_S", "HSV_V", "MOSAIC", "SAVE_PERIOD"):
                 environment.pop(key, None)
             environment.update(PYTHON_BIN=sys.executable, DATA_YAML=str(root / "data.yaml"),
                                MODEL=str(root / "initial.pt"), PROJECT_DIR=str(root / "runs"),
@@ -101,13 +101,13 @@ class TrainingArgumentTests(unittest.TestCase):
             command = ["bash", str(MODULE.parent / "start_train.sh"), "--dry-run"]
             result = subprocess.run(command, env=environment, text=True, capture_output=True, check=True)
             settings = json.loads(result.stdout)["train_settings"]
-            for key in ("epochs", "batch", "translate", "scale", "hsv_h", "hsv_s", "hsv_v", "mosaic", "save_period", "plots"):
+            for key in ("epochs", "batch", "translate", "scale", "shear", "degrees", "perspective", "hsv_h", "hsv_s", "hsv_v", "mosaic", "save_period", "plots"):
                 self.assertEqual(settings[key], DEFAULTS[key])
-            environment.update(HSV_H=".02", HSV_S=".3", HSV_V=".6", MOSAIC=".4")
+            environment.update(HSV_H=".02", HSV_S=".3", HSV_V=".6", MOSAIC=".4", PERSPECTIVE=".0003")
             result = subprocess.run(command, env=environment, text=True, capture_output=True, check=True)
             settings = json.loads(result.stdout)["train_settings"]
-            self.assertEqual({key: settings[key] for key in ("hsv_h", "hsv_s", "hsv_v", "mosaic")},
-                             {"hsv_h": .02, "hsv_s": .3, "hsv_v": .6, "mosaic": .4})
+            self.assertEqual({key: settings[key] for key in ("hsv_h", "hsv_s", "hsv_v", "mosaic", "perspective")},
+                             {"hsv_h": .02, "hsv_s": .3, "hsv_v": .6, "mosaic": .4, "perspective": .0003})
             self.assertFalse((root / "runs").exists())
 
     def test_auxiliary_weights_are_separate_from_native_ultralytics_kwargs(self):
@@ -151,7 +151,7 @@ class TrainingArgumentTests(unittest.TestCase):
             ("sem_weight", -1), ("warmup_bias_lr", float("inf")),
             ("momentum", 1), ("hsv_h", float("nan")), ("hsv_s", -.1),
             ("hsv_v", 1.1), ("mosaic", 1.01),
-            ("translate", 1.1), ("scale", -.1), ("shear", 90), ("degrees", 181),
+            ("perspective", -.0001), ("translate", 1.1), ("scale", -.1), ("shear", 90), ("degrees", 181),
             ("freeze", -1), ("mask_ratio", 0),
         ]
         for name, value in invalid:

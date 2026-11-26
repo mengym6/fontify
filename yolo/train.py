@@ -217,6 +217,7 @@ def validate_hyperparameters(args) -> None:
         ("scale", args.scale, 0 <= args.scale <= 1, "0 <= scale <= 1"),
         ("shear", args.shear, 0 <= args.shear < 90, "0 <= shear < 90 degrees"),
         ("degrees", args.degrees, 0 <= args.degrees <= 180, "0 <= degrees <= 180"),
+        ("perspective", args.perspective, 0 <= args.perspective <= 1, "0 <= perspective <= 1"),
         ("hsv-h", args.hsv_h, 0 <= args.hsv_h <= 1, "0 <= hsv-h <= 1"),
         ("hsv-s", args.hsv_s, 0 <= args.hsv_s <= 1, "0 <= hsv-s <= 1"),
         ("hsv-v", args.hsv_v, 0 <= args.hsv_v <= 1, "0 <= hsv-v <= 1"),
@@ -263,16 +264,17 @@ def parser() -> argparse.ArgumentParser:
                         help="Native dfl gain; YOLO26 reg_max=1 uses it for L1 regression")
     result.add_argument("--sem-weight", type=float, default=None,
                         help="Both E2E branches' semantic multiplier; new-run default 1, resume inherits saved config")
-    result.add_argument("--translate", type=float, default=.1)
-    result.add_argument("--scale", type=float, default=.5)
-    result.add_argument("--shear", type=float, default=0.0, help="Maximum absolute shear angle in degrees")
-    result.add_argument("--degrees", type=float, default=0.0, help="Maximum absolute rotation angle")
+    result.add_argument("--translate", type=float, default=.07)
+    result.add_argument("--scale", type=float, default=.3)
+    result.add_argument("--shear", type=float, default=2.0, help="Maximum absolute shear angle in degrees")
+    result.add_argument("--degrees", type=float, default=3.0, help="Maximum absolute rotation angle")
+    result.add_argument("--perspective", type=float, default=.0001, help="Perspective transform magnitude")
     result.add_argument("--freeze", type=int, default=0, help="Number of initial model layers to freeze")
     result.add_argument("--mask-ratio", type=int, default=4, help="Training-mask downsampling ratio")
     result.add_argument("--hsv-h", type=float, default=.015, help="Hue augmentation magnitude")
     result.add_argument("--hsv-s", type=float, default=.7, help="Saturation augmentation magnitude")
     result.add_argument("--hsv-v", type=float, default=.4, help="Brightness augmentation magnitude")
-    result.add_argument("--mosaic", type=float, default=1.0, help="Same-annotation-pool Mosaic probability")
+    result.add_argument("--mosaic", type=float, default=0.0, help="Same-annotation-pool Mosaic probability")
     result.add_argument("--device", default="0", help="AutoDL GPU: 0; CPU: cpu")
     result.add_argument("--workers", type=int, default=2)
     result.add_argument("--seed", type=int, default=42)
@@ -326,7 +328,7 @@ def main() -> None:
         "seed": args.seed, "project": str(args.project.expanduser().resolve()),
         "name": args.name, "overlap_mask": False, "fliplr": 0.0, "flipud": 0.0,
         "mosaic": args.mosaic, "mixup": 0.0, "copy_paste": 0.0, "degrees": args.degrees,
-        "translate": args.translate, "scale": args.scale, "shear": args.shear, "perspective": 0.0,
+        "translate": args.translate, "scale": args.scale, "shear": args.shear, "perspective": args.perspective,
         "hsv_h": args.hsv_h, "hsv_s": args.hsv_s, "hsv_v": args.hsv_v,
         "optimizer": args.optimizer, "lr0": args.lr0, "lrf": args.lrf,
         "weight_decay": args.weight_decay, "warmup_epochs": args.warmup_epochs,

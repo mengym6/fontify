@@ -14,7 +14,7 @@
 - `task_valid[B,2]`从`annotation_availability.json`进入loss。框、实例mask和L1仅使用实际GT；类别BCE及辅助语义项屏蔽未知任务。
 - 辅助语义目标按类别合并实例为multi-hot，允许同一像素同时属于BF/JT，避免原单类别目标压掉另一任务。
 - 验证只统计有该任务标注的图；预览仍展示两种预测，缺失GT列标记`UNANNOTATED`。
-- `overlap_mask=False`保留重叠实例。恢复官方增强强度：`translate=0.1`、`scale=0.5`、`hsv_h=0.015`、`hsv_s=0.7`、`hsv_v=0.4`、`mosaic=1`；保留用户要求的禁用翻转。Mosaic只从同标注类型池取图，仍使用官方拼接与几何变换，最后10轮按官方逻辑关闭Mosaic。官方默认旋转/剪切/透视、MixUp/Copy-paste/CutMix均为0，不另外加入反色。
+- `overlap_mask=False`保留重叠实例。下一版默认增强：`mosaic=0`、`degrees=3`、`shear=2`、`perspective=0.0001`、`translate=0.07`、`scale=0.3`；翻转保持关闭，HSV仍为`0.015/0.7/0.4`。这是下一次新训练的默认配置，旧run及resume仍沿用保存的原参数。
 
 新划分从COCO `models/yolo26s-seg.pt`开始。旧Calli模型可能已见过新验证图，训练和后验评估入口会拒绝将缺少相同split记录的Calli权重用于新划分。旧`dataset/`与旧运行保留作历史复核，不能直接横向比较新旧划分得分。
 

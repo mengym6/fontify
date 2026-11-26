@@ -35,16 +35,17 @@ BOX_WEIGHT="${BOX_WEIGHT:-7.5}"
 CLS_WEIGHT="${CLS_WEIGHT:-0.5}"
 DFL_WEIGHT="${DFL_WEIGHT:-1.5}"            # YOLO26 reg_max=1时控制L1回归项
 SEM_WEIGHT="${SEM_WEIGHT:-1}"             # 两个E2E分支的辅助语义项倍率
-TRANSLATE="${TRANSLATE:-0.1}"
-SCALE="${SCALE:-0.5}"
-SHEAR="${SHEAR:-0}"
-DEGREES="${DEGREES:-0}"
+TRANSLATE="${TRANSLATE:-0.07}"
+SCALE="${SCALE:-0.3}"
+SHEAR="${SHEAR:-2}"
+DEGREES="${DEGREES:-3}"
+PERSPECTIVE="${PERSPECTIVE:-0.0001}"
 FREEZE="${FREEZE:-0}"
 MASK_RATIO="${MASK_RATIO:-4}"             # 训练mask下采样倍率；2保留更多小阶段细节
 HSV_H="${HSV_H:-0.015}"
 HSV_S="${HSV_S:-0.7}"
 HSV_V="${HSV_V:-0.4}"
-MOSAIC="${MOSAIC:-1.0}"                 # 仅从相同标注池选取拼图来源
+MOSAIC="${MOSAIC:-0.0}"                 # 仅从相同标注池选取拼图来源
 COS_LR="${COS_LR:-0}"                    # 1=余弦调度；0=原默认调度
 AMP="${AMP:-1}"                          # 1=混合精度；0=关闭
 SAVE_PERIOD="${SAVE_PERIOD:--1}"       # 默认只保留best/last，不保存周期副本
@@ -76,7 +77,7 @@ ARGS=(
     --warmup-bias-lr "$WARMUP_BIAS_LR" --momentum "$MOMENTUM"
     --box-weight "$BOX_WEIGHT" --cls-weight "$CLS_WEIGHT" --dfl-weight "$DFL_WEIGHT"
     --sem-weight "$SEM_WEIGHT"
-    --translate "$TRANSLATE" --scale "$SCALE" --shear "$SHEAR" --degrees "$DEGREES"
+    --translate "$TRANSLATE" --scale "$SCALE" --shear "$SHEAR" --degrees "$DEGREES" --perspective "$PERSPECTIVE"
     --freeze "$FREEZE" --mask-ratio "$MASK_RATIO"
     --hsv-h "$HSV_H" --hsv-s "$HSV_S" --hsv-v "$HSV_V" --mosaic "$MOSAIC"
     --save-period "$SAVE_PERIOD" --preview-every "$PREVIEW_EVERY"
