@@ -179,6 +179,19 @@ def test_fusion_probe_rejects_zero_projection_and_observes_first_update():
     assert check_fusion_open(model)
 
 
+def test_split_fusion_probe_observes_either_branch():
+    torch = pytest.importorskip("torch")
+    from tools.dual_gradient_probe import check_fusion_open
+    from util.dual_view import DualViewFusion
+
+    fusion = DualViewFusion(encoder_width=8, width=8, classes=3, mode="split")
+    model = Namespace(dual_fusion=fusion)
+    assert not check_fusion_open(model)
+    with torch.no_grad():
+        fusion.instance_projection.weight[0, 0] = 1e-5
+    assert check_fusion_open(model)
+
+
 def test_fixed_targets_reference_same_author_same_pool():
     rows = [
         {

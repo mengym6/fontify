@@ -18,6 +18,10 @@ def checkpoint_is_dual(checkpoint):
     configured = bool(args.get("dual_view", False) or config)
     keys = checkpoint["model"]
     has_dual = any(key.startswith(("dual_head.", "dual_fusion.")) for key in keys)
+    if args.get("dual_ablation", "none") == "no_head":
+        if not configured or has_dual:
+            raise ValueError("Headless Run B metadata and model keys disagree")
+        return True
     if configured != has_dual:
         raise ValueError("dual_view metadata and model keys disagree")
     return configured
@@ -93,8 +97,16 @@ def build_checkpoint_model(checkpoint, architecture=None, model_module=None):
     architecture = architecture or args.get(
         "model", "vit_base_patch16_input896x448_win_dec64_8glb_sl1"
     )
-    model = getattr(model_module, architecture)(dual_view=dual)
+    model_kwargs = {"dual_view": dual}
+    if args.get("dual_ablation", "none") != "none":
+        model_kwargs["dual_ablation"] = args["dual_ablation"]
+    if args.get("dual_fusion_mode", "joint") != "joint":
+        model_kwargs["dual_fusion_mode"] = args["dual_fusion_mode"]
+    model = getattr(model_module, architecture)(**model_kwargs)
     model.fusion_lambda = args.get("fusion_lambda", 0.5)
+    model.dual_head_detach_backbone = bool(
+        args.get("dual_head_detach_backbone", False)
+    )
     if dual:
         config = checkpoint.get("dual_view_config") or {}
         if model.fusion_lambda != 0.5:

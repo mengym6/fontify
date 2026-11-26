@@ -213,6 +213,13 @@ def measure_batches(
 
 def check_fusion_open(model):
     """Check that ep2 has moved away from the zero fusion projection."""
+    if getattr(model.dual_fusion, "mode", "joint") == "split":
+        fusion = model.dual_fusion
+        return bool(
+            fusion.instance_projection.weight.detach().abs().sum() > 0
+            or fusion.query_projection.weight.detach().abs().sum() > 0
+            or fusion.query_projection.bias.detach().abs().sum() > 0
+        )
     for module in reversed(list(model.dual_fusion.modules())):
         if hasattr(module, "weight") and hasattr(module, "bias"):
             return bool(

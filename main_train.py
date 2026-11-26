@@ -123,6 +123,22 @@ def get_args_parser():
                         help='启用双视图 run B；默认沿用原模型和数据路径')
     parser.add_argument('--dual_pixel_mask', action='store_true',
                         help='BF polygon pixels union background; pixel reconstruction')
+    parser.add_argument('--dual_ablation', default='none',
+                        choices=('none', 'no_j', 'no_head', 'no_injection'),
+                        help='Run B component removed during training and inference')
+    parser.add_argument('--dual_head_weight_override', default=None, type=float,
+                        help='Explicit full-model experiment weight after calibration')
+    parser.add_argument('--dual_jieti_weight_override', default=None, type=float,
+                        help='Explicit full-model geometry weight after calibration')
+    parser.add_argument('--dual_full_weight_override', default=None, type=float,
+                        help='Explicit full-view image weight after calibration')
+    parser.add_argument('--dual_head_detach_backbone', action='store_true',
+                        help='Route auxiliary head supervision through detached features')
+    parser.add_argument('--dual_initialize_from_baseline', action='store_true',
+                        help='Load a legacy baseline generator into new dual-view modules')
+    parser.add_argument('--dual_fusion_mode', default='joint',
+                        choices=('joint', 'split'),
+                        help='Joint layout projection or separate instance/query injection')
     parser.add_argument('--dual_target_cache', default=None,
                         help='448 JT 实例/text 层缓存目录')
     parser.add_argument('--dual_calibration_json', default=None,
@@ -381,6 +397,9 @@ def _plot_val_curve(history, path):
 
 
 def main(args, ds_init):
+    args.dual_ablation = getattr(args, 'dual_ablation', 'none')
+    if args.dual_ablation != 'none' and not args.dual_view:
+        raise ValueError('Run B ablations require --dual_view')
     misc.init_distributed_mode(args)
 
     if ds_init is not None:
@@ -405,12 +424,43 @@ def main(args, ds_init):
     if args.dual_view:
         from tools.dual_view_protocol import validate_training_inputs
         validate_training_inputs(args)
-        model = models_train.__dict__[args.model](dual_view=True)
+        if (getattr(args, 'dual_initialize_from_baseline', False)
+                and args.dual_ablation != 'none'):
+            raise ValueError('Baseline migration requires the complete dual-view model')
+        model = models_train.__dict__[args.model](
+            dual_view=True, dual_ablation=args.dual_ablation,
+            dual_fusion_mode=getattr(args, 'dual_fusion_mode', 'joint'),
+        )
         calibration = json.loads(Path(args.dual_calibration_json).read_text())
         coefficients = calibration['coef']
         args.dual_lambda_full = calibration['lambda_full']
         args.jieti_w = calibration['w_j']
         args.dual_head_weight = calibration['w_h']
+        head_override = getattr(args, 'dual_head_weight_override', None)
+        jieti_override = getattr(args, 'dual_jieti_weight_override', None)
+        full_override = getattr(args, 'dual_full_weight_override', None)
+        detach_head = getattr(args, 'dual_head_detach_backbone', False)
+        if (args.dual_ablation != 'none'
+                and (head_override is not None
+                     or jieti_override is not None
+                     or full_override is not None or detach_head)):
+            raise ValueError('Tuning options require the complete Run B model')
+        if head_override is not None:
+            if not np.isfinite(head_override) or head_override < 0:
+                raise ValueError('Head weight override must be finite and nonnegative')
+            args.dual_calibrated_head_weight = args.dual_head_weight
+            args.dual_head_weight = head_override
+        if jieti_override is not None:
+            if not np.isfinite(jieti_override) or jieti_override < 0:
+                raise ValueError('Geometry weight override must be finite and nonnegative')
+            args.dual_calibrated_jieti_weight = args.jieti_w
+            args.jieti_w = jieti_override
+        if full_override is not None:
+            if not np.isfinite(full_override) or full_override < 0:
+                raise ValueError('Full-view weight override must be finite and nonnegative')
+            args.dual_calibrated_lambda_full = args.dual_lambda_full
+            args.dual_lambda_full = full_override
+        model.dual_head_detach_backbone = bool(detach_head)
         args.jieti_w_centroid = coefficients['centroid']
         args.jieti_w_logsigma = coefficients['logsigma']
         args.jieti_w_shape = coefficients['shape']
@@ -422,6 +472,8 @@ def main(args, ds_init):
             w_centroid=args.jieti_w_centroid,
             w_logsigma=args.jieti_w_logsigma, w_shape=args.jieti_w_shape,
         )
+        args.jieti_w = model.jieti_loss_weight
+        args.dual_head_weight = model.dual_head_weight
     else:
         model = models_train.__dict__[args.model]()
     if min(args.adv_warmup_epochs, args.edge_warmup_epochs, args.loss_warmup_duration) < 0:
@@ -458,6 +510,15 @@ def main(args, ds_init):
 
         print("Load pre-trained checkpoint from: %s" % args.finetune)
         checkpoint_model = checkpoint['model']
+        removed_prefixes = {
+            'no_head': ('dual_head.', 'dual_fusion.'),
+            'no_injection': ('dual_fusion.',),
+        }.get(args.dual_ablation, ())
+        if removed_prefixes:
+            checkpoint_model = {
+                key: value for key, value in checkpoint_model.items()
+                if not key.startswith(removed_prefixes)
+            }
         state_dict = model.state_dict()
         rm_key_list = ['decoder_embed.weight', 'decoder_embed.bias', 'mask_token']
         if args.last_norm_instance:
@@ -477,8 +538,40 @@ def main(args, ds_init):
             interpolate_pos_embed(model, checkpoint_model)
 
         # load pre-trained model
-        msg = model.load_state_dict(checkpoint_model, strict=args.dual_view)
-        print(msg)
+        if getattr(args, 'dual_initialize_from_baseline', False):
+            from util.checkpoint import load_fontify_checkpoint
+            load_fontify_checkpoint(
+                model, checkpoint, allow_dual_initialization=True,
+            )
+            restored = model.state_dict()
+            shared_equal = all(
+                restored[key].dtype == value.dtype
+                and torch.equal(restored[key].detach().cpu(), value.detach().cpu())
+                for key, value in checkpoint_model.items()
+            )
+            if not shared_equal:
+                raise RuntimeError('Baseline generator values changed during initialization')
+            if misc.is_main_process():
+                audit = {
+                    'source': args.finetune,
+                    'source_sha256': getattr(args, 'full_tuning_source_sha256', None),
+                    'shared_state_entries': len(checkpoint_model),
+                    'shared_tensors_exactly_equal': shared_equal,
+                    'new_head_initialized': True,
+                    'fusion_initially_zero': not any(
+                        bool(torch.count_nonzero(parameter))
+                        for name, parameter in model.dual_fusion.named_parameters()
+                        if 'projection' in name
+                    ),
+                    'extra_head_warmup_epochs': 0,
+                }
+                with open(Path(args.output_dir) / 'baseline_initialization.json',
+                          'w', encoding='utf-8') as stream:
+                    json.dump(audit, stream, ensure_ascii=False, indent=2)
+                print(audit)
+        else:
+            msg = model.load_state_dict(checkpoint_model, strict=args.dual_view)
+            print(msg)
 
     patch_size = model.patch_size
     print("Patch size = %s" % str(patch_size))
@@ -730,8 +823,9 @@ def main(args, ds_init):
         )
         # C3：save_freq 存周期 checkpoint（正式训练用 epoch50 与 baseline 比）；
         # 搜索组开 --save_best_only 时跳过周期保存与末轮强制保存，只留 best。
+        save_epoch = epoch + 1 if args.dual_ablation != 'none' else epoch
         if (args.output_dir and not args.save_best_only
-                and (epoch % args.save_freq == 0 or epoch + 1 == args.epochs)):
+                and (save_epoch % args.save_freq == 0 or epoch + 1 == args.epochs)):
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, optimizer_d=optimizer_d,
                 loss_scaler=loss_scaler, epoch=epoch)

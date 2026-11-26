@@ -49,7 +49,8 @@ class DualViewHead(nn.Module):
     """
 
     def __init__(self, encoder_width=768, width=256, grid_size=28,
-                 slots=4, classes=20, heads=4):
+                 slots=4, classes=20, heads=4,
+                 normalize_instance_features=False):
         super().__init__()
         self.width = width
         self.grid_size = grid_size
@@ -80,6 +81,10 @@ class DualViewHead(nn.Module):
         )
         self.existence = nn.Linear(width, 1)
         self.classifier = nn.Linear(width, classes)
+        self.instance_information_norm = (
+            nn.LayerNorm(width + classes)
+            if normalize_instance_features else nn.Identity()
+        )
         for parameter in (self.row_embedding, self.column_embedding,
                           self.source_embedding, self.slot_queries):
             nn.init.trunc_normal_(parameter, std=0.02)
@@ -119,6 +124,8 @@ class DualViewHead(nn.Module):
         classes = self.classifier(slots)
         gates = occupancy.sigmoid() * existence.sigmoid().unsqueeze(-1)
         slot_information = torch.cat((slots, classes.softmax(-1)), dim=-1)
+        # Normalize each instance before spatial gating so P retains its amplitude.
+        slot_information = self.instance_information_norm(slot_information)
         field = torch.einsum("bkp,bkd->bpd", gates, slot_information)
         field = field / self.slots
         layout = torch.cat((field, query), dim=-1)
@@ -137,12 +144,29 @@ class DualViewHead(nn.Module):
 class DualViewFusion(nn.Module):
     """532 -> 3072 production residual; last weight and bias start at zero."""
 
-    def __init__(self, encoder_width=768, width=256, classes=20):
+    def __init__(self, encoder_width=768, width=256, classes=20, mode="joint"):
         super().__init__()
-        self.norm = nn.LayerNorm(2 * width + classes)
-        self.projection = nn.Linear(2 * width + classes, 4 * encoder_width)
-        nn.init.zeros_(self.projection.weight)
-        nn.init.zeros_(self.projection.bias)
+        if mode not in ("joint", "split"):
+            raise ValueError("Unknown layout fusion mode")
+        self.mode = mode
+        self.instance_width = width + classes
+        if mode == "joint":
+            self.norm = nn.LayerNorm(2 * width + classes)
+            self.projection = nn.Linear(2 * width + classes, 4 * encoder_width)
+            projections = (self.projection,)
+        else:
+            self.query_norm = nn.LayerNorm(width)
+            self.instance_projection = nn.Linear(
+                width + classes, 4 * encoder_width, bias=False,
+            )
+            self.query_projection = nn.Linear(width, 4 * encoder_width)
+            self.instance_gate = nn.Parameter(torch.ones(()))
+            self.query_gate = nn.Parameter(torch.ones(()))
+            projections = (self.instance_projection, self.query_projection)
+        for projection in projections:
+            nn.init.zeros_(projection.weight)
+            if projection.bias is not None:
+                nn.init.zeros_(projection.bias)
 
     def forward(self, layout, has_jt=None):
         # Route BEFORE the projection: BF still updates the fusion projection,
@@ -152,4 +176,9 @@ class DualViewFusion(nn.Module):
             layout = torch.where(
                 active[:, None, None, None], layout, layout.detach()
             )
-        return self.projection(self.norm(layout))
+        if self.mode == "joint":
+            return self.projection(self.norm(layout))
+        field = layout[..., :self.instance_width]
+        query = layout[..., self.instance_width:]
+        return (self.instance_gate * self.instance_projection(field)
+                + self.query_gate * self.query_projection(self.query_norm(query)))

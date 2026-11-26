@@ -341,12 +341,20 @@ def load_dual_model(checkpoint, device, seed=0, allow_new=False):
     if str(REPO_ROOT) not in sys.path:
         sys.path.insert(0, str(REPO_ROOT))
     import models_train as models
+    from util.checkpoint import checkpoint_args
 
     seed_all(seed)
-    model = models.vit_base_patch16_input896x448_win_dec64_8glb_sl1(
-        dual_view=True
-    )
     saved = torch.load(checkpoint, map_location="cpu")
+    saved_args = checkpoint_args(saved)
+    model_kwargs = {"dual_view": True}
+    if saved_args.get("dual_fusion_mode", "joint") != "joint":
+        model_kwargs["dual_fusion_mode"] = saved_args["dual_fusion_mode"]
+    model = models.vit_base_patch16_input896x448_win_dec64_8glb_sl1(
+        **model_kwargs
+    )
+    model.dual_head_detach_backbone = bool(
+        saved_args.get("dual_head_detach_backbone", False)
+    )
     state = saved["model"]
     message = model.load_state_dict(state, strict=False)
     allowed = (

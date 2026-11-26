@@ -60,7 +60,8 @@ def unpack_batch(batch, device):
 
 def save_probe_snapshot(model, args, epoch):
     """Save model-only ep2/25 snapshots without touching RNG or optimizers."""
-    if epoch not in (2, 25) or not misc.is_main_process():
+    if (getattr(args, "dual_ablation", "none") != "none"
+            or epoch not in (2, 25) or not misc.is_main_process()):
         return
     raw = model.module if hasattr(model, "module") else model
     destination = Path(args.output_dir) / f"checkpoint-probe-{epoch}.pth"

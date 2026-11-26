@@ -318,6 +318,8 @@ class Fontify(nn.Module):
              decoder_embed_dim=128,
              loss_func="smoothl1",
              dual_view=False,
+             dual_ablation="none",
+             dual_fusion_mode="joint",
              ):
         super().__init__()
 
@@ -404,6 +406,16 @@ class Fontify(nn.Module):
         # Build the new modules only after the legacy initialization. Off mode
         # consumes no additional RNG values and preserves the old key set.
         self.dual_view = bool(dual_view)
+        if dual_fusion_mode not in ("joint", "split"):
+            raise ValueError("Unknown layout fusion mode")
+        if dual_fusion_mode != "joint" and not self.dual_view:
+            raise ValueError("Split layout fusion requires dual_view=True")
+        self.dual_fusion_mode = dual_fusion_mode
+        if dual_ablation not in ("none", "no_j", "no_head", "no_injection"):
+            raise ValueError("Unknown Run B ablation")
+        if dual_ablation != "none" and not self.dual_view:
+            raise ValueError("Run B ablations require dual_view=True")
+        self.dual_ablation = dual_ablation
         if self.dual_view:
             if depth != 12:
                 raise ValueError("Run B requires the four ViT-Base taps")
@@ -416,8 +428,11 @@ class Fontify(nn.Module):
 
             self.dual_head = DualViewHead(
                 encoder_width=embed_dim, grid_size=grid_width,
+                normalize_instance_features=dual_fusion_mode == "split",
             )
-            self.dual_fusion = DualViewFusion(encoder_width=embed_dim)
+            self.dual_fusion = DualViewFusion(
+                encoder_width=embed_dim, mode=dual_fusion_mode,
+            )
             self.dual_jieti_loss = DualJietiLoss()
             self.dual_head_loss = InstanceHeadLoss()
             self.dual_lambda_full = 0.5
@@ -426,6 +441,12 @@ class Fontify(nn.Module):
             self.jieti_w_centroid = 1.0
             self.jieti_w_logsigma = 1.0
             self.jieti_w_shape = 1.0
+            # Construct before removal so all variants consume the same RNG.
+            if dual_ablation == "no_head":
+                self.dual_head = None
+                self.dual_head_loss = None
+            if dual_ablation in ("no_head", "no_injection"):
+                self.dual_fusion = None
 
     def get_dynamic_loss_weights(self, epoch):
         """
@@ -826,6 +847,10 @@ class Fontify(nn.Module):
         if any(not torch.isfinite(torch.tensor(value)) or value < 0
                for value in values):
             raise ValueError("Dual loss coefficients must be finite/nonnegative")
+        if self.dual_ablation == "no_j":
+            jieti_weight = 0.0
+        if self.dual_ablation == "no_head":
+            head_weight = 0.0
         self.dual_lambda_full = float(lambda_full)
         self.jieti_loss_weight = float(jieti_weight)
         self.dual_head_weight = float(head_weight)
@@ -857,9 +882,17 @@ class Fontify(nn.Module):
         )
         features = torch.cat(taps, dim=-1)
         lower = features[:, features.shape[1] // 2:]
+        if self.dual_head is None:
+            return self.forward_decoder(taps), mask, None
         head_outputs = self.dual_head(quadrants, lower)
-        residual = self.dual_fusion(head_outputs["layout"], has_jt)
+        residual = (self.dual_fusion(head_outputs["layout"], has_jt)
+                    if self.dual_fusion is not None else None)
         prediction = self.forward_decoder(taps, lower_residual=residual)
+        if (self.training and has_jt is not None
+                and getattr(self, "dual_head_detach_backbone", False)):
+            head_outputs["supervision"] = self.dual_head(
+                tuple(value.detach() for value in quadrants), lower.detach(),
+            )
         return prediction, mask, head_outputs
 
     def predict_full(self, imgs, tgts, mask=None):
@@ -914,11 +947,13 @@ class Fontify(nn.Module):
             full_prediction, tgts, dual_targets["voro"],
             dual_targets["valid_parts"], has_jt,
         )
-        head_loss, head_parts = self.dual_head_loss(
-            head, dual_targets["instance_occupancy"],
-            dual_targets["instance_valid"], dual_targets["instance_classes"],
-            has_jt,
-        )
+        head_loss = full_prediction.sum() * 0.0
+        if head is not None:
+            head_loss, head_parts = self.dual_head_loss(
+                head.get("supervision", head), dual_targets["instance_occupancy"],
+                dual_targets["instance_valid"], dual_targets["instance_classes"],
+                has_jt,
+            )
         loss = (pen[0] + self.dual_lambda_full * full[0]
                 + self.jieti_loss_weight * jieti
                 + self.dual_head_weight * head_loss)
@@ -938,26 +973,29 @@ class Fontify(nn.Module):
             "j_logsigma": jparts["logsigma"],
             "j_shape": jparts["shape"], "shield": shield,
             "l1_per_sample": l1,
-            "head_occupancy_loss": head_parts["occupancy"],
-            "head_existence_loss": head_parts["existence"],
-            "head_class_loss": head_parts["classification"],
-            "head_assignment": head_parts["assignment"],
-            "head_matched_slots": head_parts["matched_slots"],
-            "head_occupancy_logits": head["occupancy_logits"],
-            "head_existence_logits": head["existence_logits"],
-            "head_class_logits": head["class_logits"],
-            "assignments": head_parts["assignment"].masked_fill(
-                ~head_parts["matched_slots"], -1
-            ),
-            "slot_existence": head["existence_logits"].sigmoid(),
-            "slot_occupancy": head["occupancy_logits"].sigmoid().mean((-1, -2)),
             "has_jt": has_jt,
-            "matched_count": head_parts["matched_slots"].sum(-1),
-            "head_bce": head_parts["bce"],
-            "head_dice": head_parts["dice"],
-            "head_existence": head_parts["existence"],
-            "head_class": head_parts["classification"],
         }
+        if head is not None:
+            extra.update({
+                "head_occupancy_loss": head_parts["occupancy"],
+                "head_existence_loss": head_parts["existence"],
+                "head_class_loss": head_parts["classification"],
+                "head_assignment": head_parts["assignment"],
+                "head_matched_slots": head_parts["matched_slots"],
+                "head_occupancy_logits": head["occupancy_logits"],
+                "head_existence_logits": head["existence_logits"],
+                "head_class_logits": head["class_logits"],
+                "assignments": head_parts["assignment"].masked_fill(
+                    ~head_parts["matched_slots"], -1
+                ),
+                "slot_existence": head["existence_logits"].sigmoid(),
+                "slot_occupancy": head["occupancy_logits"].sigmoid().mean((-1, -2)),
+                "matched_count": head_parts["matched_slots"].sum(-1),
+                "head_bce": head_parts["bce"],
+                "head_dice": head_parts["dice"],
+                "head_existence": head_parts["existence"],
+                "head_class": head_parts["classification"],
+            })
         return (
             loss, pen[1] + self.dual_lambda_full * full[1],
             pen[2] + self.dual_lambda_full * full[2],
