@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -163,7 +164,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--batch", type=int, default=8)
     result.add_argument("--imgsz", type=int, default=640)
     result.add_argument("--patience", type=int, default=25)
-    result.add_argument("--device", default="0", help="Colab GPU: 0; local validation only: cpu")
+    result.add_argument("--device", default="0", help="AutoDL GPU: 0; CPU: cpu")
     result.add_argument("--workers", type=int, default=2)
     result.add_argument("--seed", type=int, default=42)
     result.add_argument("--project", type=Path, default=ROOT / "runs")
@@ -174,6 +175,12 @@ def parser() -> argparse.ArgumentParser:
                         help="Resume output directory; defaults to LAST_PT's run/ directory")
     result.add_argument("--dry-run", action="store_true",
                         help="Validate data and print settings; no model import/download/update")
+    result.add_argument("--preview-every", type=int, default=5,
+                        help="Fixed validation preview interval; first/final epochs are also saved")
+    result.add_argument("--preview-count", type=int, default=4,
+                        help="Number of fixed validation images; 0 disables previews")
+    result.add_argument("--no-tensorboard", action="store_true",
+                        help="Explicitly disable TensorBoard scalars/images (PNG previews remain)")
     return result
 
 
@@ -181,6 +188,10 @@ def main() -> None:
     args = parser().parse_args()
     if args.epochs < 1 or args.batch < 1 or args.imgsz < 32 or args.patience < 0:
         raise ValueError("epochs/batch must be positive, imgsz >= 32, patience >= 0")
+    if args.preview_every < 1 or args.preview_count < 0:
+        raise ValueError("preview-every must be positive and preview-count must be nonnegative")
+    if "," in args.device and "LOCAL_RANK" not in os.environ:
+        raise ValueError("Use one GPU or launch this script with torchrun for multi-GPU callbacks")
     data = read_dataset(args.data)
     report = validate_dataset(data)
     if args.resume and not args.resume.expanduser().is_file():
@@ -211,6 +222,8 @@ def main() -> None:
         "model": str(model_path), "resume": str(args.resume) if args.resume else None,
         "resume_output": str(resume_output) if resume_output else None,
         "resolved_data": data, "dataset_check": report, "train_settings": settings,
+        "visualization": {"tensorboard": not args.no_tensorboard,
+                          "preview_every": args.preview_every, "preview_count": args.preview_count},
         "note": "Resume restores the checkpoint schedule; new-run defaults are not reapplied."
         if args.resume else "COCO initialization is not a trained Calli recognizer.",
     }
@@ -220,6 +233,10 @@ def main() -> None:
 
     import yaml
     from ultralytics import YOLO
+    from live_visualization import LiveVisualization, isolated_logging_integrations
+
+    live = LiveVisualization(data, split_images(data["val"]), args.preview_every,
+                             args.preview_count, args.seed, not args.no_tensorboard)
 
     if not args.resume:
         model_path.parent.mkdir(parents=True, exist_ok=True)
@@ -229,6 +246,7 @@ def main() -> None:
         validate_resume_checkpoint(model.ckpt)
     if model.task != "segment":
         raise ValueError("This dataset requires an instance-segmentation (-seg) model")
+    live.attach(model)
     config_dir = Path(settings["project"]) / "_configs"
     config_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -237,13 +255,17 @@ def main() -> None:
     (config_dir / f"launch_{stamp}.json").write_text(
         json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    if args.resume:
-        model.train(
-            resume=True, data=str(runtime_yaml), device=args.device, workers=args.workers,
-            save_dir=str(resume_output),
-        )
-    else:
-        model.train(data=str(runtime_yaml), **settings)
+    try:
+        with isolated_logging_integrations():
+            if args.resume:
+                model.train(
+                    resume=True, data=str(runtime_yaml), device=args.device, workers=args.workers,
+                    save_dir=str(resume_output),
+                )
+            else:
+                model.train(data=str(runtime_yaml), **settings)
+    finally:
+        live.close()
     print(f"Training finished. Actual output directory: {model.trainer.save_dir}")
 
 

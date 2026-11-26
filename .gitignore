@@ -55,7 +55,6 @@ fontdata_example/val_json_clean_v2/
 /yolo/predictions/
 /yolo/models/
 /yolo/runs/
-/yolo/dataset_colab_resolved.yaml
 # Large generated files
 *.zip
 *.png

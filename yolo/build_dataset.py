@@ -196,27 +196,30 @@ def render_record(record, size):
             for a in record['annotations'] if a['category_name'] != 'text']
 
 
-def original_image(path, size, text_native):
-    """Normalize raw rubbing/manuscript to black ink on white background."""
-    with Image.open(path) as im:
-        gray = np.asarray(im.convert('L')).copy()
-    if gray.shape != text_native.shape or not text_native.any():
-        raise ValueError('Missing or incompatible text mask')
-    foreground_median = float(np.median(gray[text_native]))
-    outside = gray[~text_native]
-    background_median = float(np.median(outside)) if len(outside) else 255.0
-    inverted = foreground_median > background_median
-    if inverted:
-        gray = 255 - gray
-    gray[~text_native] = 255
-    height, width = gray.shape
-    side = max(height, width)
-    canvas = Image.new('L', (side, side), 255)
-    canvas.paste(Image.fromarray(gray), ((side - width) // 2, (side - height) // 2))
-    result = canvas.resize((size, size), Image.Resampling.LANCZOS).convert('RGB')
-    return result, {'inverted': inverted, 'foreground_median': foreground_median,
-                    'background_median': background_median, 'outside_text': 'white',
-                    'text_mask': 'union_of_BF_and_JT_text_annotations'}
+def denoised_image_source(bf, jt, size, allow_jt_fallback=False):
+    """Load an existing Fontify target without any pixel transformation.
+
+    Native annotations use the confirmed centered-square geometry. The target
+    PNG is already square/resized and must not be padded or rescaled again.
+    """
+    candidates = [('BF', bf)] + ([('JT', jt)] if allow_jt_fallback else [])
+    for task, record in candidates:
+        folder = record['image_path'].parent.parent
+        path = folder / 'images_text_denoised' / Path(record['image']['file_name']).name
+        if not path.is_file():
+            continue
+        with Image.open(path) as image:
+            if image.size != (size, size):
+                raise ValueError(f'Fontify target size differs from label geometry: {path}: {image.size}')
+            if image.mode != 'RGB':
+                raise ValueError(f'Expected existing RGB Fontify target: {path}: {image.mode}')
+            image = image.copy()
+        return image, path, {
+            'selected_task': task, 'source_sha256': file_sha(path),
+            'fallback_reason': 'BF_denoised_file_missing' if task == 'JT' else None,
+            'pixel_processing': 'none: source PNG copied byte-for-byte',
+        }
+    raise FileNotFoundError(f'No existing Fontify denoised target for {bf["image_path"]}')
 
 
 def exact_mask_rle(mask):
@@ -263,6 +266,13 @@ def build(args):
     source_root, output = args.source_root.resolve(), args.output.resolve()
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f'Refusing to overwrite nonempty dataset: {output}')
+    selection = None
+    prior_excluded = {}
+    selection_path = getattr(args, 'selection_manifest', None)
+    if selection_path is not None:
+        frozen = json.loads(Path(selection_path).read_text(encoding='utf-8'))
+        selection = {row['id']: row for row in frozen['images']}
+        prior_excluded = {row['id']: row for row in frozen.get('excluded', [])}
     index, ann_files = source_index(source_root)
     val_hashes = holdout_hashes(args.val_records, source_root)
     print(f'Source identities: {len(index)}; dual: {sum(set(v) == {"BF", "JT"} for v in index.values())}', flush=True)
@@ -278,6 +288,10 @@ def build(args):
     all_ious = []
     for (author, digest), tasks in sorted(index.items()):
         identity = author + '_' + digest[:16]
+        if selection is not None and identity not in selection:
+            excluded.append(prior_excluded.get(identity, {
+                'id': identity, 'raw_sha256': digest, 'reason': 'not_in_frozen_selection'}))
+            continue
         reason = None
         if set(tasks) != {'BF', 'JT'}:
             reason = 'missing_bf_or_jt_annotation'
@@ -316,19 +330,23 @@ def build(args):
             excluded.append({'id': identity, 'raw_sha256': digest, 'reason': reason})
             continue
         info = bf['image']
-        text = np.zeros((info['height'], info['width']), dtype=bool)
-        for record in (bf, jt):
-            for ann in record['annotations']:
-                if ann['category_name'] == 'text':
-                    text |= polygon_mask(ann['segmentation'], info['height'], info['width'])
-        if not text.any():
-            excluded.append({'id': identity, 'raw_sha256': digest, 'reason': 'missing_text_mask'})
-            continue
         split = 'val' if digest in val_hashes else 'train'
-        image, normalization = original_image(bf['image_path'], args.size, text)
+        if selection is not None and (selection[identity]['raw_sha256'] != digest
+                                      or selection[identity]['split'] != split):
+            raise ValueError(f'Frozen sample identity/split changed: {identity}')
+        try:
+            image, denoised_path, denoised_metadata = denoised_image_source(
+                bf, jt, args.size, getattr(args, 'allow_jt_fallback', False))
+        except (FileNotFoundError, ValueError) as exc:
+            excluded.append({'id': identity, 'raw_sha256': digest,
+                             'reason': 'denoised_source_unavailable', 'detail': str(exc)})
+            continue
+        denoised_metadata['source_path'] = str(denoised_path.relative_to(source_root))
         image_path = Path('images') / split / (identity + '.png')
         label_path = Path('labels') / split / (identity + '.txt')
-        image.save(output / image_path)
+        shutil.copyfile(denoised_path, output / image_path)
+        if file_sha(output / image_path) != denoised_metadata['source_sha256']:
+            raise RuntimeError(f'Copied target differs from Fontify source: {identity}')
         lines = []
         for item in instances:
             lines.append(yolo_label_line(item['class_id'], item['polygon'], args.size))
@@ -342,7 +360,7 @@ def build(args):
         included.append({'id': identity, 'author': author, 'raw_sha256': digest, 'split': split,
                          'image': str(image_path), 'label': str(label_path),
                          'original_size': [info['width'], info['height']], 'sources': provenance,
-                         'instances': instances, 'normalization': normalization})
+                         'instances': instances, 'denoised_source': denoised_metadata})
         if preview_counts[(author, split)] < 1:
             draw_preview(image, instances, preview_dir / (identity + '_' + split + '.jpg'), author + '/' + split)
             preview_counts[(author, split)] += 1
@@ -357,8 +375,12 @@ def build(args):
     yaml_lines.extend(f"  {item['id']}: {item['name']}" for item in CLASSES)
     (output / 'data.yaml').write_text('\n'.join(yaml_lines) + '\n')
     (output / 'classes.json').write_text(json.dumps(CLASSES, ensure_ascii=False, indent=2) + '\n')
-    manifest = {'schema': 'calli-phase-jt-yolo-v1', 'images': included, 'excluded': excluded}
+    manifest = {'schema': 'calli-phase-jt-yolo-denoised-v2', 'images': included, 'excluded': excluded}
     (output / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+    selection_out = {'images': [
+        {key: row[key] for key in ('id', 'raw_sha256', 'split')} for row in included
+    ]}
+    (output / 'selection.json').write_text(json.dumps(selection_out, indent=2) + '\n')
     summary = {
         'created_at': datetime.now(timezone.utc).isoformat(), 'source_identity_count': len(index),
         'source_dual_identity_count': sum(set(v) == {'BF', 'JT'} for v in index.values()),
@@ -371,13 +393,25 @@ def build(args):
         'minimum_serialized_label_roundtrip_iou': min(
             (item['serialized_label_roundtrip_iou'] for row in included for item in row['instances']), default=None),
         'export_coordinate_convention': '(integer_pixel_coordinate + 0.5) / image_size; eight decimals; verified using float32 -> int32 rasterization',
-        'geometry': {'method': 'centered_square_padding', 'image_size': args.size, 'mask_resize': 'nearest', 'image_resize': 'lanczos'},
+        'geometry': {'method': 'centered_square_padding', 'image_size': args.size,
+                     'mask_resize': 'nearest', 'image_resize': 'none: copy existing Fontify target'},
+        'image_source': {'directory': 'images_text_denoised', 'preference': 'BF',
+                         'allow_jt_fallback': getattr(args, 'allow_jt_fallback', False),
+                         'selected_tasks': dict(Counter(row['denoised_source']['selected_task'] for row in included)),
+                         'all_outputs_byte_identical_to_source': True},
+        'frozen_selection': {
+            'enabled': selection is not None,
+            'source_sha256': file_sha(selection_path) if selection_path is not None else None,
+            'missing_ids': sorted(set(selection or {}) - {row['id'] for row in included}),
+        },
         'annotation_policy': {'original_annotation_is_instance': True, 'phase_merging': False,
                               'within_image_deduplication': False, 'bf_classes': 50, 'jt_classes': 20},
         'split_policy': 'Original ep66 validation raw-image SHA256 held out; all other accepted identities train. No test split.',
         'source_annotations': {str(p.relative_to(source_root)): file_sha(p) for p in ann_files},
         'source_val_records_sha256': file_sha(args.val_records),
-        'notes': ['Each original non-text BF phase/JT annotation is one instance; no phase merging or stage completeness requirement.',
+        'notes': ['Images are unmodified copies of existing Fontify images_text_denoised files; no brightness adjustment, inversion, thresholding, padding or resize is applied to those PNGs.',
+                  'Native annotation masks retain the confirmed centered-square-pad and nearest-resize geometry.',
+                  'Each original non-text BF phase/JT annotation is one instance; no phase merging or stage completeness requirement.',
                   'Only same-original BF+JT paired images are used, avoiding incomplete task annotations becoming background.',
                   'Conflicting duplicate annotation versions and invalid conversions exclude the entire source identity.',
                   'YOLO polygon export uses retraced zero-area bridges for disconnected contours; rasterization may add one-pixel lines. Exact annotation RLE remains in manifest.',
@@ -396,6 +430,8 @@ def parser():
     p.add_argument('--output', type=Path, default=base / 'dataset')
     p.add_argument('--preview-dir', type=Path, default=base / 'previews')
     p.add_argument('--val-records', type=Path, default=project / 'outputs/RunB_Fix_Pixel_ep66/协议与配置/validation_records.json')
+    p.add_argument('--selection-manifest', type=Path, help='Optional prior manifest/selection.json that freezes image IDs and splits')
+    p.add_argument('--allow-jt-fallback', action='store_true', help='Use same-original JT denoised image only if the BF target is missing')
     p.add_argument('--size', type=int, default=448)
     p.add_argument('--min-contour-iou', type=float, default=0.98)
     return p

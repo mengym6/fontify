@@ -1,4 +1,4 @@
-"""Geometry checks for inferred stroke groups and YOLO polygon export."""
+"""Checks for original labels, Fontify denoised pixels, and YOLO geometry."""
 
 import importlib.util
 from pathlib import Path
@@ -39,7 +39,10 @@ class OriginalLabelTests(unittest.TestCase):
                 folder = source / ('Writer' + kind)
                 (folder / 'images').mkdir(parents=True)
                 (folder / 'annotations').mkdir()
+                (folder / 'images_text_denoised').mkdir()
                 Image.new('RGB', (24, 24), 'white').save(folder / 'images/glyph.png')
+                rgb = np.arange(24 * 24 * 3, dtype=np.uint8).reshape(24, 24, 3)
+                Image.fromarray(rgb).save(folder / 'images_text_denoised/glyph.png')
                 names = ['1-横-起笔', 'text'] if kind == 'BF' else ['左', 'text']
                 anns = [{'id': 1, 'image_id': 1, 'category_id': 1, 'segmentation': shape},
                         {'id': 2, 'image_id': 1, 'category_id': 2, 'segmentation': shape}]
@@ -60,6 +63,11 @@ class OriginalLabelTests(unittest.TestCase):
             self.assertEqual([i['source_annotation_id'] for i in instances if i['source_task'] == 'BF'], [1, 3])
             self.assertEqual([i['class_id'] for i in instances], [0, 0, 50])
             self.assertEqual(len(list(args.output.glob('images/train/*.png'))), 1)
+            source_png = source / 'WriterBF/images_text_denoised/glyph.png'
+            exported_png = args.output / manifest['images'][0]['image']
+            self.assertEqual(source_png.read_bytes(), exported_png.read_bytes())
+            self.assertTrue(np.array_equal(np.asarray(Image.open(exported_png)), rgb))
+            self.assertEqual(manifest['images'][0]['denoised_source']['selected_task'], 'BF')
             # An alias target name still identifies holdout by original bytes.
             val.write_text(json.dumps([{'target_path': 'font/train/new/WriterJT/images_text_denoised/glyph.png',
                                         'font_folder': 'WriterJT'}]))
@@ -114,12 +122,30 @@ class PolygonExportTests(unittest.TestCase):
             encoded = np.float32(f'{(position + 0.5) / 448:.8f}')
             self.assertEqual(int(np.float32(encoded * np.float32(448))), position)
 
-    def test_padding_preserves_coordinates_and_aspect(self):
-        mask = np.zeros((10, 20), dtype=bool)
-        mask[0:2, 0:2] = True
-        result = build_dataset.pad_resize(mask, size=20)
+    def test_non_square_annotations_align_to_existing_padded_target(self):
+        import tempfile
+        from PIL import Image
+        native = np.zeros((10, 20), dtype=bool)
+        native[0:2, 0:2] = True
+        result = build_dataset.pad_resize(native, size=20)
         self.assertTrue(result[5:7, 0:2].all())
         self.assertEqual(result.sum(), 4)
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp) / 'WriterBF'
+            (folder / 'images_text_denoised').mkdir(parents=True)
+            # This stands for an already-produced Fontify padded target.
+            rgb = np.full((20, 20, 3), 255, dtype=np.uint8)
+            rgb[5:7, 0:2] = 0
+            target = folder / 'images_text_denoised/glyph.png'
+            Image.fromarray(rgb).save(target)
+            record = {'image_path': folder / 'images/glyph.png',
+                      'image': {'file_name': 'glyph.png'}}
+            image, path, metadata = build_dataset.denoised_image_source(record, record, 20)
+            self.assertTrue(np.array_equal(np.asarray(image), rgb))
+            self.assertEqual(path, target)
+            self.assertEqual(metadata['pixel_processing'], 'none: source PNG copied byte-for-byte')
+            self.assertTrue(np.array_equal((np.asarray(image)[:, :, 0] == 0), result))
+
 
 
 if __name__ == '__main__':
