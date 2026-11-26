@@ -157,6 +157,7 @@ def save_partial_protocol(trainer) -> dict:
         "availability_sha256": hashlib.sha256(path.read_bytes()).hexdigest() if path else None,
         "split_id": data.get("split_id"),
         "mode": "availability-masked" if path else "all-known-legacy",
+        "staged_training": getattr(trainer, "staged_training", None),
         "task_valid": "bool[B,2], columns BF/JT; known empty regions remain supervised negatives",
         "class_groups": {"BF": [0, 50], "JT": [50, 70]},
         "semantic_targets": "per-class instance unions, allowing overlapping BF/JT multi-hot targets",
@@ -168,7 +169,7 @@ def save_partial_protocol(trainer) -> dict:
     destination = Path(trainer.save_dir) / "partial_supervision.json"
     if destination.is_file():
         old = json.loads(destination.read_text(encoding="utf-8"))
-        for key in ("schema", "availability_sha256", "split_id", "mode"):
+        for key in ("schema", "availability_sha256", "split_id", "mode", "staged_training"):
             if old.get(key) != protocol[key]:
                 raise ValueError(f"Partial supervision identity changed for existing run: {key}")
     if int(os.environ.get("RANK", "-1")) in {-1, 0}:
@@ -267,6 +268,9 @@ def _partial_segment_class(native_class):
             proto = preds["proto"]
             proto, semantic = proto if isinstance(proto, tuple) else (proto, None)
             bs = scores.shape[0]
+            if getattr(self, "_calli_bf_only", False):
+                from staged_training import bf_only_targets
+                batch = bf_only_targets(batch, bs)
             valid = torch.as_tensor(batch.get("task_valid", torch.ones(bs, 2)), device=self.device, dtype=torch.bool)
             channel_valid = task_channel_mask(valid, device=self.device, dtype=scores.dtype)
             if valid.shape[0] != bs:
@@ -451,9 +455,14 @@ def _training_classes():
             return output
 
     class PartialSegmentationTrainer(SegmentationTrainer):
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, staged_training=None, **kwargs):
+            self.staged_training = staged_training
             super().__init__(*args, **kwargs)
             self.add_callback("on_train_start", self._install_partial_criteria)
+            if staged_training:
+                from staged_training import apply_training_stage, save_joint_checkpoint
+                self.add_callback("on_train_epoch_start", apply_training_stage)
+                self.add_callback("on_model_save", save_joint_checkpoint)
 
         @staticmethod
         def _install_partial_criteria(trainer):

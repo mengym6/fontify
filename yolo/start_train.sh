@@ -37,10 +37,12 @@ DFL_WEIGHT="${DFL_WEIGHT:-1.5}"            # YOLO26 reg_max=1时控制L1回归�
 SEM_WEIGHT="${SEM_WEIGHT:-1}"             # 两个E2E分支的辅助语义项倍率
 TRANSLATE="${TRANSLATE:-0.1}"
 SCALE="${SCALE:-0.5}"
-SHEAR="${SHEAR:-2}"
-DEGREES="${DEGREES:-3}"
-PERSPECTIVE="${PERSPECTIVE:-0.0001}"
+SHEAR="${SHEAR:-0}"
+DEGREES="${DEGREES:-0}"
+PERSPECTIVE="${PERSPECTIVE:-0}"
 FREEZE="${FREEZE:-0}"
+BF_ONLY_AFTER="${BF_ONLY_AFTER:-40}"      # 前40轮联合，从第41轮只训练笔法
+STAGE_FREEZE="${STAGE_FREEZE:-4}"       # 切换时冻结backbone前4模块，包含BN统计
 MASK_RATIO="${MASK_RATIO:-4}"             # 训练mask下采样倍率；2保留更多小阶段细节
 HSV_H="${HSV_H:-0.015}"
 HSV_S="${HSV_S:-0.7}"
@@ -79,6 +81,7 @@ ARGS=(
     --sem-weight "$SEM_WEIGHT"
     --translate "$TRANSLATE" --scale "$SCALE" --shear "$SHEAR" --degrees "$DEGREES" --perspective "$PERSPECTIVE"
     --freeze "$FREEZE" --mask-ratio "$MASK_RATIO"
+    --bf-only-after "$BF_ONLY_AFTER" --stage-freeze "$STAGE_FREEZE"
     --hsv-h "$HSV_H" --hsv-s "$HSV_S" --hsv-v "$HSV_V" --mosaic "$MOSAIC"
     --save-period "$SAVE_PERIOD" --preview-every "$PREVIEW_EVERY"
     --preview-count "$PREVIEW_COUNT"

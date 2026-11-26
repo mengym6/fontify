@@ -180,10 +180,10 @@ def validate_initialization_split(model_names: dict, checkpoint: Path, data: dic
         raise ValueError("Checkpoint and dataset split/task protocols differ; start from COCO")
 
 
-def create_partial_trainer(*args, **kwargs):
+def create_partial_trainer(*args, staged_training=None, **kwargs):
     """Lazy factory keeps metadata checking usable without importing torch."""
     from partial_supervision import PartialSegmentationTrainer
-    return PartialSegmentationTrainer(*args, **kwargs)
+    return PartialSegmentationTrainer(*args, staged_training=staged_training, **kwargs)
 
 
 def validate_resume_checkpoint(checkpoint: object) -> None:
@@ -266,9 +266,11 @@ def parser() -> argparse.ArgumentParser:
                         help="Both E2E branches' semantic multiplier; new-run default 1, resume inherits saved config")
     result.add_argument("--translate", type=float, default=.1)
     result.add_argument("--scale", type=float, default=.5)
-    result.add_argument("--shear", type=float, default=2.0, help="Maximum absolute shear angle in degrees")
-    result.add_argument("--degrees", type=float, default=3.0, help="Maximum absolute rotation angle")
-    result.add_argument("--perspective", type=float, default=.0001, help="Perspective transform magnitude")
+    result.add_argument("--shear", type=float, default=0.0, help="Maximum absolute shear angle in degrees")
+    result.add_argument("--degrees", type=float, default=0.0, help="Maximum absolute rotation angle")
+    result.add_argument("--perspective", type=float, default=0.0, help="Perspective transform magnitude")
+    result.add_argument("--bf-only-after", type=int, default=None, help="Joint epochs before BF-only training; new-run default 40, 0 disables")
+    result.add_argument("--stage-freeze", type=int, default=None, help="Backbone modules frozen at switch; new-run default 4")
     result.add_argument("--freeze", type=int, default=0, help="Number of initial model layers to freeze")
     result.add_argument("--mask-ratio", type=int, default=4, help="Training-mask downsampling ratio")
     result.add_argument("--hsv-h", type=float, default=.015, help="Hue augmentation magnitude")
@@ -291,7 +293,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--preview-count", type=int, default=60, choices=(60,),
                         help="Exactly 60 fixed validation images in one TensorBoard image card")
     result.add_argument("--no-tensorboard", action="store_true",
-                        help="Explicitly disable TensorBoard scalars/images (PNG previews remain)")
+                        help="Explicitly disable TensorBoard scalars/images (metrics.csv remains)")
     return result
 
 
@@ -318,6 +320,8 @@ def main() -> None:
         )
     from calli_loss import resolve_semantic_weight
     args.sem_weight = resolve_semantic_weight(args.sem_weight, resume_checkpoint=args.resume)
+    from staged_training import resolve_stages
+    stage_config = resolve_stages(args.bf_only_after, args.stage_freeze, args.resume)
     model_path = Path(args.model).expanduser()
     if len(model_path.parts) == 1 and not model_path.is_file():
         model_path = ROOT / "models" / model_path
@@ -343,6 +347,7 @@ def main() -> None:
         "resume_output": str(resume_output) if resume_output else None,
         "resolved_data": data, "dataset_check": report, "train_settings": settings,
         "auxiliary_loss": {"sem_weight": args.sem_weight},
+        "staged_training": stage_config,
         "visualization": {"tensorboard": not args.no_tensorboard,
                           "tensorboard_root": str((resume_output.parent if resume_output else Path(settings["project"]))
                                                   / "tensorboard"),
@@ -363,6 +368,8 @@ def main() -> None:
         return
 
     import yaml
+    from functools import partial
+    trainer_factory = partial(create_partial_trainer, staged_training=stage_config)
     from ultralytics import YOLO
     from live_visualization import LiveVisualization, isolated_logging_integrations
     from calli_loss import make_semantic_loss_callback
@@ -391,12 +398,12 @@ def main() -> None:
         with isolated_logging_integrations():
             if args.resume:
                 model.train(
-                    trainer=create_partial_trainer,
+                    trainer=trainer_factory,
                     resume=True, data=str(runtime_yaml), device=args.device, workers=args.workers, patience=0,
                     save_dir=str(resume_output),
                 )
             else:
-                model.train(trainer=create_partial_trainer, data=str(runtime_yaml), **settings)
+                model.train(trainer=trainer_factory, data=str(runtime_yaml), **settings)
     finally:
         live.close()
     print(f"Training finished. Actual output directory: {model.trainer.save_dir}")

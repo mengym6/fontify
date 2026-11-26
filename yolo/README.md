@@ -14,7 +14,7 @@
 - `task_valid[B,2]`从`annotation_availability.json`进入loss。框、实例mask和L1仅使用实际GT；类别BCE及辅助语义项屏蔽未知任务。
 - 辅助语义目标按类别合并实例为multi-hot，允许同一像素同时属于BF/JT，避免原单类别目标压掉另一任务。
 - 验证只统计有该任务标注的图；预览仍展示两种预测，缺失GT列标记`UNANNOTATED`。
-- `overlap_mask=False`保留重叠实例。下一版默认增强：`mosaic=1`、`degrees=3`、`shear=2`、`perspective=0.0001`、`translate=0.1`、`scale=0.5`；翻转保持关闭，HSV仍为`0.015/0.7/0.4`。这是下一次新训练的默认配置，旧run及resume仍沿用保存的原参数。
+- `overlap_mask=False`保留重叠实例。当前默认沿用v3增强：`mosaic=1`、`degrees=0`、`shear=0`、`perspective=0`、`translate=0.1`、`scale=0.5`；翻转保持关闭，HSV仍为`0.015/0.7/0.4`。这是下一次新训练的默认配置，旧run及resume仍沿用保存的原参数。
 
 新划分从COCO `models/yolo26s-seg.pt`开始。旧Calli模型可能已见过新验证图，训练和后验评估入口会拒绝将缺少相同split记录的Calli权重用于新划分。旧`dataset/`与旧运行保留作历史复核，不能直接横向比较新旧划分得分。
 
@@ -34,13 +34,19 @@ bash start_train.sh --tb-only # 只开TensorBoard
 EPOCHS=60 BATCH=24 RUN_NAME=calli_full_my_run bash start_train.sh
 ```
 
+默认分阶段训练：前40轮联合训练BF/JT；第41轮起只计算BF训练损失，并冻结backbone模块0–3及其BatchNorm统计。切换点依据v3结体最佳39轮设置，可在脚本顶部调整`BF_ONLY_AFTER`和`STAGE_FREEZE`；`BF_ONLY_AFTER=0`恢复全程联合训练。验证始终包含两个任务，官方best选模规则不变。
+
+阶段2会在匹配前移除JT GT，并关闭JT分类/辅助语义监督；JT-only样本不贡献训练损失，数据加载保持原池。关闭的是训练监督，深层共享参数仍可改变JT输出。阶段2的JT训练loss不再写入，CSV留空；JT验证loss和mAP继续正常显示，不能把关闭的训练loss当成0误差。
+
+第40轮额外保留`weights/joint_end.pt`用于对照；没有改变优化器、学习率或E2E调度。阶段配置保存在已有`partial_supervision.json`内，resume继承原计划；旧run没有阶段配置时仍全程联合训练。
+
 `patience=0`关闭指标早停，`EPOCHS`仍是轮数上限。人工停止在当前epoch保存和预览完成后生效：
 
 ```bash
 touch runs/<运行名>/STOP
 ```
 
-默认只保存`weights/best.pt`和`last.pt`，关闭周期checkpoint。正常结束会按Ultralytics逻辑剥离last/best优化器状态；中断续训使用尚未完成的完整checkpoint。继续训练前检查checkpoint状态，不能将已完成的权重冒充中断恢复点。
+默认保存`weights/best.pt`、`last.pt`及一个阶段边界`joint_end.pt`，关闭周期checkpoint。正常结束会按Ultralytics逻辑剥离last/best优化器状态；中断续训使用尚未完成的完整checkpoint。继续训练前检查checkpoint状态，不能将已完成的权重冒充中断恢复点。
 
 `OPTIMIZER=auto`会自行选择优化器与学习率，忽略手填`LR0`；需要控制学习率时选AdamW或SGD。原始训练超参数保留为可调选项，本版本没有自动采用上一轮分析产生的新优化方案。
 
@@ -99,6 +105,7 @@ python train.py --resume runs/<运行名>/weights/last.pt --device 0
 ## 主要文件
 
 - `build_full_dataset.py`：全量Calli转换、去噪图复制、分组9:1划分与清单。
+- `staged_training.py`：阶段切换、浅层冻结、BF-only标注筛选和边界checkpoint。
 - `partial_supervision.py`：部分标注Dataset/Trainer/Validator、损失屏蔽、实际分组loss及官方分组AP输出。
 - `official_metrics.py`：从原生mask AP结果提取BF/JT mAP，保留官方fitness。
 - `train.py`、`start_train.sh`：训练、参数入口与TB启动。

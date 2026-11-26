@@ -26,9 +26,9 @@ DEFAULTS = {
     "optimizer": "auto", "lr0": .01, "lrf": .01, "weight_decay": .0005,
     "warmup_epochs": 3.0, "save_period": -1, "cos_lr": False, "amp": True,
     "box": 7.5, "cls": .5, "dfl": 1.5, "translate": .1, "scale": .5,
-    "shear": 2.0, "degrees": 3.0, "freeze": 0, "mask_ratio": 4,
+    "shear": 0.0, "degrees": 0.0, "freeze": 0, "mask_ratio": 4,
     "warmup_bias_lr": .1, "momentum": .937, "hsv_h": .015, "hsv_s": .7, "hsv_v": .4,
-    "mosaic": 1.0, "fliplr": 0.0, "flipud": 0.0, "perspective": .0001,
+    "mosaic": 1.0, "fliplr": 0.0, "flipud": 0.0, "perspective": 0.0,
     "epochs": 60, "batch": 24, "imgsz": 640, "seed": 42, "patience": 0, "plots": False,
 }
 MANUAL_ARGUMENTS = [
@@ -74,6 +74,7 @@ class TrainingArgumentTests(unittest.TestCase):
                 train.main()
             plan = json.loads(output.getvalue())
             self.assertEqual({key: plan["train_settings"][key] for key in DEFAULTS}, DEFAULTS)
+            self.assertEqual(plan["staged_training"], {"bf_only_after": 40, "freeze_layers": 4})
             self.assertIn("ignoring the supplied lr0", plan["optimizer_note"])
             self.assertEqual(plan["visualization"]["tensorboard_root"], str((Path(temp) / "runs/tensorboard").resolve()))
             self.assertFalse((Path(temp) / "runs").exists())
@@ -93,7 +94,7 @@ class TrainingArgumentTests(unittest.TestCase):
             root = Path(temp)
             self.make_input(root)
             environment = os.environ.copy()
-            for key in ("EPOCHS", "BATCH", "TRANSLATE", "SCALE", "SHEAR", "DEGREES", "PERSPECTIVE", "HSV_H", "HSV_S", "HSV_V", "MOSAIC", "SAVE_PERIOD"):
+            for key in ("EPOCHS", "BATCH", "TRANSLATE", "SCALE", "SHEAR", "DEGREES", "PERSPECTIVE", "BF_ONLY_AFTER", "STAGE_FREEZE", "HSV_H", "HSV_S", "HSV_V", "MOSAIC", "SAVE_PERIOD"):
                 environment.pop(key, None)
             environment.update(PYTHON_BIN=sys.executable, DATA_YAML=str(root / "data.yaml"),
                                MODEL=str(root / "initial.pt"), PROJECT_DIR=str(root / "runs"),
@@ -223,6 +224,9 @@ class TrainingArgumentTests(unittest.TestCase):
                 calls, _ = self.run_with_mock_model(Path(temp), ["--sem-weight", ".25"])
             factory.assert_called_once_with(.25)
             self.assertNotIn("sem_weight", calls[0])
+            self.assertNotIn("bf_only_after", calls[0])
+            self.assertEqual(calls[0]["trainer"].keywords["staged_training"],
+                             {"bf_only_after": 40, "freeze_layers": 4})
 
     def test_resume_does_not_apply_new_hyperparameters(self):
         with TemporaryDirectory() as temp:

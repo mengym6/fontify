@@ -219,6 +219,33 @@ class TensorContracts(unittest.TestCase):
         self.assertEqual(torch.count_nonzero(semantic.grad[1, :50]).item(), 0)
         torch.testing.assert_close(wrapped._last_group_components.sum(0), loss[:4].detach() / 2)
 
+    def test_bf_only_loss_filters_jt_gt_and_has_zero_jt_gradients(self):
+        from staged_training import bf_only_targets
+        _, predictions, batch, _, criterion = self.fixture()
+        original_classes = batch["cls"].clone()
+        criterion._calli_bf_only = True
+        losses, _ = criterion.loss(predictions, batch)
+        losses.sum().backward()
+        self.assertGreater(predictions["scores"].grad[:, :50].abs().sum().item(), 0)
+        self.assertEqual(torch.count_nonzero(predictions["scores"].grad[:, 50:]).item(), 0)
+        self.assertEqual(torch.count_nonzero(predictions["proto"][1].grad[:, 50:]).item(), 0)
+        self.assertIsNone(partial.read_group_loss_accumulators(SimpleNamespace(criterion=criterion))["JT"])
+        filtered = bf_only_targets(batch, 2)
+        self.assertEqual(filtered["cls"].reshape(-1).tolist(), [0.])
+        self.assertEqual(filtered["task_valid"].tolist(), [[True, False], [True, False]])
+        torch.testing.assert_close(batch["cls"], original_classes)
+        self.assertTrue(batch["task_valid"].all())
+        # The untouched validation criterion still evaluates the JT annotations.
+        _, predictions, batch, _, validation = self.fixture()
+        validation.loss(predictions, batch)
+        self.assertIsNotNone(partial.read_group_loss_accumulators(SimpleNamespace(criterion=validation))["JT"])
+        # A JT-only image must not become a BF-negative training example.
+        batch['task_valid'][:, 0] = False
+        batch['cls'][:] = 50
+        criterion._calli_group_accumulator = None
+        loss, _ = criterion.loss(predictions, batch)
+        self.assertEqual(loss.detach().sum().item(), 0.)
+
     def test_amp_outputs_keep_native_float32_loss_accumulation(self):
         _, prediction, batch, native, wrapped = self.fixture()
         for key in ("scores", "boxes", "mask_coefficient"):
