@@ -25,10 +25,10 @@ SPEC.loader.exec_module(train)
 DEFAULTS = {
     "optimizer": "auto", "lr0": .01, "lrf": .01, "weight_decay": .0005,
     "warmup_epochs": 3.0, "save_period": -1, "cos_lr": False, "amp": True,
-    "box": 7.5, "cls": .5, "dfl": 1.5, "translate": .07, "scale": .3,
+    "box": 7.5, "cls": .5, "dfl": 1.5, "translate": .1, "scale": .5,
     "shear": 2.0, "degrees": 3.0, "freeze": 0, "mask_ratio": 4,
     "warmup_bias_lr": .1, "momentum": .937, "hsv_h": .015, "hsv_s": .7, "hsv_v": .4,
-    "mosaic": 0.0, "fliplr": 0.0, "flipud": 0.0, "perspective": .0001,
+    "mosaic": 1.0, "fliplr": 0.0, "flipud": 0.0, "perspective": .0001,
     "epochs": 60, "batch": 24, "imgsz": 640, "seed": 42, "patience": 0, "plots": False,
 }
 MANUAL_ARGUMENTS = [
