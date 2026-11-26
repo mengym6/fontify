@@ -1,7 +1,10 @@
-"""Evaluate BF/JT instance counts and optionally preview every labelled image.
+"""Evaluate BF/JT geometric recall, label-aware precision, and mean mask IoU.
 
 This is post-training inference only. Native mAP histories and checkpoint
-selection are unchanged; count metrics use fixed confidence/IoU thresholds.
+selection are unchanged. Recall ignores fine-class errors within BF/JT;
+precision requires the fine label to be correct and counts every prediction
+in its denominator. They intentionally do not use one common TP definition.
+IoU is averaged over geometrically matched masks, not bounding boxes.
 """
 
 from __future__ import annotations
@@ -66,6 +69,10 @@ def main() -> None:
         raise FileNotFoundError(weights)
     if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"Use a new evaluation directory: {output}")
+    tensorboard_dir = output.parent / "dashboard" / output.name
+    if (not args.no_tensorboard and tensorboard_dir.exists()
+            and any(tensorboard_dir.iterdir())):
+        raise FileExistsError(f"Use a new evaluation name; dashboard already exists: {tensorboard_dir}")
 
     import numpy as np
     from PIL import Image
@@ -88,18 +95,31 @@ def main() -> None:
     if model.task != "segment" or dict(model.names) != data["names"] or len(model.names) != 70:
         raise ValueError("Checkpoint must match the dataset's 50 phase + 20 component classes")
     output.mkdir(parents=True)
-    writer = None if args.no_tensorboard else summary_writer_class()(str(output / "tensorboard"))
+    writer = None if args.no_tensorboard else summary_writer_class()(str(tensorboard_dir))
     records, author_reports = [], defaultdict(list)
     checkpoint_sha = sha256(weights)
     protocol = {
         "unit": "instance_count", "confidence_threshold": args.conf,
         "mask_iou_threshold": args.match_iou,
         "matching": "within BF/JT; ignore fine class; maximum cardinality then maximum summed IoU",
-        "label_accuracy_denominator": "geometrically matched instances only",
+        "recall": "geometrically matched instances / GT instances",
+        "precision": "fine-label-correct geometric matches / all predictions after confidence filtering",
+        "precision_json_field": "label_aware_precision",
+        "iou": "sum of matched mask IoUs / geometric matches; not bbox IoU",
+        "unmatched_gt": "reduces recall; excluded from the matched-IoU mean",
+        "fine_class_error": "within BF/JT, penalizes precision but not geometric recall or matched IoU",
+        "cross_group_error": "miss in the GT task and extra prediction in the other task",
+        "metric_convention": "custom separate recall/precision numerators, not a standard shared-TP precision/recall pair",
+        "legacy_json_fields": {
+            "region_precision": "geometric matches / predictions; retained for compatibility, not displayed precision",
+            "label_accuracy": "correct fine labels / geometric matches; retained only in JSON",
+            "miss_rate": "missed GT instances / GT instances; retained only in JSON",
+        },
         "aggregation": "micro: sum counts before calculating rates",
         "gt_deduplication": "same class and identical original-resolution binary mask",
         "zero_denominator": "null in JSON; omitted from TensorBoard",
-        "tensorboard_main_rates": "overview/BF and overview/JT, percent",
+        "tensorboard_main_rates": "metrics/BF and metrics/JT: recall_pct, precision_pct, iou_pct only",
+        "tensorboard_directory": str(tensorboard_dir) if writer else None,
     }
     try:
         for index, source in enumerate(images):
@@ -140,7 +160,7 @@ def main() -> None:
                 print(f"Evaluated {index + 1}/{len(images)} {args.split} images", flush=True)
 
         summary = {
-            "schema": "calli-region-count-evaluation-v1", "created_at": datetime.now(timezone.utc).isoformat(),
+            "schema": "calli-region-count-evaluation-v2", "created_at": datetime.now(timezone.utc).isoformat(),
             "checkpoint": str(weights), "checkpoint_sha256": checkpoint_sha,
             "checkpoint_epoch_label": args.checkpoint_epoch,
             "checkpoint_epoch_label_source": "caller supplied from training records; not inferred from stripped checkpoint",
@@ -163,7 +183,9 @@ def main() -> None:
             writer.flush()
         if args.save_previews:
             write_gallery(output, records, f"{weights.name} | epoch {args.checkpoint_epoch} | {checkpoint_sha}")
-        print(json.dumps({"output": str(output), "images": len(images), "groups": summary["groups"]}, ensure_ascii=False, indent=2))
+        print(json.dumps({"output": str(output), "images": len(images),
+                          "metrics_percent": tensorboard_scalars(summary["groups"])},
+                         ensure_ascii=False, indent=2))
     finally:
         if writer:
             writer.close()

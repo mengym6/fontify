@@ -5,6 +5,7 @@ from contextlib import redirect_stdout, nullcontext
 import importlib.util
 import io
 import json
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
@@ -13,6 +14,7 @@ from unittest.mock import patch
 
 
 MODULE = Path(__file__).resolve().parents[1] / "train.py"
+sys.path.insert(0, str(MODULE.parent))
 SPEC = importlib.util.spec_from_file_location("calli_training_args", MODULE)
 train = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(train)
@@ -21,15 +23,25 @@ SPEC.loader.exec_module(train)
 DEFAULTS = {
     "optimizer": "auto", "lr0": .01, "lrf": .01, "weight_decay": .0005,
     "warmup_epochs": 3.0, "save_period": 10, "cos_lr": False, "amp": True,
+    "box": 7.5, "cls": .5, "dfl": 1.5, "translate": .03, "scale": .1,
+    "shear": 0.0, "degrees": 0.0, "freeze": 0, "mask_ratio": 4,
+    "warmup_bias_lr": .1, "momentum": .937, "hsv_v": .1,
 }
 MANUAL_ARGUMENTS = [
     "--optimizer", "AdamW", "--lr0", ".0003", "--lrf", ".1",
     "--weight-decay", ".002", "--warmup-epochs", "1.5", "--save-period", "5",
     "--cos-lr", "--no-amp",
+    "--box-weight", "5", "--cls-weight", ".7", "--dfl-weight", "1.2",
+    "--translate", ".05", "--scale", ".15", "--shear", "1", "--degrees", "0",
+    "--freeze", "4", "--mask-ratio", "2",
+    "--warmup-bias-lr", "0", "--momentum", ".9", "--hsv-v", ".15",
 ]
 MANUAL_SETTINGS = {
     "optimizer": "AdamW", "lr0": .0003, "lrf": .1, "weight_decay": .002,
     "warmup_epochs": 1.5, "save_period": 5, "cos_lr": True, "amp": False,
+    "box": 5.0, "cls": .7, "dfl": 1.2, "translate": .05, "scale": .15,
+    "shear": 1.0, "degrees": 0.0, "freeze": 4, "mask_ratio": 2,
+    "warmup_bias_lr": 0.0, "momentum": .9, "hsv_v": .15,
 }
 
 
@@ -58,6 +70,7 @@ class TrainingArgumentTests(unittest.TestCase):
             plan = json.loads(output.getvalue())
             self.assertEqual({key: plan["train_settings"][key] for key in DEFAULTS}, DEFAULTS)
             self.assertIn("ignoring the supplied lr0", plan["optimizer_note"])
+            self.assertEqual(plan["visualization"]["tensorboard_root"], str((Path(temp) / "runs/dashboard").resolve()))
             self.assertFalse((Path(temp) / "runs").exists())
 
     def test_dry_run_reports_requested_manual_settings(self):
@@ -70,6 +83,35 @@ class TrainingArgumentTests(unittest.TestCase):
             self.assertEqual({key: plan["train_settings"][key] for key in MANUAL_SETTINGS}, MANUAL_SETTINGS)
             self.assertIn("new run only", plan["optimizer_note"])
 
+    def test_auxiliary_weights_are_separate_from_native_ultralytics_kwargs(self):
+        with TemporaryDirectory() as temp:
+            arguments = self.make_input(Path(temp)) + ["--sem-weight", ".25", "--dry-run"]
+            output = io.StringIO()
+            with patch("sys.argv", arguments), redirect_stdout(output):
+                train.main()
+            plan = json.loads(output.getvalue())
+            self.assertEqual(plan["auxiliary_loss"], {"sem_weight": .25})
+            self.assertNotIn("sem_weight", plan["train_settings"])
+
+    def test_resume_inherits_saved_semantic_weight_and_rejects_a_change(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            arguments = self.make_input(root)
+            checkpoint = root / "previous_run/weights/last.pt"
+            checkpoint.parent.mkdir(parents=True)
+            checkpoint.touch()
+            (checkpoint.parent.parent / "loss_config.json").write_text(json.dumps({
+                "schema": "calli-yolo26-semantic-loss-v1", "semantic_weight": .25,
+            }))
+            arguments += ["--resume", str(checkpoint), "--dry-run"]
+            output = io.StringIO()
+            with patch("sys.argv", arguments), redirect_stdout(output):
+                train.main()
+            self.assertEqual(json.loads(output.getvalue())["auxiliary_loss"], {"sem_weight": .25})
+            with patch("sys.argv", arguments + ["--sem-weight", "1"]), redirect_stdout(io.StringIO()):
+                with self.assertRaisesRegex(ValueError, "changing the loss requires a new run"):
+                    train.main()
+
     def test_invalid_floats_and_ranges_are_rejected(self):
         defaults = train.parser().parse_args([])
         invalid = [
@@ -78,6 +120,11 @@ class TrainingArgumentTests(unittest.TestCase):
             ("weight_decay", -0.1), ("weight_decay", 1.1), ("weight_decay", float("nan")),
             ("warmup_epochs", -1), ("warmup_epochs", float("inf")),
             ("save_period", -2),
+            ("box_weight", -1), ("cls_weight", float("nan")), ("dfl_weight", -1),
+            ("sem_weight", -1), ("warmup_bias_lr", float("inf")),
+            ("momentum", 1), ("hsv_v", 1.1),
+            ("translate", 1.1), ("scale", -.1), ("shear", 90), ("degrees", 181),
+            ("freeze", -1), ("mask_ratio", 0),
         ]
         for name, value in invalid:
             with self.subTest(name=name, value=value):
@@ -104,6 +151,8 @@ class TrainingArgumentTests(unittest.TestCase):
                 self.trainer = SimpleNamespace(save_dir=root / "runs/mock")
             def train(self, **kwargs):
                 calls.append(kwargs)
+            def add_callback(self, name, callback):
+                self.callback = (name, callback)
         class Preview:
             def __init__(self, *args):
                 pass
@@ -134,6 +183,13 @@ class TrainingArgumentTests(unittest.TestCase):
             self.assertEqual({key: calls[0][key] for key in MANUAL_SETTINGS}, MANUAL_SETTINGS)
             self.assertTrue(calls[0]["save"])
             self.assertFalse(calls[0]["overlap_mask"])
+
+    def test_semantic_weight_is_connected_to_callback_not_native_kwargs(self):
+        with TemporaryDirectory() as temp:
+            with patch("calli_loss.make_semantic_loss_callback", return_value=object()) as factory:
+                calls, _ = self.run_with_mock_model(Path(temp), ["--sem-weight", ".25"])
+            factory.assert_called_once_with(.25)
+            self.assertNotIn("sem_weight", calls[0])
 
     def test_resume_does_not_apply_new_hyperparameters(self):
         with TemporaryDirectory() as temp:

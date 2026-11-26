@@ -12,6 +12,7 @@ PYTHON_BIN="${PYTHON_BIN:-/root/autodl-tmp/fontify_yolo_env/bin/python}"
 DATA_YAML="${DATA_YAML:-$SCRIPT_DIR/dataset/data.yaml}"
 MODEL="${MODEL:-yolo26s-seg.pt}"
 PROJECT_DIR="${PROJECT_DIR:-$SCRIPT_DIR/runs}"
+TB_LOGDIR="${TB_LOGDIR:-$PROJECT_DIR/dashboard}"  # 新简洁面板，避免读入旧多指标event
 RUN_NAME="${RUN_NAME:-calli_phase_jieti_$(date +%Y%m%d_%H%M%S)}"
 DEVICE="${DEVICE:-0}"
 EPOCHS="${EPOCHS:-100}"
@@ -28,6 +29,19 @@ LR0="${LR0:-0.01}"
 LRF="${LRF:-0.01}"
 WEIGHT_DECAY="${WEIGHT_DECAY:-0.0005}"
 WARMUP_EPOCHS="${WARMUP_EPOCHS:-3}"
+WARMUP_BIAS_LR="${WARMUP_BIAS_LR:-0.1}"   # 显式AdamW候选可设0；auto自行设0
+MOMENTUM="${MOMENTUM:-0.937}"              # auto会自行选择；手动候选可设0.9
+BOX_WEIGHT="${BOX_WEIGHT:-7.5}"
+CLS_WEIGHT="${CLS_WEIGHT:-0.5}"
+DFL_WEIGHT="${DFL_WEIGHT:-1.5}"            # YOLO26 reg_max=1时控制L1回归项
+SEM_WEIGHT="${SEM_WEIGHT:-1}"             # 两个E2E分支的辅助语义项倍率
+TRANSLATE="${TRANSLATE:-0.03}"
+SCALE="${SCALE:-0.10}"
+SHEAR="${SHEAR:-0}"
+DEGREES="${DEGREES:-0}"
+FREEZE="${FREEZE:-0}"
+MASK_RATIO="${MASK_RATIO:-4}"             # 训练mask下采样倍率；2保留更多小阶段细节
+HSV_V="${HSV_V:-0.1}"
 COS_LR="${COS_LR:-0}"                    # 1=余弦调度；0=原默认调度
 AMP="${AMP:-1}"                          # 1=混合精度；0=关闭
 SAVE_PERIOD="${SAVE_PERIOD:-10}"
@@ -55,6 +69,12 @@ ARGS=(
     --patience "$PATIENCE" --workers "$WORKERS" --seed "$SEED"
     --optimizer "$OPTIMIZER" --lr0 "$LR0" --lrf "$LRF"
     --weight-decay "$WEIGHT_DECAY" --warmup-epochs "$WARMUP_EPOCHS"
+    --warmup-bias-lr "$WARMUP_BIAS_LR" --momentum "$MOMENTUM"
+    --box-weight "$BOX_WEIGHT" --cls-weight "$CLS_WEIGHT" --dfl-weight "$DFL_WEIGHT"
+    --sem-weight "$SEM_WEIGHT"
+    --translate "$TRANSLATE" --scale "$SCALE" --shear "$SHEAR" --degrees "$DEGREES"
+    --freeze "$FREEZE" --mask-ratio "$MASK_RATIO"
+    --hsv-v "$HSV_V"
     --save-period "$SAVE_PERIOD" --preview-every "$PREVIEW_EVERY"
     --preview-count "$PREVIEW_COUNT"
 )
@@ -67,7 +87,7 @@ if [[ "$MODE" == train ]]; then
     "$PYTHON_BIN" "$SCRIPT_DIR/train.py" "${ARGS[@]}" --dry-run >/dev/null
 fi
 
-"$PYTHON_BIN" - "$MODE" "$SCRIPT_DIR" "$PROJECT_DIR" "$RUN_NAME" "$TB_PORT" "${ARGS[@]}" <<'PY'
+"$PYTHON_BIN" - "$MODE" "$SCRIPT_DIR" "$PROJECT_DIR" "$RUN_NAME" "$TB_PORT" "$TB_LOGDIR" "${ARGS[@]}" <<'PY'
 import json
 import os
 import socket
@@ -77,14 +97,16 @@ import time
 import urllib.request
 from pathlib import Path
 
-mode, root, project, name, port_text, *training_args = sys.argv[1:]
+mode, root, project, name, port_text, logdir_text, *training_args = sys.argv[1:]
 root, project = Path(root).resolve(), Path(project).expanduser().resolve()
+tb_logdir = Path(logdir_text).expanduser().resolve()
 port = int(port_text)
 if not 1 <= port <= 65535:
     raise ValueError("TB_PORT 必须在 1–65535 范围内")
 if not name or Path(name).name != name or name in {".", ".."}:
     raise ValueError("RUN_NAME 应是单个目录名，不含路径")
 project.mkdir(parents=True, exist_ok=True)
+tb_logdir.mkdir(parents=True, exist_ok=True)
 url = f"http://127.0.0.1:{port}"
 
 
@@ -100,16 +122,16 @@ with socket.socket() as connection:
 if occupied:
     try:
         active_logdir = tensorboard_logdir()
-        if Path(active_logdir).resolve() != project:
-            raise ValueError(f"当前日志目录为 {active_logdir}，需要 {project}")
+        if Path(active_logdir).resolve() != tb_logdir:
+            raise ValueError(f"当前日志目录为 {active_logdir}，需要 {tb_logdir}")
     except Exception as error:
         raise RuntimeError(f"端口 {port} 已被其他服务或其他日志目录占用，请更改 TB_PORT。{error}") from error
-    print(f"复用现有 TensorBoard：{url}，日志目录 {project}", flush=True)
+    print(f"复用现有 TensorBoard：{url}，日志目录 {tb_logdir}", flush=True)
 else:
     tb_log = project / f"tensorboard_{port}.log"
     with tb_log.open("a") as log:
         tb = subprocess.Popen(
-            [sys.executable, "-m", "tensorboard.main", "--logdir", str(project),
+            [sys.executable, "-m", "tensorboard.main", "--logdir", str(tb_logdir),
              "--host", "127.0.0.1", "--port", str(port)],
             cwd=root, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
             start_new_session=True,
@@ -119,7 +141,7 @@ else:
         if tb.poll() is not None:
             raise RuntimeError(f"TensorBoard启动失败，请查看 {tb_log}")
         try:
-            if Path(tensorboard_logdir()).resolve() == project:
+            if Path(tensorboard_logdir()).resolve() == tb_logdir:
                 break
         except Exception:
             time.sleep(0.5)
@@ -158,7 +180,8 @@ with train_log.open("x") as log:
     process = subprocess.Popen(command, cwd=root, env=environment, stdin=subprocess.DEVNULL,
                                stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
 launch = {"pid": process.pid, "command": command, "started_at": time.time(),
-          "log": str(train_log), "run": str(run_dir), "tensorboard": url}
+          "log": str(train_log), "run": str(run_dir), "tensorboard": url,
+          "tensorboard_logdir": str(tb_logdir)}
 (project / f"{name}_launch.json").write_text(json.dumps(launch, ensure_ascii=False, indent=2) + "\n")
 print(f"已后台启动训练 PID {process.pid}", flush=True)
 print(f"训练日志：{train_log}\n权重目录：{run_dir / 'weights'}", flush=True)

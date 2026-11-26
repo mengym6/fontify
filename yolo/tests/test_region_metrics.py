@@ -30,15 +30,48 @@ class RegionMetricsTests(unittest.TestCase):
         self.assertEqual(bf["matched_count"], 1)
         self.assertEqual(bf["region_recall"], 1.0)
         self.assertEqual(bf["region_precision"], 1.0)
+        self.assertEqual(bf["label_aware_precision"], 0.0)
         self.assertEqual(bf["label_accuracy"], 0.0)
         self.assertEqual(bf["miss_rate"], 0.0)
+        self.assertEqual(bf["mean_matched_iou"], 1.0)
 
     def test_overreporting_is_counted_once_per_extra_region(self):
         report = metrics.evaluate_regions([region()], [region(), region()])["BF"]
         self.assertEqual(report["matched_count"], 1)
         self.assertEqual(report["false_positive_count"], 1)
         self.assertEqual(report["region_precision"], 0.5)
+        self.assertEqual(report["label_aware_precision"], 0.5)
         self.assertEqual(report["region_recall"], 1.0)
+        self.assertEqual(report["mean_matched_iou"], 1.0)
+
+    def test_one_left_component_split_into_wrong_left_top_and_left_bottom(self):
+        # GT left = class 50; left-top/bottom are different JT fine labels.
+        gt = [region(50, range(20))]
+        pred = [region(55, range(10)), region(56, range(10, 20))]
+        jt = metrics.evaluate_regions(gt, pred)["JT"]
+        self.assertEqual(jt["matched_count"], 1)
+        self.assertEqual(jt["pred_count"], 2)
+        self.assertEqual(jt["region_recall"], 1.0)
+        self.assertEqual(jt["region_precision"], 0.5)  # legacy geometric field
+        self.assertEqual(jt["label_aware_precision"], 0.0)
+        self.assertEqual(jt["mean_matched_iou"], 0.5)
+
+    def test_split_correctly_labelled_halves_penalize_extra_prediction_and_iou(self):
+        gt = [region(50, range(20))]
+        pred = [region(50, range(10)), region(50, range(10, 20))]
+        jt = metrics.evaluate_regions(gt, pred)["JT"]
+        self.assertEqual(jt["region_recall"], 1.0)
+        self.assertEqual(jt["label_aware_precision"], 0.5)
+        self.assertEqual(jt["mean_matched_iou"], 0.5)
+
+    def test_split_pieces_below_iou_threshold_do_not_count_as_recalled(self):
+        gt = [region(50, range(20))]
+        pred = [region(50, range(8)), region(50, range(8, 16))]
+        jt = metrics.evaluate_regions(gt, pred)["JT"]
+        self.assertEqual(jt["region_recall"], 0.0)
+        self.assertEqual(jt["label_aware_precision"], 0.0)
+        self.assertEqual(jt["false_positive_count"], 2)
+        self.assertIsNone(jt["mean_matched_iou"])
 
     def test_miss_uses_region_count_not_area(self):
         gt = [region(0, range(40)), region(1, [60])]
@@ -54,6 +87,7 @@ class RegionMetricsTests(unittest.TestCase):
         self.assertIsNone(bf["label_accuracy"])
         self.assertIsNone(bf["mean_matched_iou"])
         self.assertEqual(bf["region_precision"], 0.0)
+        self.assertEqual(bf["label_aware_precision"], 0.0)
         self.assertEqual(bf["false_positive_count"], 1)
 
     def test_empty_predictions(self):
@@ -61,13 +95,15 @@ class RegionMetricsTests(unittest.TestCase):
         self.assertEqual(jt["region_recall"], 0.0)
         self.assertEqual(jt["miss_rate"], 1.0)
         self.assertIsNone(jt["region_precision"])
+        self.assertIsNone(jt["label_aware_precision"])
         self.assertIsNone(jt["label_accuracy"])
 
     def test_both_empty_and_empty_aggregation_are_undefined(self):
         report = metrics.evaluate_regions([], [])
         self.assertEqual(report, metrics.aggregate_region_metrics([]))
         for group in report.values():
-            for key in ("region_recall", "region_precision", "label_accuracy", "miss_rate"):
+            for key in ("region_recall", "region_precision", "label_accuracy",
+                        "label_aware_precision", "miss_rate"):
                 self.assertIsNone(group[key])
 
     def test_overlapping_instances_remain_separate(self):
@@ -146,6 +182,7 @@ class RegionMetricsTests(unittest.TestCase):
         self.assertEqual(total["miss_rate"], .9)
         self.assertEqual(total["region_precision"], 1.0)
         self.assertEqual(total["label_accuracy"], 1.0)
+        self.assertEqual(total["label_aware_precision"], 1.0)
 
     def test_aggregation_weights_label_accuracy_and_iou_by_matches(self):
         first = metrics.evaluate_regions([region()], [region()])
@@ -155,7 +192,21 @@ class RegionMetricsTests(unittest.TestCase):
         )
         all_metrics = metrics.aggregate_region_metrics([first, second])["all"]
         self.assertEqual(all_metrics["label_accuracy"], 1 / 3)
+        self.assertEqual(all_metrics["label_aware_precision"], 1 / 3)
         self.assertAlmostEqual(all_metrics["mean_matched_iou"], 2 / 3)
+
+    def test_label_aware_precision_micro_denominator_includes_wrong_and_extra_predictions(self):
+        correct = metrics.evaluate_regions([region(0)], [region(0)])
+        wrong_and_extra = metrics.evaluate_regions(
+            [region(50)], [region(51), region(52, range(30, 40))],
+        )
+        total = metrics.aggregate_region_metrics([correct, wrong_and_extra])["all"]
+        self.assertEqual(total["matched_count"], 2)
+        self.assertEqual(total["label_correct_count"], 1)
+        self.assertEqual(total["pred_count"], 3)
+        self.assertEqual(total["region_recall"], 1.0)
+        self.assertEqual(total["region_precision"], 2 / 3)
+        self.assertEqual(total["label_aware_precision"], 1 / 3)
 
     def test_accumulator_is_serializable_and_does_not_retain_masks(self):
         accumulator = metrics.RegionMetricsAccumulator(deduplicate_gt=True)
@@ -165,26 +216,24 @@ class RegionMetricsTests(unittest.TestCase):
         encoded = json.dumps({"per_image": accumulator.per_image, "summary": accumulator.summary()}, allow_nan=False)
         self.assertNotIn('"mask"', encoded)
 
-    def test_tensorboard_overview_uses_percentages_and_diagnostics_are_separate(self):
-        report = metrics.evaluate_regions([region(), region()], [region()])
+    def test_tensorboard_displays_only_three_percentage_metrics_per_group(self):
+        report = metrics.evaluate_regions(
+            [region(), region(), region(50)], [region(), region(51)],
+        )
         scalars = metrics.tensorboard_scalars(report)
-        overview = {key: value for key, value in scalars.items() if key.startswith("overview/")}
-        self.assertEqual(overview, {
-            "overview/BF/region_recall_pct": 50.0,
-            "overview/BF/label_accuracy_pct": 100.0,
-            "overview/BF/miss_rate_pct": 50.0,
-            "overview/BF/region_precision_pct": 100.0,
+        self.assertEqual(scalars, {
+            "metrics/BF/recall_pct": 50.0,
+            "metrics/BF/precision_pct": 100.0,
+            "metrics/BF/iou_pct": 100.0,
+            "metrics/JT/recall_pct": 100.0,
+            "metrics/JT/precision_pct": 0.0,
+            "metrics/JT/iou_pct": 100.0,
         })
-        self.assertEqual(scalars["diagnostics/BF/gt_count"], 2.0)
-        self.assertEqual(scalars["diagnostics/BF/duplicate_gt_count"], 1.0)
-        self.assertEqual(scalars["diagnostics/BF/mean_matched_iou"], 1.0)
-        self.assertNotIn("diagnostics/JT/mean_matched_iou", scalars)
         self.assertTrue(all(isinstance(value, float) for value in scalars.values()))
 
     def test_tensorboard_empty_groups_omit_all_main_rates(self):
         scalars = metrics.tensorboard_scalars(metrics.evaluate_regions([], []))
-        self.assertFalse(any(key.startswith("overview/") for key in scalars))
-        self.assertEqual(scalars["diagnostics/BF/gt_count"], 0.0)
+        self.assertEqual(scalars, {})
 
     def test_invalid_classes_shapes_and_thresholds_are_rejected(self):
         with self.assertRaises(ValueError):

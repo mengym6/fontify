@@ -249,16 +249,56 @@ class LiveVisualizationTests(unittest.TestCase):
             previews = []
             callback._preview = lambda trainer, step: previews.append(step)
             trainer = SimpleNamespace(epoch=0, epochs=12, start_epoch=0, stop=False,
-                                      tloss=None, lr={"lr/pg0": .1}, metrics={"metrics/mAP50(M)": .2},
-                                      label_loss_items=lambda values, prefix: {prefix + "/seg_loss": 1.0})
+                                      tloss=None, lr={"lr/pg0": .1},
+                                      metrics={"metrics/mAP50(M)": .2,
+                                               **{f"val/{name}": 2.0 for name in live.COMMON_LOSS_NAMES}},
+                                      label_loss_items=lambda values, prefix: {
+                                          f"{prefix}/{name}": 1.0 for name in live.COMMON_LOSS_NAMES})
             callback.on_epoch_start(trainer)
             callback.on_fit_end(trainer)
             callback.on_fit_end(trainer)
             trainer.epoch += 1  # native final_eval best.pt reporting hook
             callback.on_fit_end(trainer)
             self.assertEqual(previews, [1])
-            self.assertEqual(sum(key == "train/seg_loss" for key, _, _ in writer.scalars), 1)
-            self.assertTrue(any(key.startswith("final_best/") for key, _, _ in writer.scalars))
+            self.assertEqual(writer.scalars, [("loss/train_combined", 4.0, 1), ("loss/val_combined", 8.0, 1)])
+
+    def test_common_loss_totals_exclude_semantic_and_require_all_components(self):
+        train_losses = {f"train/{name}": index + 1 for index, name in enumerate(live.COMMON_LOSS_NAMES)}
+        val_losses = {f"val/{name}": 2 * (index + 1) for index, name in enumerate(live.COMMON_LOSS_NAMES)}
+        train_losses["train/sem_loss"] = 1000
+        val_losses["val/sem_loss"] = 0
+        val_losses["metrics/mAP50(M)"] = .8
+        self.assertEqual(live.common_loss_totals(train_losses, val_losses),
+                         {"loss/train_combined": 10.0, "loss/val_combined": 20.0})
+        del val_losses["val/l1_loss"]
+        train_losses["train/cls_loss"] = float("nan")
+        self.assertEqual(live.common_loss_totals(train_losses, val_losses),
+                         {"loss/train_combined": None, "loss/val_combined": None})
+
+    def test_dashboard_writer_isolates_history_and_filters_scalar_tags(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            run = root / "old_run"
+            old_event = run / "tensorboard/events.old"
+            old_event.parent.mkdir(parents=True)
+            old_event.write_bytes(b"historical events")
+            callback = live.LiveVisualization({"path": str(root), "names": {}}, [], count=0, tensorboard=False)
+            writer, directories = FakeWriter(), []
+            def factory(directory):
+                directories.append(directory)
+                return writer
+            callback.writer_type = factory
+            callback.on_start(SimpleNamespace(save_dir=run))
+            self.assertEqual(directories, [str(root / "dashboard/old_run")])
+            self.assertEqual(old_event.read_bytes(), b"historical events")
+            protocol = json.loads((run / "dashboard_protocol.json").read_text())
+            self.assertIn("not the complete E2E", protocol["loss_definition"])
+            values = {key: .5 for key in live.DASHBOARD_SCALAR_TAGS}
+            values.update({"train/seg_loss": 99, "val/box_loss": 99, "metrics/mAP50(M)": 99,
+                           "lr/pg0": 99, "diagnostics/BF/gt_count": 99,
+                           "overview/BF/region_recall_pct": 99, "final_best/metrics/mAP50(M)": 99})
+            callback._scalars(values, 1)
+            self.assertEqual({key for key, _, _ in writer.scalars}, live.DASHBOARD_SCALAR_TAGS)
 
     def test_current_checkpoint_per_image_prediction_grouping_and_rng(self):
         with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"RANK": "-1"}):
@@ -311,10 +351,11 @@ class LiveVisualizationTests(unittest.TestCase):
             self.assertEqual(report["summary"]["BF"]["gt_count"], len(images))
             self.assertEqual(report["summary"]["JT"]["pred_count"], len(images))
             scalar_names = {key for key, _, _ in writer.scalars}
-            self.assertIn("overview/BF/miss_rate_pct", scalar_names)
-            self.assertIn("diagnostics/BF/gt_count", scalar_names)
-            if report["summary"]["BF"]["label_accuracy"] is None:
-                self.assertNotIn("overview/BF/label_accuracy_pct", scalar_names)
+            self.assertIn("metrics/BF/recall_pct", scalar_names)
+            self.assertIn("metrics/BF/precision_pct", scalar_names)
+            self.assertFalse(any(key.startswith(("overview/", "diagnostics/")) for key in scalar_names))
+            if report["summary"]["BF"]["mean_matched_iou"] is None:
+                self.assertNotIn("metrics/BF/iou_pct", scalar_names)
             for file in (run / "previews/epoch_005").glob("*.png"):
                 with Image.open(file) as image:
                     self.assertEqual(image.size, (48 * 5, 40 + 88))

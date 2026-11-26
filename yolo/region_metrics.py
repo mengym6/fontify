@@ -7,10 +7,18 @@ whose IoU reaches the threshold, then their total IoU. A cross-BF/JT class error
 therefore counts as a miss in the GT group and a false positive in the other
 group. A wrong fine label within one group retains its geometric match.
 
-Recall = matched / GT; precision = matched / predictions; miss rate = missed /
-GT; label accuracy = correct fine labels / matched. These are region *counts*,
-not pixel area ratios. Zero denominators yield None. Aggregation sums counts
-and matched IoUs before computing rates, never averages per-image percentages.
+The three displayed metrics are deliberately not standard precision/recall
+with one common TP definition: recall = geometric matches / GT; label-aware
+precision = label-correct geometric matches / all predictions; IoU = the mean
+mask IoU over geometric matches. Wrong fine labels within BF or JT affect
+precision, not geometric recall or IoU. Extra predictions lower precision.
+Unmatched GT regions lower recall and are not given zero IoU in that mean.
+
+Legacy JSON fields remain available: region_precision = geometric matches /
+predictions; label_accuracy = correct labels / geometric matches; miss_rate =
+missed / GT. They are not displayed as the new precision. All denominators
+count regions, not pixel areas. Zero denominators yield None. Aggregation sums
+counts and matched IoUs first, never averages per-image percentages.
 
 GT deduplication is opt-in and removes only same-class, pixel-identical masks.
 Different classes or overlapping instances are retained. Callers should use
@@ -143,6 +151,7 @@ def _with_rates(counts: dict) -> dict:
         label_accuracy=_ratio(result["label_correct_count"], result["matched_count"]),
         miss_rate=_ratio(result["missed_count"], result["gt_count"]),
         region_precision=_ratio(result["matched_count"], result["pred_count"]),
+        label_aware_precision=_ratio(result["label_correct_count"], result["pred_count"]),
         mean_matched_iou=_ratio(result["matched_iou_sum"], result["matched_count"]),
     )
     return result
@@ -217,25 +226,25 @@ def aggregate_region_metrics(per_image_reports: Iterable[dict]) -> dict:
 
 
 def tensorboard_scalars(report: dict) -> dict[str, float]:
-    """Separate four percentage rates from diagnostic counts/raw IoUs.
+    """Return only BF/JT recall, label-aware precision and mask IoU percentages.
 
     Undefined values are omitted rather than displayed as zero or 100 percent.
     Accepts the output of either ``evaluate_regions`` or the accumulator's
-    ``summary`` and has no dependency on a TensorBoard writer or torch.
+    ``summary``. Legacy rates and diagnostic counts stay in JSON, not the UI.
+    There is no dependency on a TensorBoard writer or torch.
     """
     output = {}
-    primary = ("region_recall", "label_accuracy", "miss_rate", "region_precision")
-    diagnostics = (*COUNT_FIELDS, "matched_iou_sum", "mean_matched_iou")
+    primary = {
+        "recall": "region_recall",
+        "precision": "label_aware_precision",
+        "iou": "mean_matched_iou",
+    }
     for name in ("BF", "JT"):
         group = report[name]
-        for key in primary:
+        for display_name, key in primary.items():
             value = group.get(key)
             if value is not None:
-                output[f"overview/{name}/{key}_pct"] = 100.0 * float(value)
-        for key in diagnostics:
-            value = group.get(key)
-            if value is not None:
-                output[f"diagnostics/{name}/{key}"] = float(value)
+                output[f"metrics/{name}/{display_name}_pct"] = 100.0 * float(value)
     return output
 
 

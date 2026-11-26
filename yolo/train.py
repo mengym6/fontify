@@ -157,17 +157,31 @@ def validate_resume_checkpoint(checkpoint: object) -> None:
 
 
 def validate_hyperparameters(args) -> None:
+    semantic_weight = 1.0 if args.sem_weight is None else args.sem_weight
     checks = (
         ("lr0", args.lr0, 0 < args.lr0 <= 1, "0 < lr0 <= 1"),
         ("lrf", args.lrf, 0 <= args.lrf <= 1, "0 <= lrf <= 1"),
         ("weight-decay", args.weight_decay, 0 <= args.weight_decay <= 1, "0 <= weight-decay <= 1"),
         ("warmup-epochs", args.warmup_epochs, args.warmup_epochs >= 0, "warmup-epochs >= 0"),
+        ("warmup-bias-lr", args.warmup_bias_lr, 0 <= args.warmup_bias_lr <= 1, "0 <= warmup-bias-lr <= 1"),
+        ("momentum", args.momentum, 0 <= args.momentum < 1, "0 <= momentum < 1"),
+        ("box-weight", args.box_weight, args.box_weight >= 0, "box-weight >= 0"),
+        ("cls-weight", args.cls_weight, args.cls_weight >= 0, "cls-weight >= 0"),
+        ("dfl-weight", args.dfl_weight, args.dfl_weight >= 0, "dfl-weight >= 0"),
+        ("sem-weight", semantic_weight, semantic_weight >= 0, "sem-weight >= 0"),
+        ("translate", args.translate, 0 <= args.translate <= 1, "0 <= translate <= 1"),
+        ("scale", args.scale, 0 <= args.scale <= 1, "0 <= scale <= 1"),
+        ("shear", args.shear, 0 <= args.shear < 90, "0 <= shear < 90 degrees"),
+        ("degrees", args.degrees, 0 <= args.degrees <= 180, "0 <= degrees <= 180"),
+        ("hsv-v", args.hsv_v, 0 <= args.hsv_v <= 1, "0 <= hsv-v <= 1"),
     )
     for name, value, in_range, description in checks:
         if not math.isfinite(value) or not in_range:
             raise ValueError(f"{name} must be finite and satisfy {description}")
     if args.save_period < -1:
         raise ValueError("save-period must be -1, 0, or a positive number of epochs")
+    if args.freeze < 0 or args.mask_ratio < 1:
+        raise ValueError("freeze must be nonnegative and mask-ratio must be positive")
 
 
 def parser() -> argparse.ArgumentParser:
@@ -186,10 +200,28 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--lrf", type=float, default=.01, help="Final learning-rate fraction")
     result.add_argument("--weight-decay", type=float, default=.0005)
     result.add_argument("--warmup-epochs", type=float, default=3.0)
+    result.add_argument("--warmup-bias-lr", type=float, default=.1,
+                        help="Initial bias learning rate during warmup; auto optimizer resets it to 0")
+    result.add_argument("--momentum", type=float, default=.937,
+                        help="SGD momentum/Adam beta1; optimizer=auto selects its own value")
     result.add_argument("--save-period", type=int, default=10,
                         help="Periodic checkpoint interval; -1 or 0 disables periodic copies")
     result.add_argument("--cos-lr", action="store_true", help="Use cosine LR decay for a new run")
     result.add_argument("--no-amp", action="store_true", help="Disable mixed precision for a new run")
+    result.add_argument("--box-weight", type=float, default=7.5,
+                        help="Native box gain; YOLO26 also applies it to segmentation/semantic terms")
+    result.add_argument("--cls-weight", type=float, default=.5)
+    result.add_argument("--dfl-weight", type=float, default=1.5,
+                        help="Native dfl gain; YOLO26 reg_max=1 uses it for L1 regression")
+    result.add_argument("--sem-weight", type=float, default=None,
+                        help="Both E2E branches' semantic multiplier; new-run default 1, resume inherits saved config")
+    result.add_argument("--translate", type=float, default=.03)
+    result.add_argument("--scale", type=float, default=.10)
+    result.add_argument("--shear", type=float, default=0.0, help="Maximum absolute shear angle in degrees")
+    result.add_argument("--degrees", type=float, default=0.0, help="Maximum absolute rotation angle")
+    result.add_argument("--freeze", type=int, default=0, help="Number of initial model layers to freeze")
+    result.add_argument("--mask-ratio", type=int, default=4, help="Training-mask downsampling ratio")
+    result.add_argument("--hsv-v", type=float, default=.1, help="Brightness augmentation magnitude")
     result.add_argument("--device", default="0", help="AutoDL GPU: 0; CPU: cpu")
     result.add_argument("--workers", type=int, default=2)
     result.add_argument("--seed", type=int, default=42)
@@ -232,6 +264,8 @@ def main() -> None:
             args.resume_output.expanduser().resolve() if args.resume_output
             else args.resume.expanduser().resolve().parent.parent
         )
+    from calli_loss import resolve_semantic_weight
+    args.sem_weight = resolve_semantic_weight(args.sem_weight, resume_checkpoint=args.resume)
     model_path = Path(args.model).expanduser()
     if len(model_path.parts) == 1 and not model_path.is_file():
         model_path = ROOT / "models" / model_path
@@ -241,19 +275,25 @@ def main() -> None:
         "patience": args.patience, "device": args.device, "workers": args.workers,
         "seed": args.seed, "project": str(args.project.expanduser().resolve()),
         "name": args.name, "overlap_mask": False, "fliplr": 0.0, "flipud": 0.0,
-        "mosaic": 0.0, "mixup": 0.0, "copy_paste": 0.0, "degrees": 0.0,
-        "translate": 0.03, "scale": 0.10, "shear": 0.0, "perspective": 0.0,
-        "hsv_h": 0.0, "hsv_s": 0.0, "hsv_v": 0.1,
+        "mosaic": 0.0, "mixup": 0.0, "copy_paste": 0.0, "degrees": args.degrees,
+        "translate": args.translate, "scale": args.scale, "shear": args.shear, "perspective": 0.0,
+        "hsv_h": 0.0, "hsv_s": 0.0, "hsv_v": args.hsv_v,
         "optimizer": args.optimizer, "lr0": args.lr0, "lrf": args.lrf,
         "weight_decay": args.weight_decay, "warmup_epochs": args.warmup_epochs,
+        "warmup_bias_lr": args.warmup_bias_lr, "momentum": args.momentum,
         "cos_lr": args.cos_lr, "amp": not args.no_amp,
+        "box": args.box_weight, "cls": args.cls_weight, "dfl": args.dfl_weight,
+        "freeze": args.freeze, "mask_ratio": args.mask_ratio,
         "save": True, "save_period": args.save_period, "plots": True,
     }
     plan = {
         "model": str(model_path), "resume": str(args.resume) if args.resume else None,
         "resume_output": str(resume_output) if resume_output else None,
         "resolved_data": data, "dataset_check": report, "train_settings": settings,
+        "auxiliary_loss": {"sem_weight": args.sem_weight},
         "visualization": {"tensorboard": not args.no_tensorboard,
+                          "tensorboard_root": str((resume_output.parent if resume_output else Path(settings["project"]))
+                                                  / "dashboard"),
                           "preview_every": args.preview_every, "preview_count": args.preview_count,
                           "region_metrics_scope": "full validation",
                           "region_metrics_schedule": "first/preview interval/final epochs",
@@ -262,8 +302,8 @@ def main() -> None:
                 "the printed new-run hyperparameters are not applied to resume."
         if args.resume else "COCO initialization is not a trained Calli recognizer.",
         "optimizer_note": (
-            "Ultralytics optimizer=auto selects the optimizer and initial learning rate, "
-            "ignoring the supplied lr0. Choose AdamW or SGD for a manually selected lr0."
+            "Ultralytics optimizer=auto selects the optimizer, initial learning rate, and momentum, "
+            "ignoring the supplied lr0/momentum. Choose AdamW or SGD for manual settings."
         ) if args.optimizer == "auto" else "Explicit optimizer and lr0 apply to a new run only.",
     }
     print(json.dumps(plan, ensure_ascii=False, indent=2))
@@ -273,6 +313,7 @@ def main() -> None:
     import yaml
     from ultralytics import YOLO
     from live_visualization import LiveVisualization, isolated_logging_integrations
+    from calli_loss import make_semantic_loss_callback
 
     live = LiveVisualization(data, split_images(data["val"]), args.preview_every,
                              args.preview_count, args.seed, not args.no_tensorboard)
@@ -285,6 +326,7 @@ def main() -> None:
         validate_resume_checkpoint(model.ckpt)
     if model.task != "segment":
         raise ValueError("This dataset requires an instance-segmentation (-seg) model")
+    model.add_callback("on_train_start", make_semantic_loss_callback(args.sem_weight))
     live.attach(model)
     config_dir = Path(settings["project"]) / "_configs"
     config_dir.mkdir(parents=True, exist_ok=True)

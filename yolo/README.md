@@ -68,7 +68,7 @@ EPOCHS=80 BATCH=8 OPTIMIZER=AdamW LR0=0.0003 bash start_train.sh
 bash start_train.sh --tb-only
 ```
 
-TensorBoard监听服务器 `127.0.0.1:6006`，日志根目录与脚本的 `PROJECT_DIR` 一致。端口被其他服务或其他日志目录占用时会明确提示；修改顶部 `TB_PORT` 可换端口。无需自动打开远程浏览器。
+TensorBoard监听服务器 `127.0.0.1:6006`，日志根目录默认是 `PROJECT_DIR/dashboard`。端口被其他服务或其他日志目录占用时会明确提示；修改顶部 `TB_PORT` 可换端口。无需自动打开远程浏览器。
 
 在本地VS Code的 **Ports（端口）→ Forward a Port（转发端口）** 输入 `6006`，打开转发后的本机地址。曲线每轮更新，Images中的固定45个验证字（9个来源各5张）在首轮、每5轮、结束轮更新。
 
@@ -76,7 +76,7 @@ TensorBoard监听服务器 `127.0.0.1:6006`，日志根目录与脚本的 `PROJE
 
 ```bash
 source /root/autodl-tmp/fontify_yolo_env/bin/activate
-tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs --host 127.0.0.1 --port 6006
+tensorboard --logdir /root/autodl-tmp/fontify_yolo/yolo/runs/dashboard --host 127.0.0.1 --port 6006
 ```
 
 默认最多100轮、batch8、640输入、patience25。第一次训练会下载COCO初始化到 `models/`；现有数据、权重和运行结果均不由Git覆盖。当前在跑的训练不需要为新增启动脚本重启；修改脚本参数只影响下一次新训练。
@@ -105,6 +105,7 @@ python train.py --resume runs/calli_phase_jieti_yolo26s/weights/last.pt --device
 |---|---|
 | `start_train.sh` | 顶部调整超参数；自动TensorBoard与后台训练 |
 | `train.py` | 训练入口，支持数据检查、实时可视化和续训 |
+| `calli_loss.py` | 独立辅助semantic权重、两支/EMA安装及恢复配置 |
 | `live_visualization.py` | 每轮原生标量；定期全验证集数量指标与分层固定预览 |
 | `region_metrics.py` | BF/JT实例数量匹配与微平均统计 |
 | `evaluate_regions.py` | 已有权重事后评估、完整验证集预览和分来源图集 |
@@ -153,32 +154,52 @@ python build_dataset.py --help
 
 官方参考：[分割任务](https://docs.ultralytics.com/tasks/segment/)、[训练配置](https://docs.ultralytics.com/modes/train/)、[标签格式](https://docs.ultralytics.com/datasets/segment/)。
 
-## 面向笔法／结体的数量指标
+## 三指标与合并损失面板
 
-TensorBoard中选择 `overview/BF`（笔法）或 `overview/JT`（结体）；四个主指标单位为百分数：
+TensorBoard默认只读 `runs/dashboard/`，历史详细event仍保留。每个新run只有BF/JT各三个评价标量，以及两条合并损失；不再展示独立分类准确率、漏检率、原生mAP、学习率或各项loss。原始细项仍写入Ultralytics results.csv和JSON，可用于排查。
 
-| 名称 | 定义 |
+| 主指标（百分数） | 定义 |
 |---|---|
-| `region_recall_pct` | 几何匹配数 / GT实例数 |
-| `label_accuracy_pct` | 匹配中细分类正确数 / 几何匹配数 |
-| `miss_rate_pct` | 未匹配GT实例数 / GT实例数 |
-| `region_precision_pct` | 几何匹配数 / 预测实例数 |
+| `metrics/BF/recall_pct`（JT同理） | 几何匹配数 / GT区域数：是否找全 |
+| `metrics/BF/precision_pct` | 几何匹配且细标签正确数 / 全部预测数：错标签和多框都扣分 |
+| `metrics/BF/iou_pct` | 成功几何匹配的mask IoU均值：区域轮廓是否准确 |
 
-固定置信度0.25、mask IoU阈值0.5。先按BF/JT分组，组内匹配不要求细分类相同；一对一匹配首先最大化可匹配数量，再最大化IoU总和。跨BF/JT预测错误计入原任务漏检与另一任务误检。标签准确率只针对已找到的区域，不能把它单独当作全部目标的正确率。
+固定置信度0.25、mask IoU匹配阈值0.5。BF/JT先分组，组内忽略细标签进行一对一几何匹配，先最大化匹配数量，再最大化总IoU。查全和查准按用户定义使用不同分子，不冒称标准共用TP的P/R。IoU使用分割区域，不只看外接矩形；零匹配时无定义，JSON记null、TB省略。
 
-统计单位是区域数量，不是像素面积；召回率与漏检率互补。详细分母和平均匹配IoU位于 `diagnostics/`。无分母的率在JSON中为null，在TB省略，不伪造0%或100%。原始loss/mAP日志仍保留：它们和新数量口径不同，不能混用。
+例如GT只有“左”，却预测“左上”和“左下”，即使几何能够匹配一块，查准率仍为0；正确标签预测两个重复框，只能匹配一个，查准率为50%。不会合并预测框去迎合真值。
 
-统计前显式去重完全相同类别＋二值mask的GT，记录去重前后数量；不合并不同阶段或重叠的不同实例。汇总采用micro方式：先累加所有图片的实例数，再计算比例。
+`loss/train_combined`、`loss/val_combined` 均为one-to-one分支的box+seg+cls+l1四个共同项的加权和。验证不计算辅助semantic，因此两端都不把它加入显示曲线。这是可比较主任务合并量；实际E2E反传仍包含两分支及辅助项，不将其冒充为完整反传总目标。
 
-新运行在首轮、每5轮、结束轮对整个验证集逐图推理，计算这组数量指标，并复用结果保存固定45张预览；不是只拿45张估计全验证集指标。旧运行的4字固定清单保持不变，避免把不同采样误当同一曲线。早停/选best仍沿用原生box mAP50–95＋mask mAP50–95，不因加看板而改变训练。
+## 辅助语义损失与泛化候选
 
-对已训练权重补评并导出**全部验证图**，不重新训练：
+`SEM_WEIGHT`独立缩放两个E2E分支的辅助semantic项，默认1保持原目标。它不会改变框、实例mask、类别、L1四个主项，也不更改Calli标注。配置保存为run/loss_config.json；恢复训练读取原配置，不允许通过resume悄悄换目标。主训练权重仍为原生YOLO模型，保存时criterion被剥离。
+
+辅助semantic在重叠标注处仅监督面积最小的实例类别，和同一像素可同时属于笔法与结体的需求有潜在不一致。本轮将较小semantic权重与正则化作为待验证候选；不能仅因loss变小就认定泛化改善。
+
+同一数据、同一COCO起点的首候选命令：
+
+```bash
+RUN_NAME=calli_generalization_v1 \
+OPTIMIZER=AdamW LR0=0.0001 LRF=0.05 COS_LR=1 \
+WEIGHT_DECAY=0.005 MOMENTUM=0.9 WARMUP_BIAS_LR=0 \
+FREEZE=4 SEM_WEIGHT=0.25 MASK_RATIO=2 \
+TRANSLATE=0.05 SCALE=0.15 SHEAR=1 DEGREES=0 HSV_V=0.15 \
+PATIENCE=20 EPOCHS=100 bash start_train.sh
+```
+
+是否改善必须在同一验证数据、固定阈值和三指标下与旧best比较。冻结、权重衰减、增强和辅助权重共同变化，不将收益归因于单项。`MASK_RATIO=2`改变训练标签采样，不提高模型原生输出mask分辨率。
+
+## 完整评估与预览
+
+新运行首轮、每5轮和结束轮对全部171张验证图逐张推理，复用结果计算三指标并展示45个分层固定样本（9来源各5字）。旧run的4字清单原样保留。零分母不伪造100%，GT显式按同类且完全相同mask去重，详细计数放JSON而不占主面板。
+
+对现有权重补出全部验证图，不重新训练：
 
 ```bash
 python evaluate_regions.py \
   --weights runs/calli_phase_jieti_yolo26s_20261126/weights/best.pt \
   --split val --checkpoint-epoch 43 --save-previews \
-  --output runs/evaluation_best43_val_counts
+  --output runs/evaluation_best43_val_counts_v2
 ```
 
-输出包括summary.json、per_image.json、按来源分组的previews、index.html和tensorboard/。`--checkpoint-epoch`是根据训练记录提供的展示标签，不从已strip的权重中猜测轮次。训练集评估使用 `--split train`，必须和验证集分开解释。
+输出summary.json、per_image.json、按来源分组的previews及index.html；event位于 `runs/dashboard/evaluation_best43_val_counts_v2/`。`--checkpoint-epoch`是根据训练记录提供的展示标签，不从已strip权重猜测轮次。训练集评估用 `--split train`，与验证结果分开解释。

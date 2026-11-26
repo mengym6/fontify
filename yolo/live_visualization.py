@@ -8,11 +8,43 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import random
 from collections import Counter, defaultdict
 from contextlib import contextmanager
 from pathlib import Path
+
+
+COMMON_LOSS_NAMES = ("box_loss", "seg_loss", "cls_loss", "l1_loss")
+DASHBOARD_SCALAR_TAGS = {
+    "loss/train_combined", "loss/val_combined",
+    *{f"metrics/{group}/{metric}_pct" for group in ("BF", "JT")
+      for metric in ("recall", "precision", "iou")},
+}
+
+
+def dashboard_directory(run_directory: Path) -> Path:
+    run_directory = Path(run_directory)
+    return run_directory.parent / "dashboard" / run_directory.name
+
+
+def common_loss_totals(train_losses: dict, val_metrics: dict) -> dict:
+    """Sum comparable, gain-weighted one-to-one task terms, not E2E objectives.
+
+    YOLO26's displayed loss_items describe its one-to-one branch. Semantic
+    loss is train-only and is excluded from both displayed totals. Missing or
+    nonfinite components yield None; never display a partial sum as a total.
+    """
+    output = {}
+    for prefix, values in (("train", train_losses), ("val", val_metrics)):
+        keys = [f"{prefix}/{name}" for name in COMMON_LOSS_NAMES]
+        complete = all(key in values and values[key] is not None for key in keys)
+        numbers = [float(values[key]) for key in keys] if complete else []
+        output[f"loss/{prefix}_combined"] = (
+            sum(numbers) if complete and all(math.isfinite(value) for value in numbers) else None
+        )
+    return output
 
 
 def primary_rank() -> bool:
@@ -275,8 +307,25 @@ class LiveVisualization:
                 print(f"Keeping existing fixed preview manifest: {self.manifest['count']} images "
                       f"(new-run request: {self.count})", flush=True)
         if self.writer_type:
-            self.writer = self.writer_type(str(Path(trainer.save_dir) / "tensorboard"))
-            print(f"TensorBoard enabled: {Path(trainer.save_dir) / 'tensorboard'}", flush=True)
+            event_dir = dashboard_directory(Path(trainer.save_dir))
+            self.writer = self.writer_type(str(event_dir))
+            protocol = {
+                "schema": "calli-minimal-dashboard-v1", "event_directory": str(event_dir),
+                "scalar_tags": sorted(DASHBOARD_SCALAR_TAGS),
+                "common_loss_components": list(COMMON_LOSS_NAMES),
+                "loss_definition": (
+                    "train_combined and val_combined sum the four common gain-weighted one-to-one "
+                    "branch loss items reported by Ultralytics. They exclude train-only sem_loss "
+                    "and are not the complete E2E backpropagation objective. Missing components "
+                    "are omitted, never replaced by a partial sum."
+                ),
+                "details": "Native loss components, mAP, and LR remain in results.csv; region counts remain in JSON.",
+                "history": "Existing event files under the old run/tensorboard directory are unchanged.",
+            }
+            (Path(trainer.save_dir) / "dashboard_protocol.json").write_text(
+                json.dumps(protocol, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            print(f"TensorBoard minimal dashboard enabled: {event_dir}", flush=True)
 
     def on_epoch_start(self, trainer) -> None:
         self.active_epoch = trainer.epoch
@@ -284,24 +333,25 @@ class LiveVisualization:
     def _scalars(self, values: dict, step: int, prefix: str = "") -> None:
         if self.writer:
             for key, value in values.items():
-                if value is not None:
-                    self.writer.add_scalar(prefix + key, float(value), step)
+                tag = prefix + key
+                if value is not None and tag in DASHBOARD_SCALAR_TAGS:
+                    self.writer.add_scalar(tag, float(value), step)
 
     def on_fit_end(self, trainer) -> None:
         if not primary_rank():
             return
         if trainer.epoch != self.active_epoch:
             # Ultralytics final_eval invokes this hook for best.pt with epoch+1.
-            self._scalars(trainer.metrics, trainer.epoch + 1, "final_best/")
+            # Its losses describe a different checkpoint, so do not mix them
+            # into the current-epoch train/val totals or add native mAP tags.
             if self.writer:
                 self.writer.flush()
             return
         if self.last_fit_epoch == trainer.epoch:
             return
         step = trainer.epoch + 1
-        self._scalars(trainer.label_loss_items(trainer.tloss, prefix="train"), step)
-        self._scalars(trainer.lr, step)
-        self._scalars(trainer.metrics, step)
+        totals = common_loss_totals(trainer.label_loss_items(trainer.tloss, prefix="train"), trainer.metrics)
+        self._scalars(totals, step)
         if should_preview(
             step, trainer.epochs, self.every, trainer.start_epoch + 1, bool(trainer.stop)
         ):
