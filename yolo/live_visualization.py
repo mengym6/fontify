@@ -1,4 +1,4 @@
-"""Epoch scalars and fixed BF/JT previews, independent of the training model.
+"""Epoch scalars, periodic full-val region counts, and fixed BF/JT previews.
 
 Preview inference loads the current last.pt into a separate YOLO object. The
 training model, EMA, optimizer, and their mode/dtype are never passed to predict.
@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import random
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -48,6 +49,17 @@ def label_for(image: Path) -> Path:
     return Path(*parts).with_suffix(".txt")
 
 
+def validation_authors(data_root: Path, images: list[Path]) -> dict[Path, str]:
+    """Prefer the dataset's source author; filenames are a portable fallback."""
+    authors = {}
+    source = data_root / "manifest.json"
+    if source.is_file():
+        for row in json.loads(source.read_text(encoding="utf-8")).get("images", []):
+            if row.get("image") and row.get("author"):
+                authors[(data_root / row["image"]).resolve()] = str(row["author"])
+    return {image: authors.get(image, image.stem.rsplit("_", 1)[0]) for image in images}
+
+
 def fixed_samples(data_root: Path, candidates: list[Path], count: int,
                   seed: int, path: Path) -> dict:
     """Keep sample identity and image/label bytes fixed across epochs/resumes."""
@@ -55,16 +67,36 @@ def fixed_samples(data_root: Path, candidates: list[Path], count: int,
     available = sorted({Path(item).resolve() for item in candidates})
     count = min(count, len(available))
     if path.is_file():
+        # Existing runs, including original 4-image v1 manifests, keep their
+        # exact samples and manifest bytes when the new default becomes 45.
         manifest = json.loads(path.read_text(encoding="utf-8"))
-        if manifest.get("count") != count or manifest.get("seed") != seed:
-            raise ValueError("Existing preview manifest count/seed changed; use the original settings")
     else:
-        chosen = sorted(random.Random(seed).sample(available, count))
+        authors = validation_authors(data_root, available)
+        groups = defaultdict(list)
+        for image in available:
+            groups[authors[image]].append(image)
+        rng = random.Random(seed)
+        order = sorted(groups)
+        rng.shuffle(order)
+        for group in groups.values():
+            rng.shuffle(group)
+        chosen = []
+        while len(chosen) < count:
+            for author in order:
+                if groups[author] and len(chosen) < count:
+                    chosen.append(groups[author].pop())
+        chosen.sort()
         manifest = {
-            "schema": "calli-fixed-validation-preview-v1", "count": count,
+            "schema": "calli-fixed-validation-preview-v2", "count": count,
+            "sampling_strategy": "author_stratified_round_robin",
+            "author_source": "dataset manifest author; filename prefix fallback",
+            "target_per_author": count // max(len(order), 1),
+            "available_per_author": dict(sorted(Counter(authors.values()).items())),
+            "selected_per_author": dict(sorted(Counter(authors[image] for image in chosen).items())),
             "seed": seed, "samples": [
                 {"image": os.path.relpath(image, data_root),
                  "label": os.path.relpath(label_for(image), data_root),
+                 "author": authors[image],
                  "image_sha256": sha256(image), "label_sha256": sha256(label_for(image))}
                 for image in chosen
             ],
@@ -162,7 +194,8 @@ def prediction_instances(result) -> list[dict]:
 
 
 def panel_image(image, truth: list[dict], predicted: list[dict], names: dict,
-                epoch: int, sample: str):
+                epoch: int, sample: str, checkpoint_label: str = "current last.pt EMA",
+                confidence_threshold: float = .25):
     """One source and four grouped overlays, all from the same prediction."""
     import colorsys
     import numpy as np
@@ -173,7 +206,7 @@ def panel_image(image, truth: list[dict], predicted: list[dict], names: dict,
     header, footer = 62, 26
     canvas = Image.new("RGB", (width * 5, height + header + footer), "white")
     draw = ImageDraw.Draw(canvas)
-    draw.text((8, 5), f"Epoch {epoch:03d} | {sample} | current last.pt EMA", fill="black")
+    draw.text((8, 5), f"Epoch {epoch:03d} | {sample} | {checkpoint_label}", fill="black")
     columns = [("INPUT", []), ("BF GT [0:50]", [v for v in truth if v["class_id"] < 50]),
                ("BF PRED [0:50]", [v for v in predicted if v["class_id"] < 50]),
                ("JT GT [50:70]", [v for v in truth if 50 <= v["class_id"] < 70]),
@@ -206,14 +239,14 @@ def panel_image(image, truth: list[dict], predicted: list[dict], names: dict,
         canvas.paste(panel, (column * width, header))
         draw.text((column * width + 8, 30), f"{title} | n={len(instances)}", fill="black")
     draw.text((8, height + header + 7),
-              "BF: stroke phases; JT: components; B/M/E: beginning/middle/ending; confidence >= 0.25",
+              f"BF: stroke phases; JT: components; B/M/E: beginning/middle/ending; confidence >= {confidence_threshold:g}",
               fill="black")
     return canvas
 
 
 class LiveVisualization:
     def __init__(self, data: dict, val_images: list[Path], every: int = 5,
-                 count: int = 4, seed: int = 42, tensorboard: bool = True):
+                 count: int = 45, seed: int = 42, tensorboard: bool = True):
         self.data, self.val_images = data, val_images
         self.every, self.count, self.seed = every, count, seed
         self.writer_type = summary_writer_class() if tensorboard and primary_rank() else None
@@ -238,6 +271,9 @@ class LiveVisualization:
                 Path(self.data["path"]), self.val_images, self.count, self.seed,
                 Path(trainer.save_dir) / "previews" / "fixed_samples.json",
             )
+            if self.manifest["count"] != min(self.count, len(self.val_images)):
+                print(f"Keeping existing fixed preview manifest: {self.manifest['count']} images "
+                      f"(new-run request: {self.count})", flush=True)
         if self.writer_type:
             self.writer = self.writer_type(str(Path(trainer.save_dir) / "tensorboard"))
             print(f"TensorBoard enabled: {Path(trainer.save_dir) / 'tensorboard'}", flush=True)
@@ -248,7 +284,8 @@ class LiveVisualization:
     def _scalars(self, values: dict, step: int, prefix: str = "") -> None:
         if self.writer:
             for key, value in values.items():
-                self.writer.add_scalar(prefix + key, float(value), step)
+                if value is not None:
+                    self.writer.add_scalar(prefix + key, float(value), step)
 
     def on_fit_end(self, trainer) -> None:
         if not primary_rank():
@@ -265,7 +302,7 @@ class LiveVisualization:
         self._scalars(trainer.label_loss_items(trainer.tloss, prefix="train"), step)
         self._scalars(trainer.lr, step)
         self._scalars(trainer.metrics, step)
-        if self.count and should_preview(
+        if should_preview(
             step, trainer.epochs, self.every, trainer.start_epoch + 1, bool(trainer.stop)
         ):
             self._preview(trainer, step)
@@ -277,61 +314,99 @@ class LiveVisualization:
         import numpy as np
         from PIL import Image
         from ultralytics import YOLO
+        from region_metrics import (
+            RegionMetricsAccumulator, deduplicate_gt_instances, tensorboard_scalars,
+        )
 
         checkpoint = Path(trainer.last)
         if not checkpoint.is_file():
             raise FileNotFoundError(f"Current epoch preview checkpoint missing: {checkpoint}")
-        # Recheck the pinned validation bytes rather than silently changing GT.
-        self.manifest = fixed_samples(
-            Path(self.data["path"]), self.val_images, self.count, self.seed,
-            Path(trainer.save_dir) / "previews" / "fixed_samples.json",
-        )
+        data_root = Path(self.data["path"]).resolve()
+        if self.count:
+            self.manifest = fixed_samples(
+                data_root, self.val_images, self.count, self.seed,
+                Path(trainer.save_dir) / "previews" / "fixed_samples.json",
+            )
+        rows = self.manifest["samples"] if self.count else []
+        preview_lookup = {(data_root / row["image"]).resolve(): (index, row)
+                          for index, row in enumerate(rows)}
+        sources = sorted({Path(source).resolve() for source in self.val_images})
+        authors = validation_authors(data_root, sources)
+        counts = RegionMetricsAccumulator(conf_threshold=.25, iou_threshold=.5, deduplicate_gt=True)
         with preserve_rng():
             predictor = YOLO(str(checkpoint))
             checkpoint_matches_epoch(predictor.ckpt, trainer.epoch)
-            sources = [str(Path(self.data["path"]) / row["image"])
-                       for row in self.manifest["samples"]]
-            # A path list uses LoadPilAndNumpy in 8.4.218, which ignores batch=1
-            # and stacks all images. Reuse one independent model but predict one
-            # path at a time so preview memory does not scale with sample count.
-            results = []
+            folder = Path(trainer.save_dir) / "previews" / f"epoch_{step:03d}"
+            folder.mkdir(parents=True, exist_ok=True)
+            provenance = {
+                "epoch": step, "checkpoint_epoch_zero_based": trainer.epoch,
+                "checkpoint": str(checkpoint), "checkpoint_sha256": sha256(checkpoint),
+                "checkpoint_note": "last.pt is overwritten later; SHA identifies the weights used here",
+                "source": "current epoch last.pt EMA", "conf_threshold": .25, "iou_threshold": .5,
+                "evaluated_split": "val", "full_validation": True,
+                "evaluated_images": len(sources), "preview_images": len(rows),
+                "evaluation_interval_epochs": self.every,
+                "evaluation_schedule": "first, interval multiples, final/early-stop epochs only",
+                "ground_truth_policy": "deduplicate equal class_id and pixel-identical binary mask",
+                "native_duplicate_note": (
+                    "Native Ultralytics removes duplicate label rows during loading. This report "
+                    "independently deduplicates class+binary mask; raw/removed counts are measured, "
+                    "not assumed equal to the native loader warning."
+                ),
+            }
+            metadata = {**provenance, "samples": []}
+            # Evaluate each validation image once, then reuse the same result for
+            # its fixed preview if selected. Never retain all 171 GPU mask sets.
             for source in sources:
-                result = predictor.predict(
-                    source=source, device=trainer.device, imgsz=trainer.args.imgsz,
+                results = predictor.predict(
+                    source=str(source), device=trainer.device, imgsz=trainer.args.imgsz,
                     conf=.25, max_det=300, retina_masks=True, batch=1,
                     save=False, verbose=False, quantize=32,
                 )
-                if len(result) != 1:
-                    raise RuntimeError("A single preview path must produce exactly one result")
-                results.extend(result)
-            if len(results) != len(sources):
-                raise RuntimeError("Fixed preview output count does not match its manifest")
-            folder = Path(trainer.save_dir) / "previews" / f"epoch_{step:03d}"
-            folder.mkdir(parents=True, exist_ok=True)
-            metadata = {"epoch": step, "checkpoint_epoch_zero_based": trainer.epoch,
-                        "checkpoint": str(checkpoint), "checkpoint_sha256": sha256(checkpoint),
-                        "source": "current epoch last.pt EMA", "samples": []}
-            for index, (row, result) in enumerate(zip(self.manifest["samples"], results)):
-                source = Path(self.data["path"]) / row["image"]
-                if Path(result.path).resolve() != source.resolve():
-                    raise RuntimeError("Fixed preview inference changed sample ordering")
+                if len(results) != 1:
+                    raise RuntimeError("A single validation path must produce exactly one result")
+                result = results[0]
+                if Path(result.path).resolve() != source:
+                    raise RuntimeError("Region-count prediction returned the wrong source image")
                 with Image.open(source) as image:
                     image = image.convert("RGB")
-                truth = gt_instances(Path(self.data["path"]) / row["label"], image.height, image.width)
+                truth = gt_instances(label_for(source), image.height, image.width)
                 predicted = prediction_instances(result)
-                preview = panel_image(image, truth, predicted, self.data["names"], step, source.stem)
-                filename = f"{index:02d}_{source.stem}.png"
-                preview.save(folder / filename)
-                if self.writer:
-                    self.writer.add_image(f"previews/{index:02d}_{source.stem}",
-                                          np.asarray(preview), step, dataformats="HWC")
-                metadata["samples"].append({"image": row["image"], "preview": filename,
-                                             "gt_instances": len(truth), "pred_instances": len(predicted)})
+                relative = os.path.relpath(source, data_root)
+                counts.update(truth, predicted, image_id=relative)
+                if source in preview_lookup:
+                    index, row = preview_lookup[source]
+                    unique_truth, removed = deduplicate_gt_instances(truth)
+                    preview = panel_image(image, unique_truth, predicted, self.data["names"], step, source.stem)
+                    filename = f"{index:02d}_{source.stem}.png"
+                    preview.save(folder / filename)
+                    if self.writer:
+                        self.writer.add_image(f"previews/{index:02d}_{source.stem}",
+                                              np.asarray(preview), step, dataformats="HWC")
+                    metadata["samples"].append({
+                        "image": row["image"], "author": row.get("author", authors[source]),
+                        "preview": filename, "gt_instances_raw": len(truth),
+                        "gt_instances": len(unique_truth), "gt_duplicates_removed": removed,
+                        "pred_instances": len(predicted),
+                    })
+                del results, result, truth, predicted
+            summary = counts.summary()
+            metrics_dir = Path(trainer.save_dir) / "region_metrics"
+            metrics_dir.mkdir(parents=True, exist_ok=True)
+            metrics_path = metrics_dir / f"epoch_{step:03d}.json"
+            metrics_path.write_text(json.dumps(
+                {**provenance, "summary": summary, "per_image": counts.per_image},
+                ensure_ascii=False, indent=2, allow_nan=False,
+            ), encoding="utf-8")
+            self._scalars(tensorboard_scalars(summary), step)
+            metadata["region_metrics"] = str(metrics_path)
+            metadata["samples"].sort(key=lambda row: row["preview"])
             (folder / "preview.json").write_text(
                 json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
             )
-            del results, predictor
-        print(f"Fixed validation previews saved: {folder}", flush=True)
+            del predictor
+        print(f"Full-val region counts ({len(sources)} images): {metrics_path}; "
+              f"fixed previews ({len(rows)} images): {folder}", flush=True)
 
     def close(self, trainer=None) -> None:
         if self.writer:

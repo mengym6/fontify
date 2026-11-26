@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import random
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -15,6 +16,7 @@ from PIL import Image
 
 
 MODULE = Path(__file__).resolve().parents[1] / "live_visualization.py"
+sys.path.insert(0, str(MODULE.parent))
 SPEC = importlib.util.spec_from_file_location("live_visualization", MODULE)
 live = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(live)
@@ -169,6 +171,53 @@ class LiveVisualizationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "changed"):
                 live.fixed_samples(root, images, 4, 42, path)
 
+    def test_old_four_image_manifest_is_reused_byte_for_byte(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            data, images = self.make_data(root)
+            path = root / "run/previews/fixed_samples.json"
+            created = live.fixed_samples(root, images, 4, 42, path)
+            legacy = {"schema": "calli-fixed-validation-preview-v1", "count": 4, "seed": 42,
+                      "samples": [{k: v for k, v in row.items() if k != "author"}
+                                  for row in created["samples"]]}
+            path.write_text(json.dumps(legacy, indent=2))
+            original_bytes = path.read_bytes()
+            recovered = live.fixed_samples(root, images, 45, 123, path)
+            self.assertEqual(recovered, legacy)
+            self.assertEqual(path.read_bytes(), original_bytes)
+
+    def test_author_stratified_45_and_shortage_redistribution(self):
+        for short_author in (False, True):
+            with self.subTest(short_author=short_author), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                images, rows = [], []
+                for author in range(9):
+                    for index in range(2 if short_author and author == 0 else 6):
+                        # Deliberately use a common filename prefix: grouping
+                        # must use manifest authors, not the filename fallback.
+                        image = root / "images/val" / f"glyph_{author}_{index}.png"
+                        label = root / "labels/val" / (image.stem + ".txt")
+                        image.parent.mkdir(parents=True, exist_ok=True)
+                        label.parent.mkdir(parents=True, exist_ok=True)
+                        Image.new("RGB", (8, 8), "white").save(image)
+                        label.write_text("0 .1 .1 .8 .1 .5 .8\n")
+                        images.append(image)
+                        rows.append({"image": str(image.relative_to(root)), "author": f"author{author}"})
+                (root / "manifest.json").write_text(json.dumps({"images": rows}))
+                state = random.getstate()
+                result = live.fixed_samples(root, images, 45, 42, root / "fixed.json")
+                self.assertEqual(random.getstate(), state)
+                self.assertEqual(result["count"], 45)
+                self.assertEqual(len({row["image"] for row in result["samples"]}), 45)
+                self.assertEqual(len(result["selected_per_author"]), 9)
+                self.assertEqual(result["target_per_author"], 5)
+                if short_author:
+                    self.assertEqual(result["selected_per_author"]["author0"], 2)
+                    self.assertTrue(all(result["selected_per_author"][f"author{i}"] >= 5
+                                        for i in range(1, 9)))
+                else:
+                    self.assertEqual(set(result["selected_per_author"].values()), {5})
+
     def test_integrations_are_process_local_and_restored(self):
         class Settings(dict):
             def __setitem__(self, key, value):
@@ -241,8 +290,8 @@ class LiveVisualizationTests(unittest.TestCase):
             py_state = random.getstate()
             with patch.dict("sys.modules", {"torch": torch, "ultralytics": SimpleNamespace(YOLO=IndependentYOLO)}):
                 callback._preview(trainer, 5)
-            self.assertEqual(len(calls), 4)
-            self.assertEqual(len({call["source"] for call in calls}), 4)
+            self.assertEqual(len(calls), len(images))
+            self.assertEqual(len({call["source"] for call in calls}), len(images))
             for call in calls:
                 self.assertIsInstance(call["source"], str)
                 self.assertEqual(call["batch"], 1)
@@ -253,10 +302,39 @@ class LiveVisualizationTests(unittest.TestCase):
             self.assertEqual(len(writer.images), 4)
             metadata = json.loads((run / "previews/epoch_005/preview.json").read_text())
             self.assertEqual(metadata["checkpoint_epoch_zero_based"], 4)
+            self.assertEqual(metadata["evaluated_images"], len(images))
+            self.assertEqual(metadata["preview_images"], 4)
             self.assertEqual(metadata["samples"][0]["pred_instances"], 2)
+            report = json.loads((run / "region_metrics/epoch_005.json").read_text())
+            self.assertTrue(report["full_validation"])
+            self.assertEqual(len(report["per_image"]), len(images))
+            self.assertEqual(report["summary"]["BF"]["gt_count"], len(images))
+            self.assertEqual(report["summary"]["JT"]["pred_count"], len(images))
+            scalar_names = {key for key, _, _ in writer.scalars}
+            self.assertIn("overview/BF/miss_rate_pct", scalar_names)
+            self.assertIn("diagnostics/BF/gt_count", scalar_names)
+            if report["summary"]["BF"]["label_accuracy"] is None:
+                self.assertNotIn("overview/BF/label_accuracy_pct", scalar_names)
             for file in (run / "previews/epoch_005").glob("*.png"):
                 with Image.open(file) as image:
                     self.assertEqual(image.size, (48 * 5, 40 + 88))
+
+    def test_disabling_images_keeps_periodic_full_val_metrics_hook(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            data, images = self.make_data(root)
+            callback = live.LiveVisualization(data, images, count=0, tensorboard=False)
+            calls = []
+            callback._preview = lambda trainer, step: calls.append(step)
+            trainer = SimpleNamespace(epoch=0, epochs=100, start_epoch=0, stop=False,
+                                      tloss=None, lr={}, metrics={},
+                                      label_loss_items=lambda values, prefix: {})
+            callback.on_epoch_start(trainer)
+            callback.on_fit_end(trainer)
+            trainer.epoch = 1
+            callback.on_epoch_start(trainer)
+            callback.on_fit_end(trainer)
+            self.assertEqual(calls, [1])
 
     def test_stale_or_stripped_checkpoint_rejected(self):
         for checkpoint in (None, {"epoch": -1}, {"epoch": 3}):

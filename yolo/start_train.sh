@@ -31,8 +31,8 @@ WARMUP_EPOCHS="${WARMUP_EPOCHS:-3}"
 COS_LR="${COS_LR:-0}"                    # 1=余弦调度；0=原默认调度
 AMP="${AMP:-1}"                          # 1=混合精度；0=关闭
 SAVE_PERIOD="${SAVE_PERIOD:-10}"
-PREVIEW_EVERY="${PREVIEW_EVERY:-5}"
-PREVIEW_COUNT="${PREVIEW_COUNT:-4}"
+PREVIEW_EVERY="${PREVIEW_EVERY:-5}"        # 首轮/每5轮/末轮：全val区域计数+固定图
+PREVIEW_COUNT="${PREVIEW_COUNT:-45}"      # 新run按9来源各5字；已有manifest保持原样
 TB_PORT="${TB_PORT:-6006}"
 # ==========================================================
 

@@ -70,7 +70,7 @@ bash start_train.sh --tb-only
 
 TensorBoard监听服务器 `127.0.0.1:6006`，日志根目录与脚本的 `PROJECT_DIR` 一致。端口被其他服务或其他日志目录占用时会明确提示；修改顶部 `TB_PORT` 可换端口。无需自动打开远程浏览器。
 
-在本地VS Code的 **Ports（端口）→ Forward a Port（转发端口）** 输入 `6006`，打开转发后的本机地址。曲线每轮更新，Images中的固定4个验证字在首轮、每5轮、结束轮更新。
+在本地VS Code的 **Ports（端口）→ Forward a Port（转发端口）** 输入 `6006`，打开转发后的本机地址。曲线每轮更新，Images中的固定45个验证字（9个来源各5张）在首轮、每5轮、结束轮更新。
 
 如果希望手动启动TensorBoard，可在服务器另一个终端执行：
 
@@ -105,7 +105,9 @@ python train.py --resume runs/calli_phase_jieti_yolo26s/weights/last.pt --device
 |---|---|
 | `start_train.sh` | 顶部调整超参数；自动TensorBoard与后台训练 |
 | `train.py` | 训练入口，支持数据检查、实时可视化和续训 |
-| `live_visualization.py` | 每轮标量与固定样本分组预览，独立载入当前轮权重 |
+| `live_visualization.py` | 每轮原生标量；定期全验证集数量指标与分层固定预览 |
+| `region_metrics.py` | BF/JT实例数量匹配与微平均统计 |
+| `evaluate_regions.py` | 已有权重事后评估、完整验证集预览和分来源图集 |
 | `autodl_constraints.txt` | 已有CUDA PyTorch环境的NumPy/OpenCV兼容约束 |
 | `predict.py` | 预测叠加图与实例结果导出 |
 | `requirements.txt` | 固定训练与数据转换依赖 |
@@ -150,3 +152,33 @@ python build_dataset.py --help
 按帮助指定源路径和新的输出目录。若要保持当前样本，使用已有 `dataset/manifest.json` 作为 `--selection-manifest`，并启用 `--allow-jt-fallback`。已经生成的数据可直接训练，无需重复转换。
 
 官方参考：[分割任务](https://docs.ultralytics.com/tasks/segment/)、[训练配置](https://docs.ultralytics.com/modes/train/)、[标签格式](https://docs.ultralytics.com/datasets/segment/)。
+
+## 面向笔法／结体的数量指标
+
+TensorBoard中选择 `overview/BF`（笔法）或 `overview/JT`（结体）；四个主指标单位为百分数：
+
+| 名称 | 定义 |
+|---|---|
+| `region_recall_pct` | 几何匹配数 / GT实例数 |
+| `label_accuracy_pct` | 匹配中细分类正确数 / 几何匹配数 |
+| `miss_rate_pct` | 未匹配GT实例数 / GT实例数 |
+| `region_precision_pct` | 几何匹配数 / 预测实例数 |
+
+固定置信度0.25、mask IoU阈值0.5。先按BF/JT分组，组内匹配不要求细分类相同；一对一匹配首先最大化可匹配数量，再最大化IoU总和。跨BF/JT预测错误计入原任务漏检与另一任务误检。标签准确率只针对已找到的区域，不能把它单独当作全部目标的正确率。
+
+统计单位是区域数量，不是像素面积；召回率与漏检率互补。详细分母和平均匹配IoU位于 `diagnostics/`。无分母的率在JSON中为null，在TB省略，不伪造0%或100%。原始loss/mAP日志仍保留：它们和新数量口径不同，不能混用。
+
+统计前显式去重完全相同类别＋二值mask的GT，记录去重前后数量；不合并不同阶段或重叠的不同实例。汇总采用micro方式：先累加所有图片的实例数，再计算比例。
+
+新运行在首轮、每5轮、结束轮对整个验证集逐图推理，计算这组数量指标，并复用结果保存固定45张预览；不是只拿45张估计全验证集指标。旧运行的4字固定清单保持不变，避免把不同采样误当同一曲线。早停/选best仍沿用原生box mAP50–95＋mask mAP50–95，不因加看板而改变训练。
+
+对已训练权重补评并导出**全部验证图**，不重新训练：
+
+```bash
+python evaluate_regions.py \
+  --weights runs/calli_phase_jieti_yolo26s_20261126/weights/best.pt \
+  --split val --checkpoint-epoch 43 --save-previews \
+  --output runs/evaluation_best43_val_counts
+```
+
+输出包括summary.json、per_image.json、按来源分组的previews、index.html和tensorboard/。`--checkpoint-epoch`是根据训练记录提供的展示标签，不从已strip的权重中猜测轮次。训练集评估使用 `--split train`，必须和验证集分开解释。

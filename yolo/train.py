@@ -202,9 +202,10 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--dry-run", action="store_true",
                         help="Validate data and print settings; no model import/download/update")
     result.add_argument("--preview-every", type=int, default=5,
-                        help="Fixed validation preview interval; first/final epochs are also saved")
-    result.add_argument("--preview-count", type=int, default=4,
-                        help="Number of fixed validation images; 0 disables previews")
+                        help="Full-val region-count evaluation and preview interval; includes first/final epochs")
+    result.add_argument("--preview-count", type=int, default=45,
+                        help="New runs: author-stratified fixed images (default 9x5); existing manifests stay fixed; "
+                             "0 disables images, not periodic full-val count metrics")
     result.add_argument("--no-tensorboard", action="store_true",
                         help="Explicitly disable TensorBoard scalars/images (PNG previews remain)")
     return result
@@ -253,7 +254,10 @@ def main() -> None:
         "resume_output": str(resume_output) if resume_output else None,
         "resolved_data": data, "dataset_check": report, "train_settings": settings,
         "visualization": {"tensorboard": not args.no_tensorboard,
-                          "preview_every": args.preview_every, "preview_count": args.preview_count},
+                          "preview_every": args.preview_every, "preview_count": args.preview_count,
+                          "region_metrics_scope": "full validation",
+                          "region_metrics_schedule": "first/preview interval/final epochs",
+                          "region_conf_threshold": .25, "region_iou_threshold": .5},
         "note": "Resume restores the checkpoint optimizer and training schedule; "
                 "the printed new-run hyperparameters are not applied to resume."
         if args.resume else "COCO initialization is not a trained Calli recognizer.",
