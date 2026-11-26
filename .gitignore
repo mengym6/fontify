@@ -67,3 +67,6 @@ fontdata_example/val_json_clean_v2/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Local project task records
+/task_md/
