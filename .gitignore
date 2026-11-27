@@ -52,6 +52,7 @@ fontdata_example/val_json_clean_v2/
 !/yolo/README.md
 /yolo/dataset/
 /yolo/dataset_full/
+/yolo/pair_data/
 /yolo/previews/
 /yolo/predictions/
 /yolo/models/

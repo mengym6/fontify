@@ -24,13 +24,13 @@ SEED="${SEED:-42}"
 
 # auto 会自行决定优化器和初始学习率，忽略手填 LR0。
 # 要手动调整 LR0，请把 OPTIMIZER 改成 AdamW 或 SGD。
-OPTIMIZER="${OPTIMIZER:-auto}"
-LR0="${LR0:-0.01}"
+OPTIMIZER="${OPTIMIZER:-AdamW}"
+LR0="${LR0:-0.00054}"
 LRF="${LRF:-0.01}"
 WEIGHT_DECAY="${WEIGHT_DECAY:-0.0005}"
 WARMUP_EPOCHS="${WARMUP_EPOCHS:-3}"
-WARMUP_BIAS_LR="${WARMUP_BIAS_LR:-0.1}"   # 显式AdamW候选可设0；auto自行设0
-MOMENTUM="${MOMENTUM:-0.937}"              # auto会自行选择；手动候选可设0.9
+WARMUP_BIAS_LR="${WARMUP_BIAS_LR:-0}"     # 当前baseline与原auto均从0预热
+MOMENTUM="${MOMENTUM:-0.9}"              # AdamW beta1
 BOX_WEIGHT="${BOX_WEIGHT:-7.5}"
 CLS_WEIGHT="${CLS_WEIGHT:-0.5}"
 DFL_WEIGHT="${DFL_WEIGHT:-1.5}"            # YOLO26 reg_max=1时控制L1回归项
@@ -41,8 +41,8 @@ SHEAR="${SHEAR:-0}"
 DEGREES="${DEGREES:-0}"
 PERSPECTIVE="${PERSPECTIVE:-0}"
 FREEZE="${FREEZE:-0}"
-BF_ONLY_AFTER="${BF_ONLY_AFTER:-40}"      # 前40轮联合，从第41轮只训练笔法
-STAGE_FREEZE="${STAGE_FREEZE:-4}"       # 切换时冻结backbone前4模块，包含BN统计
+BF_ONLY_AFTER="${BF_ONLY_AFTER:-0}"       # 当前baseline全程联合训练BF/JT
+STAGE_FREEZE="${STAGE_FREEZE:-0}"        # 当前baseline不执行阶段冻结
 MASK_RATIO="${MASK_RATIO:-4}"             # 训练mask下采样倍率；2保留更多小阶段细节
 HSV_H="${HSV_H:-0.015}"
 HSV_S="${HSV_S:-0.7}"
