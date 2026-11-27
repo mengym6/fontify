@@ -9,6 +9,7 @@ from yolo.correspondence_v9.metrics import evaluate_sample, summarize
 from yolo.correspondence_v9.prepare import convert
 from yolo.correspondence_v9.data import read_data
 from yolo.correspondence_v9.predict import encode_prediction
+from yolo.correspondence_v9.visualization import preview
 
 
 class TinyEncoder(nn.Module):
@@ -43,6 +44,14 @@ def target():
 class V9Tests(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(2)
+
+    def test_preview_accepts_region_that_disappears_when_downsampled(self):
+        mask = torch.zeros(1, 320, 320)
+        mask[0, 2, 2] = 1
+        t = {"gt_masks": mask, "gen_masks": mask, "groups": torch.tensor([0]), "matchable": torch.tensor([1])}
+        out = {"mask_logits": mask * 20 - 10, "match_logits": torch.tensor([5.])}
+        image = preview(torch.ones(2, 3, 320, 320), t, out)
+        self.assertEqual(image.shape, (596, 768, 3))
 
     def test_one_output_per_anchor_and_both_images_receive_gradients(self):
         m = GTCorrespondence(TinyEncoder(), width=16, layers=1, heads=4, token_grid=2)

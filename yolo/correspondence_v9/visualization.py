@@ -58,6 +58,9 @@ def preview(images, target, output, threshold=0.5):
                 layer.putalpha(alpha)
                 image = Image.alpha_composite(image, layer)
                 y, x = np.nonzero(np.asarray(alpha))
+                if not len(x):
+                    # A tiny region may disappear when reduced to the preview size.
+                    continue
                 ImageDraw.Draw(image).text(
                     (int(x.mean()), int(y.mean())),
                     str(i),
